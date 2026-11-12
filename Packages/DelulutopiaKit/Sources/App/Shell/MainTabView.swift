@@ -1,5 +1,6 @@
 import DLData
 import FeatureHome
+import FeatureDiscussions
 import FeatureLetters
 import DLDesignSystem
 import DLUI
@@ -59,6 +60,8 @@ struct MainTabView: View {
             HomeScreen()
         case .letters:
             LettersScreen()
+        case .discussions:
+            DiscussionsScreen()
         case .you:
             YouScreen(config: backend.config, settings: backend.settings)
         default:
@@ -90,6 +93,12 @@ struct RouteScreen: View {
             LetterScreen(id: id)
         case let .write(editId, replyTo):
             WriteScreen(editId: editId, replyTo: replyTo)
+        case let .discussion(id):
+            DiscussionScreen(id: id)
+        case let .composeDiscussion(editId):
+            ComposeDiscussionScreen(editId: editId)
+        case .archived:
+            DiscussionsScreen(archived: true)
         case .appearance:
             AppearanceScreenHost()
         default:

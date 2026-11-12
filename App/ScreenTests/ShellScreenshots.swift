@@ -3,6 +3,7 @@ import DLData
 import DLDesignSystem
 import DLTestSupport
 import DLUI
+import FeatureDiscussions
 import FeatureLetters
 import FeatureStart
 import Foundation
@@ -161,6 +162,30 @@ struct ShellScreenshots {
 
     @Test func letterSent() {
         Shoot.screen(letter(21), named: "letter-sent-light", style: .light, wait: 2.5)
+    }
+
+    // MARK: Discussions (canvas D-Discussions, D-Thread, D-Compose)
+
+    @Test func discussionsLight() {
+        Shoot.screen(app(.discussions), named: "discussions-light", style: .light, wait: 2.5)
+    }
+
+    @Test func discussionsDark() {
+        Shoot.screen(app(.discussions, theme: .dark), named: "discussions-dark", style: .dark, wait: 2.5)
+    }
+
+    private func pushed<V: View>(_ view: V, theme: ThemeMode = .match) -> some View {
+        let backend = FixtureBackend.make(theme: theme)
+        backend.home.start()
+        return NavigationStack { view }.environment(backend)
+    }
+
+    @Test func discussionThread() {
+        Shoot.screen(pushed(DiscussionScreen(id: 31)), named: "discussion-thread-light", style: .light, wait: 2.5)
+    }
+
+    @Test func discussionCompose() {
+        Shoot.screen(pushed(ComposeDiscussionScreen()), named: "discussion-compose-light", style: .light, wait: 2.5)
     }
 
     @Test func youLight() {

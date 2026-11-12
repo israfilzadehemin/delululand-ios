@@ -104,9 +104,10 @@ public struct AddBar: View {
     }
 
     public var body: some View {
+        let on = enabled
         HStack(spacing: 4) {
             PhotosPicker(selection: $photos, maxSelectionCount: 10, matching: .images) {
-                icon("photo.on.rectangle")
+                AddIcon(symbol: "photo.on.rectangle", enabled: on)
             }
             .disabled(!enabled)
             .accessibilityLabel("Add photo")
@@ -169,6 +170,15 @@ public struct AddBar: View {
     }
 
     private func icon(_ symbol: String) -> some View {
+        AddIcon(symbol: symbol, enabled: enabled)
+    }
+}
+
+private struct AddIcon: View {
+    let symbol: String
+    let enabled: Bool
+
+    var body: some View {
         Image(systemName: symbol)
             .font(.system(size: 19, weight: .medium))
             .foregroundStyle(enabled ? Color.dlInk : Color.dlInkDisabled)

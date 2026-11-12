@@ -10,6 +10,7 @@ public enum AppRoute: Hashable, Sendable {
     case write(editId: Int? = nil, replyTo: Int? = nil)
     case discussion(Int)
     case composeDiscussion(editId: Int?)
+    case archived
     case thread(Int)
     case newEmail
     case friend
