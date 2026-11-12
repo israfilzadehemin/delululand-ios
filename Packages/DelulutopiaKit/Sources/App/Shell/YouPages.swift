@@ -340,7 +340,6 @@ struct NotificationsScreen: View {
     }
 }
 
-@MainActor
 enum UNAuthorizationStatusWord {
     case unknown, on, off, blocked
 
@@ -360,11 +359,15 @@ enum UNAuthorizationStatusWord {
         }
     }
 
+    private var device: String {
+        MainActor.assumeIsolated { UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone" }
+    }
+
     var line: String {
         switch self {
-        case .on: "Notifications reach this \(UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone")."
+        case .on: "Notifications reach this \(device)."
         case .blocked: "Notifications are off for Delulutopia in iOS Settings."
-        default: "This \(UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone") won’t show notifications."
+        default: "This \(device) won’t show notifications."
         }
     }
 }
