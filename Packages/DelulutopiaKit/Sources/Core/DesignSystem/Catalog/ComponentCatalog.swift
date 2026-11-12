@@ -217,8 +217,8 @@ public struct DLComponentCatalog: View {
     }
 }
 
-/// Glass pieces over paper content, sized to one screen so they can be reviewed as drawn on a device
-/// (system glass only renders on screen).
+/// Glass pieces and the capsule buttons over paper content, sized to one screen so they can be
+/// reviewed as drawn on a device (system glass only renders on screen).
 public struct DLGlassSamples: View {
     public init() {}
 
@@ -249,6 +249,18 @@ public struct DLGlassSamples: View {
                     DLGlassIconButton("xmark", label: "Close") {}
                 }
                 Spacer()
+                HStack(spacing: 10) {
+                    Button("Edit") {}
+                        .buttonStyle(.dlOutline)
+                    Button("Allow") {}
+                        .buttonStyle(.dlTint)
+                    Button("Send") {}
+                        .buttonStyle(.dlFilled)
+                    Button("Keep") {}
+                        .buttonStyle(.dlGrey)
+                }
+                .padding(12)
+                .background(.dlPaper, in: RoundedRectangle(cornerRadius: DLRadius.groupedCard, style: .continuous))
                 DLToast("Arrives at 14:50", symbol: "clock")
                 DLToast("2 photos added to your draft", symbol: "photo", actionTitle: "Undo") {}
                 DLDraftAccessory("Continue your letter", glass: true) {}

@@ -14,8 +14,9 @@ import UIKit
 /// taller-than-screen pages off screen, where system glass does not render.
 @MainActor
 public enum Shoot {
-    /// iPhone 17 Pro in points (iOS design I2).
+    /// iPhone 17 Pro in points (iOS design I2), with its status bar and home indicator insets.
     public static let phone = CGSize(width: 402, height: 874)
+    public static let phoneSafeArea = UIEdgeInsets(top: 62, left: 0, bottom: 34, right: 0)
 
     public static var outputDirectory: String {
         if let dir = ProcessInfo.processInfo.environment["DL_SNAPSHOT_DIR"], !dir.isEmpty {
@@ -39,6 +40,7 @@ public enum Shoot {
             view,
             named: name,
             style: style,
+            topUpSafeArea: true,
             as: .image(drawHierarchyInKeyWindow: true, precision: 1, size: phone, traits: traits),
             file: file,
             testName: testName,
@@ -62,6 +64,7 @@ public enum Shoot {
             view,
             named: name,
             style: style,
+            topUpSafeArea: false,
             as: .image(on: config, precision: 1, traits: traits),
             file: file,
             testName: testName,
@@ -80,6 +83,7 @@ public enum Shoot {
         _ view: V,
         named name: String,
         style: UIUserInterfaceStyle,
+        topUpSafeArea: Bool,
         as strategy: Snapshotting<UIViewController, UIImage>,
         file: StaticString,
         testName: String,
@@ -89,6 +93,17 @@ public enum Shoot {
         DLAppearance.apply()
         let host = UIHostingController(rootView: view.environment(\.dlMotionEnabled, false))
         host.overrideUserInterfaceStyle = style
+        if topUpSafeArea {
+            // The resized key window can report smaller insets than a device; add the difference so
+            // bars and titles sit where they do on an iPhone.
+            let actual = keyWindow?.safeAreaInsets ?? .zero
+            host.additionalSafeAreaInsets = UIEdgeInsets(
+                top: max(0, phoneSafeArea.top - actual.top),
+                left: 0,
+                bottom: max(0, phoneSafeArea.bottom - actual.bottom),
+                right: 0
+            )
+        }
         let directory = outputDirectory
         try? FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
         withSnapshotTesting(record: .all) {
@@ -102,5 +117,12 @@ public enum Shoot {
                 line: line
             )
         }
+    }
+
+    private static var keyWindow: UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow }
     }
 }
