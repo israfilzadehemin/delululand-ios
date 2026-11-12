@@ -9,6 +9,7 @@ let package = Package(
     platforms: [.iOS(.v17)],
     products: [
         .library(name: "DLDesignSystem", targets: ["DLDesignSystem"]),
+        .library(name: "DLNetwork", targets: ["DLNetwork"]),
         .library(name: "DLData", targets: ["DLData"]),
         .library(name: "AppShell", targets: ["AppShell"]),
         // Linked only by the app-hosted screenshot target (DelulutopiaScreens).
@@ -25,7 +26,12 @@ let package = Package(
             resources: [.copy("Resources/Fonts")]
         ),
         .target(
+            name: "DLNetwork",
+            path: "Sources/Core/Network"
+        ),
+        .target(
             name: "DLData",
+            dependencies: ["DLNetwork"],
             path: "Sources/Core/Data"
         ),
         .target(
@@ -48,8 +54,13 @@ let package = Package(
         ),
         .testTarget(
             name: "DLDataTests",
-            dependencies: ["DLData"],
+            dependencies: ["DLData", "DLNetwork"],
             path: "Tests/Data"
+        ),
+        .testTarget(
+            name: "DLNetworkTests",
+            dependencies: ["DLNetwork"],
+            path: "Tests/Network"
         ),
         .testTarget(
             name: "AppShellTests",
