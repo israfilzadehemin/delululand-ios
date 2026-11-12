@@ -81,6 +81,21 @@ jobs:
             -destination "id=${{ steps.sim.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath "$GITHUB_WORKSPACE/build/Screenshots.xcresult" | xcbeautify
 
+      - name: Home Screen label (staging build)
+        if: steps.sync.outputs.regenerated != 'true'
+        continue-on-error: true
+        run: |
+          udid="${{ steps.sim.outputs.udid }}"
+          app="$(find ~/Library/Developer/Xcode/DerivedData -type d -path '*/Debug-Staging-iphonesimulator/Delulutopia.app' | head -1)"
+          xcrun simctl boot "$udid" 2>/dev/null || true
+          xcrun simctl bootstatus "$udid" -b
+          xcrun simctl install "$udid" "$app"
+          xcrun simctl launch "$udid" com.delulutopia.app.test
+          sleep 4
+          xcrun simctl terminate "$udid" com.delulutopia.app.test
+          sleep 4
+          xcrun simctl io "$udid" screenshot "$SNAPSHOT_DIR/zz.home-screen.png"
+
       - name: Upload screenshots
         if: always() && steps.sync.outputs.regenerated != 'true'
         uses: actions/upload-artifact@v4
