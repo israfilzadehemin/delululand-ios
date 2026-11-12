@@ -1,6 +1,6 @@
 # p1/full-parity
 
-Commit `e6675e8`, run 43194585327.
+Commit `eb80707`, run 43322795019.
 
 ## appearanceDark.appearance-dark
 
@@ -54,6 +54,10 @@ Commit `e6675e8`, run 43194585327.
 
 ![glassLight.glass-light.png](glassLight.glass-light.png)
 
+## homeAz.home-az-light
+
+![homeAz.home-az-light.png](homeAz.home-az-light.png)
+
 ## homeBoardDark.home-board-dark
 
 ![homeBoardDark.home-board-dark.png](homeBoardDark.home-board-dark.png)
@@ -70,6 +74,14 @@ Commit `e6675e8`, run 43194585327.
 
 ![homeEmpty.home-empty-light.png](homeEmpty.home-empty-light.png)
 
+## homeFa.home-fa-light
+
+![homeFa.home-fa-light.png](homeFa.home-fa-light.png)
+
+## homeFaDark.home-fa-dark
+
+![homeFaDark.home-fa-dark.png](homeFaDark.home-fa-dark.png)
+
 ## homeLight.home-light
 
 ![homeLight.home-light.png](homeLight.home-light.png)
@@ -77,6 +89,14 @@ Commit `e6675e8`, run 43194585327.
 ## homeWaiting.home-waiting-light
 
 ![homeWaiting.home-waiting-light.png](homeWaiting.home-waiting-light.png)
+
+## languageFaDark.language-fa-dark
+
+![languageFaDark.language-fa-dark.png](languageFaDark.language-fa-dark.png)
+
+## languageLight.language-light
+
+![languageLight.language-light.png](languageLight.language-light.png)
 
 ## letterReceived.letter-received-light
 
@@ -86,6 +106,10 @@ Commit `e6675e8`, run 43194585327.
 
 ![letterReceivedDark.letter-received-dark.png](letterReceivedDark.letter-received-dark.png)
 
+## letterReceivedFa.letter-received-fa-light
+
+![letterReceivedFa.letter-received-fa-light.png](letterReceivedFa.letter-received-fa-light.png)
+
 ## lettersDark.letters-dark
 
 ![lettersDark.letters-dark.png](lettersDark.letters-dark.png)
@@ -93,6 +117,10 @@ Commit `e6675e8`, run 43194585327.
 ## letterSent.letter-sent-light
 
 ![letterSent.letter-sent-light.png](letterSent.letter-sent-light.png)
+
+## lettersFa.letters-fa-light
+
+![lettersFa.letters-fa-light.png](lettersFa.letters-fa-light.png)
 
 ## lettersLight.letters-light
 
@@ -110,9 +138,17 @@ Commit `e6675e8`, run 43194585327.
 
 ![startCards.start-cards-light.png](startCards.start-cards-light.png)
 
+## startCardsAz.start-cards-az-light
+
+![startCardsAz.start-cards-az-light.png](startCardsAz.start-cards-az-light.png)
+
 ## startCardsDark.start-cards-dark
 
 ![startCardsDark.start-cards-dark.png](startCardsDark.start-cards-dark.png)
+
+## startCardsFa.start-cards-fa-light
+
+![startCardsFa.start-cards-fa-light.png](startCardsFa.start-cards-fa-light.png)
 
 ## startCreate.start-create-light
 
@@ -157,6 +193,10 @@ Commit `e6675e8`, run 43194585327.
 ## youDark.you-dark
 
 ![youDark.you-dark.png](youDark.you-dark.png)
+
+## youFa.you-fa-light
+
+![youFa.you-fa-light.png](youFa.you-fa-light.png)
 
 ## youLight.you-light
 
