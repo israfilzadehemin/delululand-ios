@@ -1,6 +1,6 @@
 # p0/scaffold-design-system
 
-Commit `b267e13`, run 43170501212.
+Commit `78094d5`, run 43171937670.
 
 ## appearanceDark.appearance-dark
 
@@ -17,6 +17,14 @@ Commit `b267e13`, run 43170501212.
 ## catalogLight.catalog-light
 
 ![catalogLight.catalog-light.png](catalogLight.catalog-light.png)
+
+## glassDark.glass-dark
+
+![glassDark.glass-dark.png](glassDark.glass-dark.png)
+
+## glassLight.glass-light
+
+![glassLight.glass-light.png](glassLight.glass-light.png)
 
 ## homeDark.home-dark
 
