@@ -2,6 +2,7 @@ import AppShell
 import DLData
 import DLDesignSystem
 import DLTestSupport
+import DLUI
 import FeatureStart
 import Foundation
 import SwiftUI
@@ -12,8 +13,8 @@ import Testing
 @MainActor
 @Suite("Shell screenshots", .serialized)
 struct ShellScreenshots {
-    private func app(_ tab: AppTab, theme: ThemeMode = .match, state: FixtureServer.State = .init()) -> some View {
-        AppRoot(backend: FixtureBackend.make(state: state, theme: theme), initialTab: tab)
+    private func app(_ tab: AppTab, theme: ThemeMode = .match, state: FixtureServer.State = .init(), boardMini: Bool = false) -> some View {
+        AppRoot(backend: FixtureBackend.make(state: state, theme: theme, boardMini: boardMini), initialTab: tab)
     }
 
     private func start(_ path: [StartRoute] = [], state: FixtureServer.State) -> some View {
@@ -71,12 +72,35 @@ struct ShellScreenshots {
 
     // MARK: Signed in
 
+    // MARK: Home (canvas A-Home, A-Home-board, A-Home-empty, A-Home-waiting)
+
     @Test func homeLight() {
-        Shoot.screen(app(.home), named: "home-light", style: .light, wait: 2)
+        Shoot.screen(app(.home, boardMini: true), named: "home-light", style: .light, wait: 2.5)
     }
 
     @Test func homeDark() {
-        Shoot.screen(app(.home, theme: .dark), named: "home-dark", style: .dark, wait: 2)
+        Shoot.screen(app(.home, theme: .dark, boardMini: true), named: "home-dark", style: .dark, wait: 2.5)
+    }
+
+    @Test func homeBoardLight() {
+        Shoot.screen(app(.home), named: "home-board-light", style: .light, wait: 2.5)
+    }
+
+    @Test func homeBoardDark() {
+        Shoot.screen(app(.home, theme: .dark), named: "home-board-dark", style: .dark, wait: 2.5)
+    }
+
+    @Test func homeEmpty() {
+        var state = FixtureServer.State()
+        state.empty = true
+        Shoot.screen(app(.home, state: state), named: "home-empty-light", style: .light, wait: 2)
+    }
+
+    @Test func homeWaiting() {
+        var state = FixtureServer.State()
+        state.alone = true
+        state.empty = true
+        Shoot.screen(app(.home, state: state), named: "home-waiting-light", style: .light, wait: 2)
     }
 
     @Test func lettersLight() {

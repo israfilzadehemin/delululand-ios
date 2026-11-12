@@ -158,7 +158,7 @@ public struct StampImage: View {
                     .aspectRatio(contentMode: .fit)
             } else {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(.dlLetterEnvelopeTone)
+                    .fill(.dlLetterEnvelope)
                     .aspectRatio(300.0 / 380.0, contentMode: .fit)
             }
         }
@@ -175,8 +175,4 @@ public struct StampImage: View {
             image = await SVGRasterizer.shared.image(svg: data, key: url, width: renderWidth)
         }
     }
-}
-
-extension ShapeStyle where Self == Color {
-    static var dlLetterEnvelopeTone: Color { DLPalette.letterEnvelope.color }
 }

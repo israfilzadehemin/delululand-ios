@@ -78,12 +78,17 @@ struct DraftSaverTests {
         }
         saver.load(version: 2, savedAt: nil)
         saver.touch()
-        try await Task.sleep(for: .milliseconds(200))
+        // A busy simulator can be slow to run the debounce; wait for the save rather than a fixed time.
+        for _ in 0 ..< 150 where saver.status != .conflict {
+            try await Task.sleep(for: .milliseconds(20))
+        }
         #expect(saver.status == .conflict)
         #expect(saver.serverVersion == 5)
         await #expect(throws: DraftSaver.FlushError.self) { _ = try await saver.flush() }
         saver.keepMine()
-        try await Task.sleep(for: .milliseconds(200))
+        for _ in 0 ..< 150 where saver.status != .saved {
+            try await Task.sleep(for: .milliseconds(20))
+        }
         #expect(saver.status == .saved)
         #expect(saver.version == 6)
         #expect(recorder.calls == [2, 5])

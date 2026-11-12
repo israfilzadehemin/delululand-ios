@@ -111,7 +111,7 @@ public final class FixtureServer: URLProtocol, @unchecked Sendable {
         if !state.alone { h["friend"] = friend }
         if !state.empty {
             h["board"] = [
-                "version": 7, "authorId": 2, "createdAt": iso(-120), "url": "/api/m/board.png", "reaction": "heart",
+                "version": 7, "authorId": 2, "createdAt": iso(-120), "url": "/api/m/board.png", "reaction": "love",
                 "comment": ["text": "this sun is literally me today", "createdAt": iso(-100)],
             ]
         }
@@ -337,7 +337,7 @@ public final class FixtureServer: URLProtocol, @unchecked Sendable {
 /// A backend wired to the fixture server, for screenshot tests.
 @MainActor
 public enum FixtureBackend {
-    public static func make(state: FixtureServer.State = .init(), theme: ThemeMode = .match) -> Backend {
+    public static func make(state: FixtureServer.State = .init(), theme: ThemeMode = .match, boardMini: Bool = false) -> Backend {
         FixtureServer.state = state
         let name = "dl.fixture.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
@@ -345,6 +345,7 @@ public enum FixtureBackend {
         let settings = DeviceSettings(defaults: defaults)
         settings.setThemeMode(theme)
         settings.setLeaves(false)
+        settings.setBoardMini(boardMini)
         let config = AppConfig(environment: .staging, apiBaseURL: FixtureServer.baseURL, version: "0.1.0", build: "1")
         return Backend(
             config: config,

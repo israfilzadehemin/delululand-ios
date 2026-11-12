@@ -201,7 +201,7 @@ public struct API: Sendable {
             }
         }
 
-        var maxBytes: Int {
+        public var maxBytes: Int {
             switch self {
             case .photo: 10 * 1024 * 1024
             case .audio: 60 * 1024 * 1024
@@ -210,7 +210,7 @@ public struct API: Sendable {
             }
         }
 
-        var tooLarge: String {
+        public var tooLarge: String {
             switch self {
             case .photo: "This photo is larger than 10 MB"
             case .audio: "This audio file is larger than 60 MB"
@@ -218,6 +218,9 @@ public struct API: Sendable {
             case .doodle: "This doodle is larger than 2 MB"
             }
         }
+
+        /// The refusal sentence when `bytes` is over the limit, before uploading.
+        public func precheck(_ bytes: Int) -> String? { bytes > maxBytes ? tooLarge : nil }
     }
 
     /// Uploads to a draft's attachment path (`api/draft/attachments`, `api/discussions/draft/attachments`,

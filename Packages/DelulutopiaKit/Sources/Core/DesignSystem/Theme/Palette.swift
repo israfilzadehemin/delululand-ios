@@ -176,6 +176,34 @@ public extension ShapeStyle where Self == Color {
     static var dlOnNewBadge: Color { DLPalette.onNewBadge.color }
     static var dlCountdownChip: Color { DLPalette.countdownChip.color }
     static var dlMarkContainer: Color { DLPalette.markContainer.color }
+    static var dlMarkLine: Color { DLPalette.markLine.color }
+    static var dlInkOnScrim: Color { DLPalette.inkOnScrim.color }
+    static var dlLetterSheet: Color { DLPalette.letterSheet.color }
+    static var dlLetterEnvelope: Color { DLPalette.letterEnvelope.color }
+    static var dlLetterFlap: Color { DLPalette.letterFlap.color }
+    static var dlLetterEdge: Color { DLPalette.letterEdge.color }
+    static var dlLetterSlip: Color { DLPalette.letterSlip.color }
+    static var dlLetterInk: Color { DLPalette.letterInk.color }
+    static var dlLetterRule: Color { DLPalette.letterRule.color }
+    static var dlLetterMargin: Color { DLPalette.letterMargin.color }
+    static var dlLetterPrint: Color { DLPalette.letterPrint.color }
+    static var dlLetterTape: Color { DLPalette.letterTape.color }
+    static var dlLightbox: Color { DLPalette.lightbox.color }
+    static var dlOnLightbox: Color { DLPalette.onLightbox.color }
+    static var dlOnLightboxQuiet: Color { DLPalette.onLightboxQuiet.color }
+    static var dlBoardFrame: Color { DLPalette.boardFrame.color }
+    static var dlBoardTray: Color { DLPalette.boardTray.color }
+    static var dlBoardSurface: Color { DLPalette.boardSurface.color }
+    static var dlUserAText: Color { DLPalette.userAText.color }
+    static var dlUserBText: Color { DLPalette.userBText.color }
+    static var dlReactLine: Color { DLPalette.reactLine.color }
+    static var dlMailBackground: Color { DLPalette.mailBackground.color }
+    static var dlMailMine: Color { DLPalette.mailMine.color }
+    static var dlMailLine: Color { DLPalette.mailLine.color }
+    static var dlMailBlue: Color { DLPalette.mailBlue.color }
+    static var dlOnMailBlue: Color { DLPalette.onMailBlue.color }
+    static var dlMailUnread: Color { DLPalette.mailUnread.color }
+    static var dlMailInk: Color { DLPalette.mailInk.color }
     /// iOS `secondarySystemFill`: grey capsule buttons and alert buttons (canvas Components).
     static var dlSystemFill: Color { Color(uiColor: .secondarySystemFill) }
     /// iOS `systemRed`: destructive actions in alerts, menus and dialogs.

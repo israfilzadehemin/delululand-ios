@@ -1,30 +1,61 @@
 import DLData
+import FeatureHome
 import DLDesignSystem
+import DLUI
 import SwiftUI
 import UIKit
 
 /// The floating glass tab bar on iOS 26+ (the system draws it), the classic bar before. Each tab
-/// keeps its own navigation stack.
+/// keeps its own navigation stack; `dlOpen` pushes on the current one, `dlNotice` shows a toast
+/// above the bar.
 struct MainTabView: View {
     @Binding var selection: AppTab
     @Environment(Backend.self) var backend
     @Environment(\.colorScheme) var colorScheme
+    @State private var paths: [AppTab: [AppRoute]] = [:]
+    @State private var toast: DLToastItem?
 
     var body: some View {
-        TabView(selection: $selection) {
+        TabView(selection: tabSelection) {
             ForEach(AppTab.allCases) { tab in
-                NavigationStack {
+                NavigationStack(path: path(tab)) {
                     root(for: tab)
+                        .navigationDestination(for: AppRoute.self) { route in
+                            RouteScreen(route: route)
+                        }
                 }
                 .tabItem { tabLabel(tab) }
                 .tag(tab)
             }
         }
+        .environment(\.dlOpen) { route in paths[selection, default: []].append(route) }
+        .environment(\.dlSelectTab) { tab in
+            paths[tab] = []
+            selection = tab
+        }
+        .environment(\.dlNotice) { item in toast = item }
+        .environment(\.dlBrand, backend.home.home?.universe.name ?? "Delulutopia")
+        .environment(\.dlFirstCitizen, backend.home.home?.firstCitizen)
+        .dlToast($toast, bottom: 96)
+    }
+
+    /// Tapping the current tab again pops it to its root (iOS convention).
+    private var tabSelection: Binding<AppTab> {
+        Binding(get: { selection }, set: { tab in
+            if tab == selection { paths[tab] = [] }
+            selection = tab
+        })
+    }
+
+    private func path(_ tab: AppTab) -> Binding<[AppRoute]> {
+        Binding(get: { paths[tab] ?? [] }, set: { paths[tab] = $0 })
     }
 
     @ViewBuilder
     private func root(for tab: AppTab) -> some View {
         switch tab {
+        case .home:
+            HomeScreen()
         case .you:
             YouScreen(config: backend.config, settings: backend.settings)
         default:
@@ -44,6 +75,33 @@ struct MainTabView: View {
             Label(tab.title, systemImage: tab.symbol)
         }
     }
+}
+
+/// A pushed screen for a route. Screens that have not landed yet show the placeholder line.
+struct RouteScreen: View {
+    let route: AppRoute
+
+    var body: some View {
+        switch route {
+        case .appearance:
+            AppearanceScreenHost()
+        default:
+            ScrollView {
+                Text("This screen arrives in the next build.")
+                    .dlText(.callout)
+                    .foregroundStyle(.dlInkQuiet)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 120)
+            }
+            .background(.dlPaper)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+private struct AppearanceScreenHost: View {
+    @Environment(Backend.self) var backend
+    var body: some View { AppearanceScreen(settings: backend.settings) }
 }
 
 /// The You tab shows the citizen's picture at 26 pt with an accent ring when selected (iOS design §3).

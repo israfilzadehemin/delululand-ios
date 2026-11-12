@@ -5,44 +5,13 @@ import DLUI
 import FeatureStart
 import SwiftUI
 
-/// The five destinations of the floating tab bar (iOS design §3): Home · Letters · Discussions ·
-/// Emails · You (the citizen's picture).
-public enum AppTab: String, CaseIterable, Identifiable, Sendable {
-    case home
-    case letters
-    case discussions
-    case emails
-    case you
-
-    public var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .home: "Home"
-        case .letters: "Letters"
-        case .discussions: "Discussions"
-        case .emails: "Emails"
-        case .you: "You"
-        }
-    }
-
+extension AppTab {
     /// The line a placeholder tab shows until its screen lands.
     var placeholderLine: String {
         switch self {
         case .home: "Home arrives in the next build."
         case .you: "You arrives in the next build."
         default: "\(title) arrive in the next build."
-        }
-    }
-
-    /// SF Symbols from the canvas "Foundations › SF Symbols" (You draws the picture instead).
-    var symbol: String {
-        switch self {
-        case .home: "house"
-        case .letters: "envelope"
-        case .discussions: "bubble.left.and.bubble.right"
-        case .emails: "at"
-        case .you: "person.crop.circle"
         }
     }
 }
