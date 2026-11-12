@@ -1,3 +1,4 @@
+import DLI18n
 import Foundation
 import os
 import Security
@@ -25,7 +26,7 @@ public struct APIError: Error, Sendable, Equatable, LocalizedError {
     public var retryAfterMs: Int? { extra["retryAfterMs"]?.int }
     public var errorDescription: String? { message }
 
-    static func offline(_ message: String = "Can't reach the server.") -> APIError {
+    static func offline(_ message: String = t("common.cantReachServer")) -> APIError {
         APIError(status: 0, code: offlineCode, message: message)
     }
 
@@ -273,6 +274,8 @@ public final class APIClient: Sendable {
         request.setValue("delululand", forHTTPHeaderField: "X-Requested-With")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        // L8: server-worded text (errors, moods, stamps) comes back in the citizen's language.
+        request.setValue(I18n.shared.lang.tag, forHTTPHeaderField: "Accept-Language")
         if let cookie = cookies.header(for: url) {
             request.setValue(cookie, forHTTPHeaderField: "Cookie")
         }
@@ -314,7 +317,7 @@ public final class APIClient: Sendable {
     static func refusal(status: Int, data: Data) -> APIError {
         let object = (try? JSONDecoder().decode([String: JSONValue].self, from: data)) ?? [:]
         let code = object["code"]?.string ?? "HTTP_\(status)"
-        let message = object["message"]?.string ?? "Something went wrong."
+        let message = object["message"]?.string ?? t("common.somethingWentWrong")
         var extra = object
         extra["code"] = nil
         extra["message"] = nil
@@ -352,7 +355,7 @@ public final class APIClient: Sendable {
         do {
             return try Coders.decoder().decode(T.self, from: data)
         } catch {
-            throw APIError(status: 0, code: "BAD_RESPONSE", message: "Something went wrong.")
+            throw APIError(status: 0, code: "BAD_RESPONSE", message: t("common.somethingWentWrong"))
         }
     }
 
@@ -387,16 +390,16 @@ public final class APIClient: Sendable {
         } catch is CancellationError {
             throw CancellationError()
         } catch let error as URLError where error.code == .timedOut {
-            throw APIError(status: 0, code: "TIMEOUT", message: "The upload took too long. Try again.")
+            throw APIError(status: 0, code: "TIMEOUT", message: t("media.uploadTimedOut"))
         } catch {
-            throw APIError(status: 0, code: "NETWORK", message: "Upload failed. Try again.")
+            throw APIError(status: 0, code: "NETWORK", message: t("media.uploadFailed"))
         }
         absorb(response, for: request.url!)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
             let refusal = Self.refusal(status: status, data: data)
             throw refusal.code.hasPrefix("HTTP_") && refusal.message == "Something went wrong."
-                ? APIError(status: status, code: refusal.code, message: "Upload failed. Try again.") : refusal
+                ? APIError(status: status, code: refusal.code, message: t("media.uploadFailed")) : refusal
         }
         progress?(1)
         return try decode(data)

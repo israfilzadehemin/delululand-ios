@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import SwiftUI
 
@@ -42,12 +43,12 @@ public extension Citizen {
 public func ageWords(_ iso: String?, now: Date) -> String {
     guard let since = DLTime.date(iso) else { return "" }
     let s = max(0, Int(now.timeIntervalSince(since)))
-    if s < 60 { return "just now" }
+    if s < 60 { return t("common.age.justNow") }
     let m = s / 60
-    if m < 60 { return "\(m) min ago" }
+    if m < 60 { return t("common.age.min", ["n": m]) }
     let h = m / 60
-    if h < 24 { return "\(h) h ago" }
-    return "\(h / 24) d ago"
+    if h < 24 { return t("common.age.h", ["n": h]) }
+    return t("common.age.d", ["n": h / 24])
 }
 
 /// A citizen's picture with the writer ring, from the universe colour key.
@@ -101,7 +102,7 @@ public struct OfflineBanner: View {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.dlError)
-            Text("Can’t reach \(brand). Showing what we had.")
+            Text(t("home.cantReachShowingWhatWe", ["brand": brand]))
                 .dlText(.footnote)
                 .foregroundStyle(.dlInk)
             Spacer(minLength: 0)

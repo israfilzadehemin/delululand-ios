@@ -8,6 +8,7 @@ let package = Package(
     defaultLocalization: "en",
     platforms: [.iOS(.v17)],
     products: [
+        .library(name: "DLI18n", targets: ["DLI18n"]),
         .library(name: "DLDesignSystem", targets: ["DLDesignSystem"]),
         .library(name: "DLNetwork", targets: ["DLNetwork"]),
         .library(name: "DLData", targets: ["DLData"]),
@@ -26,58 +27,66 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.18.0"),
     ],
     targets: [
+        // Languages (doc "Delululand — Languages"): the catalogue shared with the web and Android.
+        .target(
+            name: "DLI18n",
+            path: "Sources/Core/I18n"
+        ),
         .target(
             name: "DLDesignSystem",
+            dependencies: ["DLI18n"],
             path: "Sources/Core/DesignSystem",
             resources: [.copy("Resources/Fonts")]
         ),
         .target(
             name: "DLNetwork",
+            dependencies: ["DLI18n"],
             path: "Sources/Core/Network"
         ),
         .target(
             name: "DLData",
-            dependencies: ["DLNetwork"],
+            dependencies: ["DLI18n", "DLNetwork"],
             path: "Sources/Core/Data"
         ),
         .target(
             name: "DLUI",
-            dependencies: ["DLDesignSystem", "DLData", "DLNetwork"],
+            dependencies: ["DLI18n", "DLDesignSystem", "DLData", "DLNetwork"],
             path: "Sources/Core/UI"
         ),
         .target(
             name: "FeatureStart",
-            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
+            dependencies: ["DLI18n", "DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
             path: "Sources/Feature/Start"
         ),
         .target(
             name: "FeatureHome",
-            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
+            dependencies: ["DLI18n", "DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
             path: "Sources/Feature/Home"
         ),
         .target(
             name: "FeatureLetters",
-            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
+            dependencies: ["DLI18n", "DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
             path: "Sources/Feature/Letters"
         ),
         .target(
             name: "FeatureDiscussions",
-            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
+            dependencies: ["DLI18n", "DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
             path: "Sources/Feature/Discussions"
         ),
         .target(
             name: "FeatureEmails",
-            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
+            dependencies: ["DLI18n", "DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
             path: "Sources/Feature/Emails"
         ),
         .target(
             name: "AppShell",
-            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI", "FeatureStart", "FeatureHome", "FeatureLetters", "FeatureDiscussions", "FeatureEmails"],
+            dependencies: ["DLI18n", "DLDesignSystem", "DLData", "DLNetwork", "DLUI", "FeatureStart", "FeatureHome", "FeatureLetters", "FeatureDiscussions", "FeatureEmails"],
             path: "Sources/App/Shell"
         ),
         .target(
             name: "DLTestSupport",
             dependencies: [
+                "DLI18n",
                 "DLDesignSystem",
                 "DLData",
                 "DLNetwork",
@@ -87,23 +96,28 @@ let package = Package(
             resources: [.copy("Media")]
         ),
         .testTarget(
+            name: "DLI18nTests",
+            dependencies: ["DLI18n"],
+            path: "Tests/I18n"
+        ),
+        .testTarget(
             name: "DLDesignSystemTests",
-            dependencies: ["DLDesignSystem"],
+            dependencies: ["DLI18n", "DLDesignSystem"],
             path: "Tests/DesignSystem"
         ),
         .testTarget(
             name: "DLDataTests",
-            dependencies: ["DLData", "DLNetwork"],
+            dependencies: ["DLI18n", "DLData", "DLNetwork"],
             path: "Tests/Data"
         ),
         .testTarget(
             name: "DLNetworkTests",
-            dependencies: ["DLNetwork"],
+            dependencies: ["DLI18n", "DLNetwork"],
             path: "Tests/Network"
         ),
         .testTarget(
             name: "AppShellTests",
-            dependencies: ["AppShell", "DLData", "DLDesignSystem", "DLUI"],
+            dependencies: ["DLI18n", "AppShell", "DLData", "DLDesignSystem", "DLUI"],
             path: "Tests/AppShell"
         ),
     ]

@@ -58,22 +58,22 @@ struct MainTabView: View {
         guard !old.isEmpty || backend.home.home != nil, let h = backend.home.home else { return }
         let fresh = new.filter { !old.contains($0) }
         guard !old.isEmpty, let key = fresh.first else { return }
-        let friend = h.friend?.nickname ?? "Your friend"
+        let friend = h.friend?.nickname ?? t("common.friend")
         let id = Int(key.dropFirst()) ?? 0
         switch key.first {
         case "l":
-            toast = DLToastItem("\(friend)’s letter arrived", symbol: "envelope", actionTitle: "Open") {
+            toast = DLToastItem(t("notify.inTab.letter", ["name": friend]), symbol: "envelope", actionTitle: t("common.open")) {
                 selection = .letters
                 paths[.letters] = [.letter(id)]
             }
         case "d":
-            toast = DLToastItem("\(friend) started a discussion", symbol: "note.text", actionTitle: "Open") {
+            toast = DLToastItem(t("notify.inTab.discussion", ["name": friend]), symbol: "note.text", actionTitle: t("common.open")) {
                 selection = .discussions
                 paths[.discussions] = [.discussion(id)]
             }
         default:
             let thread = h.newEmails.first { $0.id == id }?.threadId ?? id
-            toast = DLToastItem("\(friend) sent you an email", symbol: "at", actionTitle: "Open") {
+            toast = DLToastItem(t("notify.inTab.email", ["name": friend]), symbol: "at", actionTitle: t("common.open")) {
                 selection = .emails
                 paths[.emails] = [.thread(thread)]
             }
@@ -135,7 +135,7 @@ struct MainTabView: View {
             } icon: {
                 Image(uiImage: DotTabIcon.image(symbol: tab.symbol, selected: selection == tab, style: style))
             }
-            .accessibilityLabel("\(tab.title), new")
+            .accessibilityLabel(t("tabs.titleNew", ["title": tab.title]))
         } else {
             Label(tab.title, systemImage: tab.symbol)
         }
@@ -195,16 +195,8 @@ struct RouteScreen: View {
             UniverseScreen()
         case .notifications:
             NotificationsScreen()
-        default:
-            ScrollView {
-                Text("This screen arrives in the next build.")
-                    .dlText(.callout)
-                    .foregroundStyle(.dlInkQuiet)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 120)
-            }
-            .background(.dlPaper)
-            .navigationBarTitleDisplayMode(.inline)
+        case .language:
+            LanguageScreen()
         }
     }
 }

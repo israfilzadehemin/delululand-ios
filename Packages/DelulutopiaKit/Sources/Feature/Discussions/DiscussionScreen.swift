@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -143,7 +144,7 @@ final class DiscussionModel {
         } catch let e as APIError where (400 ..< 500).contains(e.status) {
             return e.message
         } catch {
-            return "Not posted. Try again."
+            return t("common.notPosted")
         }
     }
 
@@ -156,7 +157,7 @@ final class DiscussionModel {
             if e.status == 404 { drop(c.id) }
             return e.message
         } catch {
-            return "Not saved. Try again."
+            return t("reactions.notSavedTryAgain")
         }
     }
 
@@ -169,7 +170,7 @@ final class DiscussionModel {
             drop(c.id)
             return nil
         } catch {
-            return "Not deleted. Try again."
+            return t("common.notDeleted")
         }
     }
 
@@ -189,22 +190,22 @@ final class DiscussionModel {
     func archive() async -> String {
         do {
             ui = .shown(try await backend.api.archive(id: id))
-            return "Archived for both of you"
+            return t("discussions.archivedForBoth")
         } catch let e as APIError where (400 ..< 500).contains(e.status) {
             return e.message
         } catch {
-            return "Not archived. Try again."
+            return t("discussions.notArchived")
         }
     }
 
     func unarchive() async -> String {
         do {
             ui = .shown(try await backend.api.unarchive(id: id))
-            return "Back in Discussions"
+            return t("discussions.backInDiscussions")
         } catch let e as APIError where (400 ..< 500).contains(e.status) {
             return e.message
         } catch {
-            return "Not unarchived. Try again."
+            return t("discussions.notUnarchived")
         }
     }
 
@@ -215,10 +216,10 @@ final class DiscussionModel {
             backend.home.refreshSoon()
             return nil
         } catch let e as APIError {
-            if takeBack, e.code == "WINDOW_CLOSED" { return "Too late: it’s on its way." }
-            return takeBack ? "Not taken back. Try again." : "Not deleted. Try again."
+            if takeBack, e.code == "WINDOW_CLOSED" { return t("common.tooLate") }
+            return takeBack ? t("discussions.notTakenBack") : t("common.notDeleted")
         } catch {
-            return takeBack ? "Not taken back. Try again." : "Not deleted. Try again."
+            return takeBack ? t("discussions.notTakenBack") : t("common.notDeleted")
         }
     }
 }
@@ -241,17 +242,17 @@ public struct DiscussionScreen: View {
             case let .shown(d):
                 if let model { ThreadView(d: d, model: model) }
             case let .notArrived(at):
-                gone("Arrives at \(DLTime.clock(at))")
+                gone(t("discussions.arrivesAt", ["time": DLTime.clock(at)]))
             case .gone:
-                gone("This discussion isn’t here anymore.")
+                gone(t("discussions.thisDiscussionIsntHereAnymore"))
             case .unreachable:
-                gone("Can’t reach \(backend.home.home?.universe.name ?? "Delulutopia"). Try again.")
+                gone(t("discussions.cantReachTryAgain", ["brand": backend.home.home?.universe.name ?? "Delulutopia"]))
             case .loading:
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle("Discussion")
+        .navigationTitle(t("discussions.discussion"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .onAppear {
@@ -264,7 +265,7 @@ public struct DiscussionScreen: View {
     private func gone(_ text: String) -> some View {
         VStack(spacing: 16) {
             Text(text).dlText(.callout).foregroundStyle(.dlInkQuiet).multilineTextAlignment(.center)
-            Button("Back") { dismiss() }.buttonStyle(DLButtonStyle(.outline))
+            Button(t("discussions.back")) { dismiss() }.buttonStyle(DLButtonStyle(.outline))
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -272,6 +273,17 @@ public struct DiscussionScreen: View {
 }
 
 private struct ThreadView: View {
+    /// "Leyla · Posted 21:10 · Arrived 22:10 · edited" in the language in force.
+    private func metaLine(_ d: DFull, friend: Citizen?, now: Date, arrived: Bool) -> String {
+        let author = d.mine ? t("board.you") : friend?.nickname ?? t("common.friend")
+        let posted = DLTime.clock(d.postedAt, now: now)
+        let arrives = DLTime.clock(d.arrivesAt, now: now)
+        let times = arrived
+            ? t("discussions.timesArrived", ["posted": posted, "arrived": arrives])
+            : t("discussions.timesArrives", ["posted": posted, "arrives": arrives])
+        return "\(author) · \(times)" + (d.editedAt != nil ? t("discussions.metaEdited") : "")
+    }
+
     let d: DFull
     let model: DiscussionModel
 
@@ -303,22 +315,25 @@ private struct ThreadView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     if inReach {
-                        ReachBar("\(DLTime.countdown(DLTime.remaining(until: d.windowEndsAt, now: now))) left to take it back") {
-                            ReachChip("Edit") { open(.composeDiscussion(editId: d.id)) }
-                            ReachChip("Cancel") { askTakeBack = true }
+                        ReachBar(t("discussions.leftToTakeBack", ["countdown": DLTime.countdown(DLTime.remaining(until: d.windowEndsAt, now: now))])) {
+                            ReachChip(t("discussions.edit")) { open(.composeDiscussion(editId: d.id)) }
+                            ReachChip(t("discussions.cancel")) { askTakeBack = true }
                         }
                     }
                     if let archivedAt = d.archivedAt {
-                        let by = d.archivedBy == meId ? "you" : (d.archivedBy != nil ? friend?.nickname ?? "" : "")
-                        ReachBar("Archived\(by.isEmpty ? "" : " by \(by)") · \(DLTime.day(archivedAt))") {
-                            if d.canUnarchive { ReachChip("Unarchive") { Task { notice(.text(await model.unarchive())) } } }
+                        let day = DLTime.day(archivedAt)
+                        let line = d.archivedBy == meId ? t("discussions.archivedByYou", ["day": day])
+                            : d.archivedBy != nil ? t("discussions.archivedByFriend", ["friend": friend?.nickname ?? t("settings.yourFriend"), "day": day])
+                            : t("discussions.archivedOn", ["day": day])
+                        ReachBar(line) {
+                            if d.canUnarchive { ReachChip(t("discussions.unarchive")) { Task { notice(.text(await model.unarchive())) } } }
                         }
                     }
                     Note(.of(d.color), pin: 24) {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(d.title).font(.custom(DLFontName.literataSemiBold.rawValue, size: 22, relativeTo: .title2)).foregroundStyle(.dlNoteInk)
-                            Text("\(d.mine ? "You" : friend?.nickname ?? "Friend") · Posted \(DLTime.clock(d.postedAt, now: now)) · \(arrived ? "Arrived" : "Arrives") \(DLTime.clock(d.arrivesAt, now: now))\(d.editedAt != nil ? " · Edited" : "")")
-                                .font(.custom(DLFontName.manropeMedium.rawValue, size: 12, relativeTo: .caption))
+                            Text(d.title).font(.custom(DLFontName.literataSemiBold.name, size: 22, relativeTo: .title2)).foregroundStyle(.dlNoteInk)
+                            Text(metaLine(d, friend: friend, now: now, arrived: arrived))
+                                .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption))
                                 .foregroundStyle(.dlNoteInkQuiet)
                             LetterBody(d.doc, size: 16, lineHeight: 25, color: .dlNoteInk)
                             if !photos.isEmpty {
@@ -330,15 +345,15 @@ private struct ThreadView: View {
                                                     .frame(width: 88, height: 88)
                                                     .clipShape(RoundedRectangle(cornerRadius: 4))
                                             }
-                                            .accessibilityLabel("Photo \(i + 1) of \(photos.count), open full size")
+                                            .accessibilityLabel(t("discussions.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
                                         }
                                     }
                                 }
                             }
                             ForEach(audios) { a in VoicePlayer(url: a.url, durationMs: a.durationMs) }
                             if d.mine, !arrived {
-                                Text("Arrives for \(friend?.nickname ?? "your friend") in \(DLTime.countdown(DLTime.remaining(until: d.arrivesAt, now: now)))")
-                                    .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 13, relativeTo: .footnote).monospacedDigit())
+                                Text(t("discussions.arrivesForIn", ["friend": friend?.nickname ?? t("settings.yourFriend"), "countdown": DLTime.countdown(DLTime.remaining(until: d.arrivesAt, now: now))]))
+                                    .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
                                     .foregroundStyle(.dlNoteInk)
                             }
                             if arrived {
@@ -362,35 +377,35 @@ private struct ThreadView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 if d.canEdit || d.canArchive || d.canUnarchive || d.canDelete {
                     Menu {
-                        if d.canEdit { Button("Edit", systemImage: "pencil") { open(.composeDiscussion(editId: d.id)) } }
-                        if d.canArchive { Button("Archive", systemImage: "archivebox") { Task { notice(.text(await model.archive())) } } }
-                        if d.canUnarchive { Button("Unarchive", systemImage: "tray.and.arrow.up") { Task { notice(.text(await model.unarchive())) } } }
-                        if d.canDelete { Button("Delete", systemImage: "trash", role: .destructive) { askDelete = true } }
+                        if d.canEdit { Button(t("discussions.edit"), systemImage: "pencil") { open(.composeDiscussion(editId: d.id)) } }
+                        if d.canArchive { Button(t("discussions.archive"), systemImage: "archivebox") { Task { notice(.text(await model.archive())) } } }
+                        if d.canUnarchive { Button(t("discussions.unarchive"), systemImage: "tray.and.arrow.up") { Task { notice(.text(await model.unarchive())) } } }
+                        if d.canDelete { Button(t("discussions.delete"), systemImage: "trash", role: .destructive) { askDelete = true } }
                     } label: {
                         Image(systemName: "ellipsis")
                     }
-                    .accessibilityLabel("Discussion options")
+                    .accessibilityLabel(t("discussions.discussionOptions"))
                 }
             }
         }
         .fullScreenCover(item: Binding(get: { photo.map { PhotoIndex(i: $0) } }, set: { photo = $0?.i })) { p in
             Lightbox(items: d.attachments.filter { $0.kind == "photo" }, index: p.i) { photo = nil }.environment(backend)
         }
-        .confirmationDialog("Take it back?", isPresented: $askTakeBack, titleVisibility: .visible) {
-            Button("Yes, take it back", role: .destructive) { remove(takeBack: true) }
-            Button("No", role: .cancel) {}
-        } message: { Text("This deletes the discussion and every comment on it. It can’t be undone.") }
-        .confirmationDialog("Delete this discussion?", isPresented: $askDelete, titleVisibility: .visible) {
-            Button("Yes, delete", role: .destructive) { remove(takeBack: false) }
-            Button("No", role: .cancel) {}
-        } message: { Text("It disappears for both of you, with every comment and reaction. It can’t be undone.") }
-        .confirmationDialog("Delete this comment?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
-            Button("Yes, delete", role: .destructive) {
+        .confirmationDialog(t("discussions.takeItBack"), isPresented: $askTakeBack, titleVisibility: .visible) {
+            Button(t("discussions.yesTakeItBack"), role: .destructive) { remove(takeBack: true) }
+            Button(t("discussions.no"), role: .cancel) {}
+        } message: { Text(t("discussions.thisDeletesTheDiscussionAnd")) }
+        .confirmationDialog(t("discussions.deleteThisDiscussion"), isPresented: $askDelete, titleVisibility: .visible) {
+            Button(t("discussions.yesDelete"), role: .destructive) { remove(takeBack: false) }
+            Button(t("discussions.no"), role: .cancel) {}
+        } message: { Text(t("discussions.itDisappearsForBothOf2")) }
+        .confirmationDialog(t("discussions.deleteThisComment"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+            Button(t("discussions.yesDelete"), role: .destructive) {
                 guard let c = deleting else { return }
                 Task { if let failed = await model.delete(c) { notice(.text(failed)) } }
             }
-            Button("No", role: .cancel) {}
-        } message: { Text("It disappears for both of you, with its reactions. It can’t be undone.") }
+            Button(t("discussions.no"), role: .cancel) {}
+        } message: { Text(t("discussions.itDisappearsForBothOf")) }
     }
 
     private struct PhotoIndex: Identifiable {
@@ -413,25 +428,25 @@ private struct ThreadView: View {
     private func comments(meId: Int, friend: Citizen?, archived: Bool, now: Date) -> some View {
         let count = d.commentCount ?? model.comments.count
         VStack(alignment: .leading, spacing: 12) {
-            Text(count == 0 ? "No comments yet" : commentWords(count).uppercased())
-                .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 11, relativeTo: .caption2)).tracking(0.77)
+            Text(count == 0 ? t("discussions.noCommentsYet") : commentWords(count).uppercased())
+                .font(.custom(DLFontName.manropeExtraBold.name, size: 11, relativeTo: .caption2)).tracking(0.77)
                 .foregroundStyle(.dlInkQuiet)
             if model.cursor != nil {
-                Button(model.loadingOlder ? "Loading older comments…" : "See older comments") { model.seeOlder() }
+                Button(model.loadingOlder ? t("discussions.loadingOlderComments") : t("discussions.seeOlderComments")) { model.seeOlder() }
                     .buttonStyle(DLButtonStyle(.outline))
                     .disabled(model.loadingOlder)
             }
             if model.olderFailed {
-                Text("Couldn’t load older comments. Try again.").dlText(.footnote).foregroundStyle(.dlError)
+                Text(t("discussions.couldntLoadOlderCommentsTry")).dlText(.footnote).foregroundStyle(.dlError)
             }
             ForEach(Array(model.comments.enumerated()), id: \.element.id) { i, c in
                 commentNote(c, index: i, meId: meId, friend: friend, archived: archived, now: now)
             }
             if archived {
-                Text("Archived. Unarchive it to comment.").dlText(.footnote).foregroundStyle(.dlInkQuiet)
+                Text(t("discussions.archivedUnarchiveItToComment")).dlText(.footnote).foregroundStyle(.dlInkQuiet)
             } else {
                 HStack(alignment: .bottom, spacing: 8) {
-                    TextField("Write a comment", text: $text, axis: .vertical)
+                    TextField(t("discussions.writeAComment"), text: $text, axis: .vertical)
                         .dlText(.input)
                         .lineLimit(1 ... 6)
                         .padding(.horizontal, 14)
@@ -439,13 +454,13 @@ private struct ThreadView: View {
                         .background(.dlCell, in: RoundedRectangle(cornerRadius: 20))
                         .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.dlLine))
                         .disabled(busy)
-                    Button(busy ? "Posting…" : "Post") {
-                        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !t.isEmpty else { return }
+                    Button(busy ? t("common.posting") : t("discussions.post")) {
+                        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !trimmed.isEmpty else { return }
                         busy = true
                         error = nil
                         Task {
-                            if let failed = await model.post(t) { error = failed } else { text = "" }
+                            if let failed = await model.post(trimmed) { error = failed } else { text = "" }
                             busy = false
                         }
                     }
@@ -462,10 +477,10 @@ private struct ThreadView: View {
         return Note(mine ? .of(d.color) : .blank, pin: 0, tilt: index % 2 == 0 ? -0.8 : 0.7) {
             VStack(alignment: .leading, spacing: 8) {
                 if editing?.id == c.id {
-                    TextField("Edit comment", text: $editText, axis: .vertical).dlText(.input).lineLimit(1 ... 8)
+                    TextField(t("discussions.editComment"), text: $editText, axis: .vertical).dlText(.input).lineLimit(1 ... 8)
                     HStack {
-                        Button("Cancel") { editing = nil }.buttonStyle(DLButtonStyle(.outline)).disabled(busy)
-                        Button(busy ? "Saving…" : "Save") {
+                        Button(t("discussions.cancel")) { editing = nil }.buttonStyle(DLButtonStyle(.outline)).disabled(busy)
+                        Button(busy ? t("common.saving") : t("discussions.save")) {
                             busy = true
                             Task {
                                 if let failed = await model.edit(c, editText.trimmingCharacters(in: .whitespacesAndNewlines)) { notice(.text(failed)) } else { editing = nil }
@@ -476,9 +491,9 @@ private struct ThreadView: View {
                         .disabled(busy || editText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                 } else {
-                    Text(c.text).font(.custom(DLFontName.literataRegular.rawValue, size: 16, relativeTo: .body)).foregroundStyle(.dlNoteInk)
+                    Text(c.text).font(.custom(DLFontName.literataRegular.name, size: 16, relativeTo: .body)).foregroundStyle(.dlNoteInk)
                     Text("\(mine ? "You" : friend?.nickname ?? "Friend") · \(DLTime.clock(c.createdAt, now: now))\(c.editedAt != nil ? " · Edited" : "")")
-                        .font(.custom(DLFontName.manropeMedium.rawValue, size: 12, relativeTo: .caption))
+                        .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption))
                         .foregroundStyle(.dlNoteInkQuiet)
                     ReactionRow(c.reactions, me: meId, compact: true, enabled: !archived) { emoji in
                         let reacted = c.reactions.first { $0.emoji == emoji }?.userIds.contains(meId) ?? false
@@ -491,11 +506,11 @@ private struct ThreadView: View {
         .padding(mine ? .leading : .trailing, 36)
         .contextMenu {
             if mine, !archived {
-                Button("Edit", systemImage: "pencil") {
+                Button(t("discussions.edit"), systemImage: "pencil") {
                     editText = c.text
                     editing = c
                 }
-                Button("Delete", systemImage: "trash", role: .destructive) { deleting = c }
+                Button(t("discussions.delete"), systemImage: "trash", role: .destructive) { deleting = c }
             }
         }
     }

@@ -1,4 +1,5 @@
 import DLData
+import DLI18n
 import DLNetwork
 import DLUI
 import Foundation
@@ -86,7 +87,7 @@ final class HomeActions {
 
     private static func moodError(_ error: Error) -> String {
         if let e = error as? APIError, (400 ..< 500).contains(e.status), !e.code.hasPrefix("HTTP_") { return e.message }
-        return "Not saved. Try again."
+        return t("home.notSavedTryAgain")
     }
 
     // MARK: Board (doc "Delululand — Board")
@@ -124,9 +125,9 @@ final class HomeActions {
                 store.patch { $0.board = current }
                 return .conflict(current)
             }
-            return .failed(error.isOffline ? "Posting failed. Try again." : error.message)
+            return .failed(error.isOffline ? t("board.postingFailed") : error.message)
         } catch {
-            return .failed("Posting failed. Try again.")
+            return .failed(t("board.postingFailed"))
         }
     }
 
@@ -146,22 +147,22 @@ final class HomeActions {
             let e = error as? APIError
             if let e, let current = Self.changed(e) {
                 store.patch { $0.board = current }
-                return "\(friend) just posted a new doodle."
+                return t("board.friendJustPosted", ["friend": friend])
             }
             store.patch { $0.board = board }
-            return (e?.isOffline ?? true) ? "Couldn’t save your reaction. Try again." : e!.message
+            return (e?.isOffline ?? true) ? t("board.reactionNotSaved") : e!.message
         }
     }
 
     /// §C: the friend's one sticky note. A notice on failure, or nil.
     func comment(_ board: Board, text: String, friend: String) async -> String? {
-        await boardWrite(friend: friend, fallback: "Couldn’t post your comment. Try again.") {
+        await boardWrite(friend: friend, fallback: t("board.commentNotPosted")) {
             try await $0.commentBoard(version: board.version, text: text)
         }
     }
 
     func uncomment(_ board: Board, friend: String) async -> String? {
-        await boardWrite(friend: friend, fallback: "Couldn’t delete your comment. Try again.") {
+        await boardWrite(friend: friend, fallback: t("board.commentNotDeleted")) {
             try await $0.uncommentBoard(version: board.version)
         }
     }
@@ -175,7 +176,7 @@ final class HomeActions {
             guard let e = error as? APIError else { return fallback }
             if let current = Self.changed(e) {
                 store.patch { $0.board = current }
-                return "\(friend) just posted a new doodle."
+                return t("board.friendJustPosted", ["friend": friend])
             }
             if e.code == "COMMENT_EXISTS" {
                 store.refreshSoon()

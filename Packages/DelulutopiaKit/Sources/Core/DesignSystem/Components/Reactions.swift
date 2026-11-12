@@ -1,3 +1,4 @@
+import DLI18n
 import SwiftUI
 
 /// A reaction toggle chip (doc "Delululand — Reactions"): the emoji, a count when both citizens
@@ -66,6 +67,6 @@ public struct DLAddReactionButton: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(DLPressStyle(scale: 0.92))
-        .accessibilityLabel("Add a reaction")
+        .accessibilityLabel(t("reactions.addAReaction"))
     }
 }

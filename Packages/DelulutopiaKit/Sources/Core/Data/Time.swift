@@ -1,7 +1,9 @@
+import DLI18n
 import DLNetwork
 import Foundation
 
-/// Instants and clock text (web `src/clock`; Android `Time`): the viewer's zone, 24-hour, en-GB.
+/// Instants and clock text (web `src/clock`; Android `Time`): the viewer's zone, 24-hour, in the
+/// language in force (Persian: solar calendar and Persian digits).
 public enum DLTime {
     nonisolated(unsafe) private static let isoFractional: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
@@ -14,15 +16,6 @@ public enum DLTime {
         f.formatOptions = [.withInternetDateTime]
         return f
     }()
-
-    private static func formatter(_ format: String, zone: TimeZone = .current) -> DateFormatter {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_GB")
-        f.calendar = Calendar(identifier: .gregorian)
-        f.timeZone = zone
-        f.dateFormat = format
-        return f
-    }
 
     /// Server-aligned now (`X-Server-Time`).
     public static var now: Date { ServerClock.shared.now }
@@ -39,36 +32,30 @@ public enum DLTime {
     /// FS-T6: `HH:MM` today; `27 Oct, 21:10` another day this year; `27 Oct 2025, 21:10` in another year.
     public static func clock(_ iso: String?, now: Date = DLTime.now) -> String {
         guard let d = date(iso) else { return "" }
-        let cal = Calendar.current
-        let time = formatter("HH:mm").string(from: d)
-        if cal.isDate(d, inSameDayAs: now) { return time }
-        if cal.component(.year, from: d) == cal.component(.year, from: now) {
-            return "\(formatter("d MMM").string(from: d)), \(time)"
-        }
-        return "\(formatter("d MMM yyyy").string(from: d)), \(time)"
+        let time = Dates.time(d)
+        if Calendar.current.isDate(d, inSameDayAs: now) { return time }
+        return t("common.dayTime", ["day": Dates.day(d, year: !Dates.sameYear(d, now)), "time": time])
     }
 
     /// `HH:MM` only.
     public static func time(_ iso: String?) -> String {
-        date(iso).map { formatter("HH:mm").string(from: $0) } ?? ""
+        date(iso).map { Dates.time($0) } ?? ""
     }
 
     public static func time(of date: Date) -> String {
-        formatter("HH:mm").string(from: date)
+        Dates.time(date)
     }
 
     /// A day without the time: `10 Nov` this year, `10 Nov 2025` in another.
     public static func day(_ iso: String?, now: Date = DLTime.now) -> String {
         guard let d = date(iso) else { return "" }
-        let cal = Calendar.current
-        let sameYear = cal.component(.year, from: d) == cal.component(.year, from: now)
-        return formatter(sameYear ? "d MMM" : "d MMM yyyy").string(from: d)
+        return Dates.day(d, year: !Dates.sameYear(d, now))
     }
 
     /// m:ss for a remaining duration; never negative; hours never appear (28:41).
     public static func countdown(_ remaining: TimeInterval) -> String {
         let total = Int((max(remaining, 0)).rounded(.up))
-        return "\(total / 60):\(String(format: "%02d", total % 60))"
+        return localDigits("\(total / 60):\(String(format: "%02d", total % 60))")
     }
 
     /// The remaining time until `iso`.
@@ -112,7 +99,7 @@ public enum DLTime {
     /// "m:ss" of a media duration in milliseconds (voice notes, videos).
     public static func mediaLength(ms: Int?) -> String {
         let total = Int((Double(ms ?? 0) / 1000).rounded())
-        return "\(total / 60):\(String(format: "%02d", total % 60))"
+        return localDigits("\(total / 60):\(String(format: "%02d", total % 60))")
     }
 }
 

@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -49,14 +50,28 @@ struct BoardTile: View {
     private var mini: Bool { backend.settings.boardMini }
     private var canReact: Bool { board.map { $0.authorId != home.me.id } ?? false }
     private var mark: BoardReaction? { BoardReaction.of(board?.reaction) }
-    private var whose: String? { board.map { $0.authorId == home.me.id ? "your doodle" : "\(friend)’s doodle" } }
+    /// Whether the doodle on the board is mine; nil when the board is empty.
+    private var boardMine: Bool? { board.map { $0.authorId == home.me.id } }
 
-    private func nameOf(_ authorId: Int) -> String { authorId == home.me.id ? "You" : friend }
+    private func nameOf(_ authorId: Int) -> String { authorId == home.me.id ? t("board.you") : friend }
 
-    private func didWhat(_ b: Board) -> String {
-        guard let from = b.editedFrom else { return "drew this" }
-        if from == b.authorId { return "edited this" }
-        return "edited \(from == home.me.id ? "your" : "\(friend)’s") doodle"
+    /// "Leyla drew this · 2 h ago" with the name in bold (web board byline keys).
+    private func byline(_ b: Board) -> Text {
+        let mine = b.authorId == home.me.id
+        let key = if let from = b.editedFrom {
+            from == b.authorId
+                ? (mine ? "board.byline.meEditedOwn" : "board.byline.friendEditedOwn")
+                : (mine ? "board.byline.meEditedFriends" : "board.byline.friendEditedMine")
+        } else {
+            mine ? "board.byline.meDrew" : "board.byline.friendDrew"
+        }
+        let line = t(key, ["friend": friend, "age": ageWords(b.createdAt, now: now)])
+        let parts = line.components(separatedBy: "{name}")
+        var text = Text(parts[0])
+        for part in parts.dropFirst() {
+            text = text + Text(fillValue(nameOf(b.authorId))).font(DLTextStyle.footnoteStrong.spec.dynamicFont).foregroundColor(.dlInk) + Text(part)
+        }
+        return text
     }
 
     var body: some View {
@@ -94,11 +109,13 @@ struct BoardTile: View {
             let edit = mode == .edit && board != nil
             DoodlePad(
                 surface: .board,
-                title: edit ? "Edit the board" : "Draw on the board",
-                doneLabel: "Post",
-                busyLabel: "Posting…",
+                title: edit ? t("board.editTheBoard") : t("board.drawOnTheBoard"),
+                doneLabel: t("board.post"),
+                busyLabel: t("board.posting"),
                 busy: busy,
-                note: whose.map { edit ? "Posting replaces \($0) with your edit" : "Posting replaces \($0)" },
+                note: boardMine.map { mine in
+                    t(mine ? (edit ? "board.replacing.mineEdit" : "board.replacing.mine") : (edit ? "board.replacing.friendsEdit" : "board.replacing.friends"), ["friend": friend])
+                },
                 backdrop: edit ? board?.url : nil,
                 onDone: { png in post(png, version: board?.version ?? 0, edit: edit) },
                 onClose: {
@@ -107,7 +124,7 @@ struct BoardTile: View {
                 },
                 onBackdropError: {
                     pad = nil
-                    notice(.text("Couldn’t open the doodle. Try again."))
+                    notice(.text(t("board.couldntOpenDoodle")))
                 }
             )
             .environment(backend)
@@ -116,11 +133,11 @@ struct BoardTile: View {
                     conflict = nil
                     pad = nil
                 }
-                Button("Replace it") {
+                Button(t("board.replaceIt")) {
                     if let c = conflict { post(c.png, version: c.current.version, edit: c.edit) }
                 }
             } message: {
-                Text("You were drawing over an older one. Posting now replaces it; keeping it discards your drawing.")
+                Text(t("board.youWereDrawingOverAn"))
             }
         }
         .sheet(isPresented: Binding(get: { picking && !viewing }, set: { picking = $0 })) {
@@ -167,14 +184,14 @@ struct BoardTile: View {
     }
 
     private var conflictMine: Bool { conflict?.current.authorId == home.me.id }
-    private var conflictTitle: String { "\(conflictMine ? "You" : friend) just posted a new doodle" }
-    private var conflictKeep: String { conflictMine ? "Keep it" : "Keep \(friend)’s" }
+    private var conflictTitle: String { conflictMine ? t("board.conflict.me") : t("board.conflict.friend", ["friend": friend]) }
+    private var conflictKeep: String { conflictMine ? t("board.keepIt") : t("board.keepFriends", ["friend": friend]) }
 
     // MARK: Pieces
 
     private func unfolded(_ board: Board) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            ZStack(alignment: .topTrailing) {
+            DLCornerStack(.topRight) {
                 Button { viewing = true } label: {
                     BoardFrame {
                         ZStack(alignment: .topLeading) {
@@ -186,15 +203,14 @@ struct BoardTile: View {
                     }
                 }
                 .buttonStyle(DLPressStyle(scale: 0.99))
-                .accessibilityLabel("Board: \(board.authorId == home.me.id ? "your" : "\(friend)’s") doodle. Open full screen")
+                .accessibilityLabel(board.authorId == home.me.id ? t("board.frame.mine") : t("board.frame.friends", ["friend": friend]))
                 corner(board).padding(13)
             }
             BoardNote(board: board, home: home, actions: actions)
             HStack(spacing: 10) {
                 WhoDot(color: Who.of(board.authorId, first: first).signature)
-                let reacted = board.reaction == nil ? "" : (canReact ? " · you reacted" : " · \(friend) reacted")
-                (Text(nameOf(board.authorId)).font(DLTextStyle.footnoteStrong.spec.dynamicFont).foregroundColor(.dlInk)
-                    + Text(" \(didWhat(board)) · \(ageWords(board.createdAt, now: now))\(reacted)"))
+                let reacted = board.reaction == nil ? "" : (canReact ? t("board.reactedSuffix.me") : t("board.reactedSuffix.friend", ["friend": friend]))
+                (byline(board) + Text(reacted))
                     .font(DLTextStyle.footnote.spec.dynamicFont)
                     .foregroundStyle(.dlInkQuiet)
                 Spacer(minLength: 0)
@@ -203,8 +219,8 @@ struct BoardTile: View {
             .padding(.top, 4)
             HStack(spacing: 8) {
                 Spacer(minLength: 0)
-                DrawButton(symbol: "pencil", title: "Edit", label: whose.map { "Edit \($0)" }) { pad = .edit }
-                DrawButton(symbol: "scribble", title: "Draw", label: nil) { pad = .new }
+                DrawButton(symbol: "pencil", title: t("home.edit"), label: boardMine.map { $0 ? t("board.editMine") : t("board.editFriends", ["friend": friend]) }) { pad = .edit }
+                DrawButton(symbol: "scribble", title: t("board.draw"), label: nil) { pad = .new }
                 FoldButton(up: true) { backend.settings.setBoardMini(true) }
                     .padding(.trailing, -8)
             }
@@ -227,9 +243,9 @@ struct BoardTile: View {
             }
             .buttonStyle(.plain)
             .rotationEffect(.degrees(mark == nil ? 0 : 8))
-            .accessibilityLabel(mark.map { "Your reaction: \($0.name). Change it" } ?? "React to \(friend)’s doodle")
+            .accessibilityLabel(mark.map { t("board.yourReactionChangeIt", ["name": $0.name]) } ?? t("board.reactToSDoodle", ["friend": friend]))
         } else if let mark {
-            HandReaction(reaction: mark, size: 44, tilt: 8, label: "\(friend) reacted: \(mark.name)")
+            HandReaction(reaction: mark, size: 44, tilt: 8, label: t("board.reacted", ["friend": friend, "name": mark.name]))
                 .frame(width: 48, height: 48)
         }
     }
@@ -238,11 +254,11 @@ struct BoardTile: View {
         ZStack(alignment: .bottomTrailing) {
             BoardFrame {
                 VStack(spacing: 14) {
-                    Text("The board is empty")
-                        .font(.custom(DLFontName.literataRegular.rawValue, size: 17, relativeTo: .body))
+                    Text(t("board.theBoardIsEmpty"))
+                        .font(.custom(DLFontName.literataRegular.name, size: 17, relativeTo: .body))
                         .foregroundStyle(Ink.slate)
                     Button { pad = .new } label: {
-                        Label("Draw the first doodle", systemImage: "scribble")
+                        Label(t("board.drawTheFirstDoodle"), systemImage: "scribble")
                     }
                     .buttonStyle(DLButtonStyle(.filled))
                     .fixedSize()
@@ -266,10 +282,15 @@ struct BoardTile: View {
                 .clipShape(RoundedRectangle(cornerRadius: 2))
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
-                        Text("Board").font(.custom(DLFontName.manropeExtraBold.rawValue, size: 15, relativeTo: .subheadline))
+                        Text(t("board.board")).font(.custom(DLFontName.manropeExtraBold.name, size: 15, relativeTo: .subheadline))
                         if home.boardNew, board != nil { NewChip(paper: false) }
                     }
-                    Text(board.map { "\(nameOf($0.authorId)) \($0.editedFrom == nil ? "drew" : "edited") · \(ageWords($0.createdAt, now: now))" } ?? "The board is empty")
+                    Text(board.map { b in
+                        let age = ageWords(b.createdAt, now: now)
+                        return b.authorId == home.me.id
+                            ? t(b.editedFrom == nil ? "board.strip.meDrew" : "board.strip.meEdited", ["age": age])
+                            : t(b.editedFrom == nil ? "board.strip.friendDrew" : "board.strip.friendEdited", ["friend": friend, "age": age])
+                    } ?? t("board.theBoardIsEmpty"))
                         .font(DLTextStyle.footnote.spec.dynamicFont)
                         .opacity(0.85)
                 }
@@ -283,15 +304,15 @@ struct BoardTile: View {
             .shadow(color: .dlShade.opacity(0.18), radius: 1.5, y: 1)
         }
         .buttonStyle(DLPressStyle(scale: 0.99))
-        .accessibilityHint("Unfold the board")
+        .accessibilityHint(t("board.unfoldTheBoard"))
     }
 
     private func reactSheet(_ board: Board) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("React to \(friend)’s doodle").dlText(.title3).foregroundStyle(.dlInk)
+                Text(t("board.reactToSDoodle", ["friend": friend])).dlText(.title3).foregroundStyle(.dlInk)
                 Spacer()
-                DLGlassIconButton("xmark", label: "Close") { picking = false }
+                DLGlassIconButton("xmark", label: t("home.close")) { picking = false }
             }
             .padding(.horizontal, 8)
             VStack(spacing: 6) {
@@ -307,7 +328,7 @@ struct BoardTile: View {
                                     }
                                     .frame(width: 56, height: 56)
                                     Text(r.name)
-                                        .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 12, relativeTo: .caption))
+                                        .font(.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption))
                                         .foregroundStyle(Ink.ink)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
@@ -327,7 +348,7 @@ struct BoardTile: View {
             .background(Color(red: 0xFB / 255, green: 0xFB / 255, blue: 0xF8 / 255), in: RoundedRectangle(cornerRadius: 6))
             .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.dlBoardFrame, lineWidth: 4))
             if board.reaction != nil {
-                Button("Remove reaction") { react(nil) }
+                Button(t("board.removeReaction")) { react(nil) }
                     .buttonStyle(DLButtonStyle(.outline, fullWidth: true))
             }
         }
@@ -370,7 +391,7 @@ private struct DrawButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: symbol).font(.system(size: 16, weight: .semibold))
-                Text(title).font(.custom(DLFontName.manropeExtraBold.rawValue, size: 14, relativeTo: .subheadline))
+                Text(title).font(.custom(DLFontName.manropeExtraBold.name, size: 14, relativeTo: .subheadline))
             }
             .foregroundStyle(.dlSeal)
             .padding(.horizontal, 22)
@@ -397,7 +418,7 @@ private struct FoldButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(up ? "Fold the board" : "Unfold the board")
+        .accessibilityLabel(up ? t("board.foldTheBoard") : t("board.unfoldTheBoard"))
     }
 }
 
@@ -423,7 +444,7 @@ struct BoardNote: View {
     private var ink: Color { dark ? Color(red: 0xEC / 255, green: 0xE4 / 255, blue: 0xD6 / 255) : Ink.ink }
     private var tape: Color { dark ? Color(red: 0x78 / 255, green: 0x70 / 255, blue: 0x62 / 255).opacity(0.7) : Color(red: 0xEC / 255, green: 0xE4 / 255, blue: 0xD2 / 255).opacity(0.78) }
 
-    private func caveat(_ size: CGFloat) -> Font { .custom(DLFontName.caveatMedium.rawValue, size: size, relativeTo: .body) }
+    private func caveat(_ size: CGFloat) -> Font { .custom(DLFontName.caveatMedium.name, size: size, relativeTo: .body) }
 
     var body: some View {
         if board.comment != nil || mine {
@@ -442,7 +463,7 @@ struct BoardNote: View {
             if let comment = board.comment {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(comment.text).font(caveat(23)).foregroundStyle(ink).fixedSize(horizontal: false, vertical: true)
-                    Text("— \(mine ? "You" : friend)")
+                    Text("— \(mine ? t("board.you") : friend)")
                         .font(caveat(18))
                         .foregroundStyle(ink.opacity(0.72))
                         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -474,7 +495,7 @@ struct BoardNote: View {
                         .buttonStyle(.plain)
                         .offset(x: 4, y: -4)
                         .disabled(busy)
-                        .accessibilityLabel("Delete your comment")
+                        .accessibilityLabel(t("board.deleteYourComment"))
                     }
                 }
             } else {
@@ -490,7 +511,7 @@ struct BoardNote: View {
         let tooLong = length > commentMax
         let enabled = !busy && length > 0 && !tooLong
         return HStack(spacing: 6) {
-            TextField("", text: $text, prompt: Text("Leave \(friend) a note…").foregroundColor(ink.opacity(0.55)))
+            TextField("", text: $text, prompt: Text(t("board.leaveANote", ["friend": friend])).foregroundColor(ink.opacity(0.55)))
                 .font(caveat(21))
                 .foregroundStyle(ink)
                 .tint(ink)
@@ -502,7 +523,7 @@ struct BoardNote: View {
                     let one = value.replacingOccurrences(of: "\n", with: " ")
                     if one != value { text = one }
                 }
-                .accessibilityLabel("Comment on \(friend)’s doodle")
+                .accessibilityLabel(t("board.commentOnSDoodle", ["friend": friend]))
             if length >= countFrom {
                 Text("\(commentMax - length)")
                     .font(DLTextStyle.footnote.spec.dynamicFont)
@@ -519,7 +540,7 @@ struct BoardNote: View {
             }
             .buttonStyle(.plain)
             .disabled(!enabled)
-            .accessibilityLabel("Post comment")
+            .accessibilityLabel(t("board.postComment"))
         }
         .padding(EdgeInsets(top: 8, leading: 14, bottom: 4, trailing: 4))
         .frame(minHeight: 56)
@@ -557,7 +578,7 @@ struct BoardViewer: View {
     var body: some View {
         let friend = home.friendName
         let mark = BoardReaction.of(board.reaction)
-        let name = board.authorId == home.me.id ? "You" : friend
+        let name = board.authorId == home.me.id ? t("board.you") : friend
         ZStack {
             Color.dlLightbox.ignoresSafeArea()
             VStack(spacing: 0) {
@@ -569,19 +590,19 @@ struct BoardViewer: View {
                             .frame(width: 44, height: 44)
                             .background(.white.opacity(0.12), in: Circle())
                     }
-                    .accessibilityLabel("Close")
+                    .accessibilityLabel(t("home.close"))
                     Spacer()
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
                 Spacer(minLength: 12)
                 VStack(alignment: .leading, spacing: 12) {
-                    ZStack(alignment: .topTrailing) {
+                    DLCornerStack(.topRight) {
                         BoardFrame { BoardImage(url: board.url) }
                             .accessibilityElement()
-                            .accessibilityLabel("\(name == "You" ? "Your" : "\(name)’s") doodle")
+                            .accessibilityLabel(board.authorId == home.me.id ? t("board.alt.mine") : t("board.alt.friends", ["friend": friend]))
                         if let mark {
-                            HandReaction(reaction: mark, size: 84, tilt: 8, label: "\(canReact ? "Your reaction" : "\(friend) reacted"): \(mark.name)")
+                            HandReaction(reaction: mark, size: 84, tilt: 8, label: canReact ? t("board.myReaction", ["name": mark.name]) : t("board.reacted", ["friend": friend, "name": mark.name]))
                                 .padding(14)
                         }
                     }
@@ -605,10 +626,10 @@ struct BoardViewer: View {
                             .contentShape(Circle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(mark.map { "Your reaction: \($0.name). Change it" } ?? "React")
+                        .accessibilityLabel(mark.map { t("board.yourReactionChangeIt", ["name": $0.name]) } ?? t("board.react"))
                     }
-                    viewerButton("pencil", "Edit", outlined: true) { onDraw("edit") }
-                    viewerButton("scribble", "Draw new", outlined: false) { onDraw("new") }
+                    viewerButton("pencil", t("home.edit"), outlined: true) { onDraw("edit") }
+                    viewerButton("scribble", t("board.drawNew"), outlined: false) { onDraw("new") }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -620,7 +641,7 @@ struct BoardViewer: View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Image(systemName: symbol).font(.system(size: 15, weight: .semibold))
-                Text(title).font(.custom(DLFontName.manropeExtraBold.rawValue, size: 14, relativeTo: .subheadline))
+                Text(title).font(.custom(DLFontName.manropeExtraBold.name, size: 14, relativeTo: .subheadline))
             }
             .foregroundStyle(outlined ? Color.dlOnLightbox : Color.dlLightbox)
             .padding(.horizontal, 14)

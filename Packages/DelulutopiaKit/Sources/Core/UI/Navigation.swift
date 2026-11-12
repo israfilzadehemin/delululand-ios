@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import SwiftUI
 
@@ -18,6 +19,7 @@ public enum AppRoute: Hashable, Sendable {
     case universe
     case appearance
     case notifications
+    case language
 }
 
 /// The tabs, for opening one from anywhere (a toast, an arrival notice, a notification).
@@ -28,11 +30,11 @@ public enum AppTab: String, CaseIterable, Identifiable, Sendable {
 
     public var title: String {
         switch self {
-        case .home: "Home"
-        case .letters: "Letters"
-        case .discussions: "Discussions"
-        case .emails: "Emails"
-        case .you: "You"
+        case .home: t("tabs.home")
+        case .letters: t("tabs.letters")
+        case .discussions: t("tabs.discussions")
+        case .emails: t("tabs.emails")
+        case .you: t("tabs.you")
         }
     }
 

@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import FeatureStart
@@ -8,11 +9,7 @@ import SwiftUI
 extension AppTab {
     /// The line a placeholder tab shows until its screen lands.
     var placeholderLine: String {
-        switch self {
-        case .home: "Home arrives in the next build."
-        case .you: "You arrives in the next build."
-        default: "\(title) arrive in the next build."
-        }
+        t("app.comingNext")
     }
 }
 
@@ -29,10 +26,14 @@ public struct AppRoot: View {
     }
 
     public var body: some View {
+        let lang = I18n.shared.lang
         content
             .safeAreaInset(edge: .top, spacing: 0) {
                 if let line = backend.testBanner { DLTestBanner(line) }
             }
+            // L5: Persian lays out right to left; L4: system pickers and formatters follow the language.
+            .environment(\.layoutDirection, lang.rtl ? .rightToLeft : .leftToRight)
+            .environment(\.locale, lang.locale)
             .environment(backend)
             .tint(.dlSeal)
             .preferredColorScheme(backend.settings.themeMode.colorScheme)
@@ -93,7 +94,7 @@ struct LaunchScreen: View {
                     .foregroundStyle(.dlUserA)
                     .opacity(0)
                 Text("Delulutopia")
-                    .font(.custom(DLFontName.literataSemiBold.rawValue, size: 18, relativeTo: .headline))
+                    .font(.custom(DLFontName.literataSemiBold.name, size: 18, relativeTo: .headline))
                     .foregroundStyle(.dlInk)
                     .opacity(0)
             }
@@ -116,14 +117,14 @@ struct SignedInShell: View {
     var body: some View {
         MainTabView(selection: $selection)
             .alert(
-                backend.biometrics.kind == .touchID ? "Unlock with Touch ID?" : "Unlock with Face ID?",
+                t("settings.bioOfferTitle", ["bio": bioName]),
                 isPresented: Binding(get: { offerVisible }, set: { if !$0 { backend.pendingBiometricOffer = nil } })
             ) {
-                Button("Not now", role: .cancel) {
+                Button(t("notify.notNow"), role: .cancel) {
                     if let offer = backend.pendingBiometricOffer { markOffered(offer.userId) }
                     backend.pendingBiometricOffer = nil
                 }
-                Button(backend.biometrics.kind == .touchID ? "Use Touch ID" : "Use Face ID") {
+                Button(t("settings.bioOfferYes", ["bio": bioName])) {
                     if let offer = backend.pendingBiometricOffer {
                         backend.biometrics.store(pin: offer.pin, userId: offer.userId)
                         markOffered(offer.userId)
@@ -131,10 +132,11 @@ struct SignedInShell: View {
                     backend.pendingBiometricOffer = nil
                 }
             } message: {
-                Text("Next time, \(backend.biometrics.kind == .touchID ? "touch the button" : "look at your \(deviceWord)") instead of typing your PIN. "
-                    + "Your PIN stays on this \(deviceWord), opened only by \(backend.biometrics.kind == .touchID ? "Touch ID" : "Face ID"). You can turn it off in You.")
+                Text(t(backend.biometrics.kind == .touchID ? "settings.bioOfferTextTouch" : "settings.bioOfferTextFace", ["device": deviceWord]))
             }
     }
+
+    private var bioName: String { backend.biometrics.kind == .touchID ? "Touch ID" : "Face ID" }
 
     private var offerVisible: Bool {
         guard let offer = backend.pendingBiometricOffer, backend.biometrics.isAvailable else { return false }

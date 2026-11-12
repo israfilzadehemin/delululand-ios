@@ -79,6 +79,8 @@ targets:
       - package: DelulutopiaKit
         product: DLTestSupport
       - package: DelulutopiaKit
+        product: DLI18n
+      - package: DelulutopiaKit
         product: AppShell
       - package: DelulutopiaKit
         product: FeatureStart

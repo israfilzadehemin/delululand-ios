@@ -1,3 +1,4 @@
+import DLI18n
 import Foundation
 
 // Request bodies (Android `Requests.kt`, `Account.kt`). Field names are the API's.
@@ -24,18 +25,22 @@ public struct CreateUniverseRequest: Encodable, Sendable {
     public let username: String
     public let timezone: String
     public let pin: String
+    /// L8: the language picked before the citizen existed becomes theirs.
+    public let language: String
 
-    public init(invite: String, name: String, welcome: String, username: String, timezone: String, pin: String) {
+    public init(invite: String, name: String, welcome: String, username: String, timezone: String, pin: String, language: String = I18n.shared.lang.tag) {
         self.invite = invite
         self.name = name
         self.welcome = welcome
         self.username = username
         self.timezone = timezone
         self.pin = pin
+        self.language = language
     }
 }
 
-struct JoinBody: Encodable { let username: String; let timezone: String; let pin: String }
+struct JoinBody: Encodable { let username: String; let timezone: String; let pin: String; let language: String }
+struct LanguageBody: Encodable { let language: String }
 
 /// `pinnedLetterId` and `stampSlug` are sent as null to clear them.
 struct SaveDraftBody: Encodable {

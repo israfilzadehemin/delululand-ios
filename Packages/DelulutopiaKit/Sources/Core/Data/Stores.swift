@@ -1,3 +1,4 @@
+import DLI18n
 import DLNetwork
 import Foundation
 import Observation
@@ -156,6 +157,7 @@ public final class HomeStore {
     @ObservationIgnored private let live: LiveUpdates
     @ObservationIgnored private var refresher: Refresher?
     @ObservationIgnored private var moodTask: Task<Void, Never>?
+    @ObservationIgnored private var languageObserver: (any NSObjectProtocol)?
     @ObservationIgnored private var loading = false
     @ObservationIgnored private var again = false
 
@@ -169,7 +171,7 @@ public final class HomeStore {
         guard refresher == nil else { return }
         let refresher = Refresher(
             live: live,
-            signals: ["letter", "discussion", "comment", "email", "reaction", "board", "mood", "moods", "profile", "universe"],
+            signals: ["letter", "discussion", "comment", "email", "reaction", "board", "mood", "moods", "profile", "universe", "language"],
             deadlines: { [weak self] in self?.deadlines() ?? [] },
             reload: { [weak self] in await self?.load() }
         )
@@ -181,6 +183,17 @@ public final class HomeStore {
                 await self?.loadMoods()
             }
         }
+        // L8: after a switch, the server's own words (default moods, stamps) come again in the new language.
+        languageObserver = NotificationCenter.default.addObserver(forName: .dlLanguageChanged, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reloadWords() }
+        }
+        Task {
+            await load()
+            await loadMoods()
+        }
+    }
+
+    private func reloadWords() {
         Task {
             await load()
             await loadMoods()
@@ -192,6 +205,8 @@ public final class HomeStore {
         refresher = nil
         moodTask?.cancel()
         moodTask = nil
+        if let languageObserver { NotificationCenter.default.removeObserver(languageObserver) }
+        languageObserver = nil
         home = nil
         offline = false
         moodsLoaded = false
@@ -210,6 +225,8 @@ public final class HomeStore {
             do {
                 home = try await api.home()
                 offline = false
+                // L8: the account's language wins on every device; another device's pick arrives here.
+                if let lang = Lang.parse(home?.me.language), lang != I18n.shared.lang { I18n.shared.set(lang) }
                 refresher?.armDeadline()
             } catch let error as APIError {
                 if error.isOffline { offline = true }

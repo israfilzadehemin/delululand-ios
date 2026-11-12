@@ -1,4 +1,5 @@
 import DLData
+import DLI18n
 import DLNetwork
 import DLUI
 import Foundation
@@ -9,8 +10,8 @@ public enum StartRules {
     public static let welcomeMax = 1500
 
     public static func nameOK(_ name: String) -> Bool {
-        let t = name.trimmingCharacters(in: .whitespaces)
-        return (2...12).contains(t.count) && t.unicodeScalars.allSatisfy { CharacterSet.letters.union(.decimalDigits).contains($0) }
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        return (2...12).contains(trimmed.count) && trimmed.unicodeScalars.allSatisfy { CharacterSet.letters.union(.decimalDigits).contains($0) }
     }
 
     public static func usernameOK(_ name: String) -> Bool {
@@ -28,16 +29,8 @@ public enum StartRules {
     /// U5: the three paragraphs with the universe's name in place of "Delulutopia".
     public static func welcomeTemplate(_ name: String) -> String {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        let n = trimmed.isEmpty ? "Your universe" : trimmed
-        return [
-            "\(n) is a place free from the negativity, limitations, and challenges of the real world. A little universe of its own, "
-                + "belonging to two adults who refuse to let adulthood define them. A place where reality can be forgotten, "
-                + "imagination knows no boundaries, and creativity is free to run wild.",
-            "If you hold the key to this place, it means you're one of its citizens. You belong here. Enter the key below, "
-                + "step inside, and surrender yourself to the embrace of \(n).",
-            "But if you don't have the key, then you were never meant to be here. Don't disturb the magic, don't spoil the "
-                + "fantasy. Kindly turn around and leave. Immediately.",
-        ].joined(separator: "\n\n")
+        let n = trimmed.isEmpty ? t("universe.yourUniverse") : trimmed
+        return [t("universe.welcome.p1", ["name": n]), t("universe.welcome.p2", ["name": n]), t("universe.welcome.p3")].joined(separator: "\n\n")
     }
 
     public static func paragraphs(_ welcome: String) -> [String] {
@@ -197,7 +190,7 @@ final class PinModel {
     /// The PIN kept behind Face ID, sent as if typed; a refused one is forgotten.
     func unlockWithBiometrics() async {
         guard mode == .enter, !busy else { return }
-        let reason = "Unlock \(universe.isEmpty ? "Delulutopia" : universe)"
+        let reason = t("pin.unlockBrand", ["brand": universe.isEmpty ? "Delulutopia" : universe])
         guard let pin = await backend.biometrics.pin(userId: userId, reason: reason) else { return }
         await submit(pin, fromBiometrics: true)
     }
@@ -366,8 +359,8 @@ final class CreateUniverseModel {
     }
 
     var welcomeError: String? {
-        if welcome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "Write a few words" }
-        if StartRules.welcomeLength(welcome) > StartRules.welcomeMax { return "Up to 1,500 characters" }
+        if welcome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return t("universe.writeAFewWords") }
+        if StartRules.welcomeLength(welcome) > StartRules.welcomeMax { return t("universe.welcomeMax") }
         return nil
     }
 

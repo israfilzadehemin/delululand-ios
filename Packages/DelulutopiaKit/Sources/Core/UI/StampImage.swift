@@ -1,6 +1,7 @@
 import CryptoKit
 import DLData
 import DLDesignSystem
+import DLI18n
 import SwiftUI
 import UIKit
 import WebKit
@@ -163,7 +164,7 @@ public struct StampImage: View {
             }
         }
         .frame(width: width)
-        .accessibilityLabel("Stamp: \(name)")
+        .accessibilityLabel(t("stamps.stamp", ["name": name]))
         .task(id: url) {
             guard let url else { return }
             let renderWidth = width * 2

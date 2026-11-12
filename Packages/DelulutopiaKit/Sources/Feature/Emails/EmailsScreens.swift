@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -73,9 +74,9 @@ public struct EmailsScreen: View {
                 if rows.isEmpty {
                     VStack(spacing: 14) {
                         Image(systemName: "at").font(.system(size: 44, weight: .light)).foregroundStyle(.dlInkQuiet)
-                        Text("No emails yet.").dlText(.headline).foregroundStyle(.dlInk)
-                        Text("Start the first one.").dlText(.subheadline).foregroundStyle(.dlInkQuiet)
-                        Button("New email") { open(.newEmail) }.buttonStyle(DLButtonStyle(.filled))
+                        Text(t("emails.noEmailsYet")).dlText(.headline).foregroundStyle(.dlInk)
+                        Text(t("emails.startTheFirstOne")).dlText(.subheadline).foregroundStyle(.dlInkQuiet)
+                        Button(t("emails.newEmail")) { open(.newEmail) }.buttonStyle(DLButtonStyle(.filled))
                         if let line = creditsLine(home?.emailCredits) { Text(line).font(.caption).foregroundStyle(.dlInkQuiet) }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -91,7 +92,7 @@ public struct EmailsScreen: View {
                                     .dlEnter(.rise, delay: DLMotion.stagger(i))
                                     .onAppear { if i >= rows.count - 3 { model.loadMore() } }
                             }
-                            Text(model.nextCursor != nil ? "Loading older threads…" : "That is everything")
+                            Text(model.nextCursor != nil ? t("emails.loadingOlderThreads") : t("emails.thatIsEverything"))
                                 .dlText(.footnote).foregroundStyle(.dlInkQuiet).frame(minHeight: 40)
                         }
                         .padding(.horizontal, 16)
@@ -103,12 +104,12 @@ public struct EmailsScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle("Emails")
+        .navigationTitle(t("emails.emails"))
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { open(.newEmail) } label: { Image(systemName: "square.and.pencil") }
-                    .accessibilityLabel("New email")
+                    .accessibilityLabel(t("emails.newEmail"))
             }
         }
         .refreshable { await model?.loadHead() }
@@ -133,18 +134,18 @@ private struct ThreadCard: View {
         let unread = row.unread > 0
         let reacted = row.unseenReactions
         let snippet = reactionWins(row.lastReaction, count: reacted, otherActivityAt: row.lastEmailAt)
-            ? noticeLine(row.lastReaction!, count: reacted, reactorName: friend?.nickname ?? "Friend")
+            ? noticeLine(row.lastReaction!, count: reacted, reactorName: friend?.nickname ?? t("common.friend"))
             : (row.lastText?.isEmpty == false ? row.lastText! : mediaWords(photos: row.lastMedia?.photos ?? 0, audios: row.lastMedia?.audios ?? 0, videos: row.lastMedia?.videos ?? 0) ?? "")
         Button { open(.thread(row.id)) } label: {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(row.subject)
-                        .font(.custom(unread ? DLFontName.literataBold.rawValue : DLFontName.literataSemiBold.rawValue, size: 17, relativeTo: .headline))
+                        .font(.custom(unread ? DLFontName.literataBold.name : DLFontName.literataSemiBold.name, size: 17, relativeTo: .headline))
                         .foregroundStyle(.dlMailInk)
                         .lineLimit(1)
                     Spacer()
                     if row.unread + reacted > 0 {
-                        Text("\(row.unread + reacted) new")
+                        Text(t("emails.new", ["fresh": row.unread + reacted]))
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(.dlOnMailBlue)
                             .padding(.horizontal, 8)
@@ -207,14 +208,14 @@ final class ThreadModel {
 
     func load() async {
         do {
-            let t = try await backend.api.thread(id: id)
-            thread = t.thread
-            let ids = Set(t.emails.items.map(\.id))
-            let kept = emails.filter { !ids.contains($0.id) && $0.id < (t.emails.items.map(\.id).min() ?? .max) }
-            emails = (t.emails.items + kept).sorted { $0.id > $1.id }
-            if olderCursor == nil || kept.isEmpty { olderCursor = t.emails.olderCursor }
+            let got = try await backend.api.thread(id: id)
+            thread = got.thread
+            let ids = Set(got.emails.items.map(\.id))
+            let kept = emails.filter { !ids.contains($0.id) && $0.id < (got.emails.items.map(\.id).min() ?? .max) }
+            emails = (got.emails.items + kept).sorted { $0.id > $1.id }
+            if olderCursor == nil || kept.isEmpty { olderCursor = got.emails.olderCursor }
             ui = .shown
-            if t.thread.unread > 0 || t.thread.unseenReactions > 0 || !seen {
+            if got.thread.unread > 0 || got.thread.unseenReactions > 0 || !seen {
                 seen = true
                 try? await backend.api.threadSeen(id: id)
                 backend.home.refreshSoon()
@@ -276,7 +277,7 @@ public struct ThreadScreen: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(model.thread?.subject ?? "")
-                                .font(.custom(DLFontName.literataSemiBold.rawValue, size: 22, relativeTo: .title2))
+                                .font(.custom(DLFontName.literataSemiBold.name, size: 22, relativeTo: .title2))
                                 .foregroundStyle(.dlMailInk)
                             if let composer, composer.loaded {
                                 ComposerView(composer: composer, credits: home?.emailCredits) { sent in model.sent(sent.email) }
@@ -287,13 +288,13 @@ public struct ThreadScreen: View {
                                           onReact: { emoji, mine in Task { await model.react(emailId: e.id, emoji: emoji, mine: mine) } })
                             }
                             if model.olderCursor != nil {
-                                Button(model.loadingOlder ? "Loading older emails…" : "See older") { model.seeOlder() }
+                                Button(model.loadingOlder ? t("emails.loadingOlder") : t("emails.seeOlder")) { model.seeOlder() }
                                     .buttonStyle(DLButtonStyle(.text))
                                     .frame(maxWidth: .infinity)
                             } else {
-                                Text("That is everything").dlText(.footnote).foregroundStyle(.dlInkQuiet).frame(maxWidth: .infinity)
+                                Text(t("emails.thatIsEverything")).dlText(.footnote).foregroundStyle(.dlInkQuiet).frame(maxWidth: .infinity)
                             }
-                            if model.olderFailed { Text("Couldn’t load older emails. Try again.").dlText(.footnote).foregroundStyle(.dlError) }
+                            if model.olderFailed { Text(t("emails.couldntLoadOlderEmailsTry")).dlText(.footnote).foregroundStyle(.dlError) }
                         }
                         .padding(16)
                     }
@@ -301,9 +302,9 @@ public struct ThreadScreen: View {
                 }
             case .gone, .unreachable:
                 VStack(spacing: 16) {
-                    Text(model?.ui == .gone ? "This thread isn’t here." : "Can’t reach \(home?.universe.name ?? "Delulutopia"). Try again.")
+                    Text(model?.ui == .gone ? t("emails.threadGone") : t("common.cantReachTryAgain", ["brand": home?.universe.name ?? "Delulutopia"]))
                         .dlText(.callout).foregroundStyle(.dlInkQuiet)
-                    Button("Back") { dismiss() }.buttonStyle(DLButtonStyle(.outline))
+                    Button(t("emails.back")) { dismiss() }.buttonStyle(DLButtonStyle(.outline))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .loading:
@@ -311,7 +312,7 @@ public struct ThreadScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle("Email")
+        .navigationTitle(t("emails.email"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .task {
@@ -365,7 +366,7 @@ private struct EmailCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint(open ? "Fold" : "Unfold")
+            .accessibilityHint(open ? t("emails.fold") : t("emails.unfold"))
             if open {
                 if !email.text.isEmpty {
                     Text(email.text).font(.system(size: 16)).foregroundStyle(.dlMailInk).textSelection(.enabled)
@@ -378,7 +379,7 @@ private struct EmailCard: View {
                                     .frame(height: 96)
                                     .clipShape(RoundedRectangle(cornerRadius: 6))
                             }
-                            .accessibilityLabel("Photo \(i + 1) of \(photos.count), open full size")
+                            .accessibilityLabel(t("emails.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
                         }
                     }
                 }
@@ -388,7 +389,7 @@ private struct EmailCard: View {
                     onReact(emoji, email.reactions.first { $0.emoji == emoji }?.userIds.contains(meId) ?? false)
                 }
                 if mine, let read = email.readAt {
-                    Text("Seen \(DLTime.clock(read))").font(.caption).foregroundStyle(.dlInkQuiet)
+                    Text(t("emails.seen", ["time": DLTime.clock(read)])).font(.caption).foregroundStyle(.dlInkQuiet)
                 }
             }
         }
@@ -423,7 +424,7 @@ private struct VideoTile: View {
             .frame(height: 200)
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-        .accessibilityLabel("Play video")
+        .accessibilityLabel(t("media.playVideo"))
         .fullScreenCover(isPresented: $playing) {
             VideoPlayerScreen(path: att.url) { playing = false }.environment(backend)
         }
@@ -448,14 +449,14 @@ public struct NewEmailScreen: View {
                 }
                 .padding(16)
             } else if composer?.failed == true {
-                Text("Couldn’t load your draft. Check your connection and try again.").dlText(.callout).foregroundStyle(.dlError).padding(24)
+                Text(t("emails.couldntLoadYourDraftCheck")).dlText(.callout).foregroundStyle(.dlError).padding(24)
             } else {
                 ProgressView().padding(40)
             }
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle("New email")
+        .navigationTitle(t("emails.newEmail"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .task {

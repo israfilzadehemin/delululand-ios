@@ -1,6 +1,7 @@
 import AppShell
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLTestSupport
 import DLUI
 import FeatureDiscussions
@@ -223,5 +224,77 @@ struct ShellScreenshots {
     @Test func appearanceDark() async {
         let backend = FixtureBackend.make(theme: .dark)
         Shoot.screen(NavigationStack { AppearanceScreen(settings: backend.settings) }, named: "appearance-dark", style: .dark)
+    }
+
+    // MARK: Languages (doc "Delululand — Languages" L14: the Language screen and right-to-left samples)
+
+    /// Renders in `lang`, then puts English back for the shots that follow.
+    private func shoot(in lang: Lang, _ shot: () async -> Void) async {
+        I18n.shared.set(lang)
+        await shot()
+        I18n.shared.set(.en)
+    }
+
+    @Test func languageLight() async {
+        let backend = FixtureBackend.make()
+        Shoot.screen(NavigationStack { LanguageScreen() }.environment(backend), named: "language-light", style: .light)
+    }
+
+    @Test func languageFaDark() async {
+        await shoot(in: .fa) {
+            let backend = FixtureBackend.make(theme: .dark)
+            Shoot.screen(
+                NavigationStack { LanguageScreen() }.environment(backend).environment(\.layoutDirection, .rightToLeft),
+                named: "language-fa-dark", style: .dark
+            )
+        }
+    }
+
+    @Test func startCardsAz() async {
+        await shoot(in: .az) {
+            await Shoot.screen(start(state: signedOut), named: "start-cards-az-light", style: .light, wait: 1.5)
+        }
+    }
+
+    @Test func startCardsFa() async {
+        await shoot(in: .fa) {
+            await Shoot.screen(start(state: signedOut).environment(\.layoutDirection, .rightToLeft), named: "start-cards-fa-light", style: .light, wait: 1.5)
+        }
+    }
+
+    @Test func homeAz() async {
+        await shoot(in: .az) {
+            await Shoot.screen(app(.home), named: "home-az-light", style: .light, wait: 2.5)
+        }
+    }
+
+    @Test func homeFa() async {
+        await shoot(in: .fa) {
+            await Shoot.screen(app(.home), named: "home-fa-light", style: .light, wait: 2.5)
+        }
+    }
+
+    @Test func homeFaDark() async {
+        await shoot(in: .fa) {
+            await Shoot.screen(app(.home, theme: .dark), named: "home-fa-dark", style: .dark, wait: 2.5)
+        }
+    }
+
+    @Test func lettersFa() async {
+        await shoot(in: .fa) {
+            await Shoot.screen(app(.letters), named: "letters-fa-light", style: .light, wait: 2.5)
+        }
+    }
+
+    @Test func letterReceivedFa() async {
+        await shoot(in: .fa) {
+            await Shoot.screen(letter(11).environment(\.layoutDirection, .rightToLeft), named: "letter-received-fa-light", style: .light, wait: 2.5)
+        }
+    }
+
+    @Test func youFa() async {
+        await shoot(in: .fa) {
+            await Shoot.screen(app(.you), named: "you-fa-light", style: .light, wait: 2)
+        }
     }
 }

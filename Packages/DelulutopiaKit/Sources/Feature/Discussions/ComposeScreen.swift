@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -73,8 +74,8 @@ final class ComposeModel {
         saver?.touch()
     }
 
-    func changeTitle(_ t: String) {
-        title = t
+    func changeTitle(_ text: String) {
+        title = text
         saver?.touch()
     }
 
@@ -95,9 +96,9 @@ final class ComposeModel {
     }
 
     func post() async -> String? {
-        guard let saver else { return "Not posted. Try again." }
+        guard let saver else { return t("common.notPosted") }
         let version: Int
-        do { version = try await saver.flush() } catch { return "Not posted. Try again." }
+        do { version = try await saver.flush() } catch { return t("common.notPosted") }
         do {
             _ = try await backend.api.post(draftVersion: version)
             backend.home.refreshSoon()
@@ -105,7 +106,7 @@ final class ComposeModel {
         } catch let e as APIError where ["TITLE_REQUIRED", "EMPTY_DISCUSSION", "TITLE_TOO_LONG"].contains(e.code) {
             return e.message
         } catch {
-            return "Not posted. Try again."
+            return t("common.notPosted")
         }
     }
 
@@ -117,9 +118,9 @@ final class ComposeModel {
             backend.home.refreshSoon()
             return nil
         } catch let e as APIError where (400 ..< 500).contains(e.status) {
-            return e.status == 404 ? "This discussion isn’t here anymore." : e.message
+            return e.status == 404 ? t("discussions.thisDiscussionIsntHereAnymore") : e.message
         } catch {
-            return "Not saved. Try again."
+            return t("reactions.notSavedTryAgain")
         }
     }
 
@@ -158,8 +159,8 @@ public struct ComposeDiscussionScreen: View {
                 form(model, atts)
             } else if let model, case .failed = model.load {
                 VStack(spacing: 16) {
-                    Text("Couldn’t load your draft. Check your connection and try again.").dlText(.callout).foregroundStyle(.dlError)
-                    Button("Back") { dismiss() }.buttonStyle(DLButtonStyle(.outline))
+                    Text(t("discussions.couldntLoadYourDraftCheck")).dlText(.callout).foregroundStyle(.dlError)
+                    Button(t("discussions.back")) { dismiss() }.buttonStyle(DLButtonStyle(.outline))
                 }
                 .padding(24)
             } else {
@@ -203,14 +204,14 @@ public struct ComposeDiscussionScreen: View {
                         }
                     }
                     .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Note colour")
+                    .accessibilityLabel(t("discussions.noteColour"))
                     Note(model.color, pin: 24) {
                         VStack(alignment: .leading, spacing: 10) {
-                            TextField("Title", text: Binding(get: { model.title }, set: { model.changeTitle(String($0.prefix(120))) }), axis: .vertical)
-                                .font(.custom(DLFontName.literataSemiBold.rawValue, size: 22, relativeTo: .title2))
+                            TextField(t("discussions.title"), text: Binding(get: { model.title }, set: { model.changeTitle(String($0.prefix(120))) }), axis: .vertical)
+                                .font(.custom(DLFontName.literataSemiBold.name, size: 22, relativeTo: .title2))
                                 .foregroundStyle(.dlNoteInk)
                                 .lineLimit(1 ... 3)
-                            RichEditor(editor, initial: model.initial, placeholder: "Write here") { model.onBody($0) }
+                            RichEditor(editor, initial: model.initial, placeholder: t("discussions.writeHere")) { model.onBody($0) }
                                 .frame(minHeight: 220, alignment: .top)
                         }
                         .padding(EdgeInsets(top: 30, leading: 18, bottom: 18, trailing: 18))
@@ -235,18 +236,18 @@ public struct ComposeDiscussionScreen: View {
             .padding(.top, 6)
             .background(.dlLetterEnvelope)
         }
-        .navigationTitle(editing ? "Editing a discussion" : "New discussion")
+        .navigationTitle(editing ? t("discussions.editingADiscussion") : t("discussions.newDiscussion"))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(editing)
         .toolbar {
             if editing {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { confirmDiscard = true } label: { Image(systemName: "chevron.left") }
-                        .accessibilityLabel("Back, discard changes")
+                    Button { confirmDiscard = true } label: { Image(systemName: "chevron.backward") }
+                        .accessibilityLabel(t("discussions.backDiscardChanges"))
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button(editing ? (busy ? "Saving…" : "Save") : "Post") {
+                Button(editing ? (busy ? t("common.saving") : t("discussions.save")) : t("discussions.post")) {
                     if editing {
                         busy = true
                         Task {
@@ -263,29 +264,29 @@ public struct ComposeDiscussionScreen: View {
             }
         }
         .sheet(isPresented: $postOpen) {
-            PostSheet(friend: backend.home.home?.friend?.nickname ?? "Friend",
+            PostSheet(friend: backend.home.home?.friend?.nickname ?? t("common.friend"),
                       delay: backend.server?.discussionDelay ?? backend.server?.delay ?? "PT60M",
                       window: backend.server?.window ?? "PT5M",
                       onClose: { postOpen = false }) {
                 if let failed = await model.post() { return failed }
                 postOpen = false
-                notice(.text("Posted"))
+                notice(.text(t("discussions.posted")))
                 dismiss()
                 return nil
             }
         }
-        .alert("A newer version was saved on another device. Load it?", isPresented: Binding(get: { model.saver?.status == .conflict }, set: { _ in })) {
-            Button("Keep mine", role: .cancel) { model.saver?.keepMine() }
-            Button("Load") { Task { if let doc = await model.loadServer() { editor.set(doc) } } }
+        .alert(t("discussions.aNewerVersionWasSaved"), isPresented: Binding(get: { model.saver?.status == .conflict }, set: { _ in })) {
+            Button(t("discussions.keepMine"), role: .cancel) { model.saver?.keepMine() }
+            Button(t("discussions.load")) { Task { if let doc = await model.loadServer() { editor.set(doc) } } }
         }
-        .confirmationDialog("Discard your changes?", isPresented: $confirmDiscard, titleVisibility: .visible) {
-            Button("Yes", role: .destructive) {
+        .confirmationDialog(t("discussions.discardYourChanges"), isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button(t("discussions.yes"), role: .destructive) {
                 Task {
                     await model.discardEdit()
                     dismiss()
                 }
             }
-            Button("No", role: .cancel) {}
+            Button(t("discussions.no"), role: .cancel) {}
         }
     }
 }
@@ -305,17 +306,17 @@ private struct PostSheet: View {
         let d = DLTime.isoDuration(delay) ?? 3600
         let w = DLTime.isoDuration(window) ?? 300
         VStack(alignment: .leading, spacing: 14) {
-            Text("Post this discussion?").dlText(.title2).foregroundStyle(.dlInk)
+            Text(t("discussions.postThisDiscussion")).dlText(.title2).foregroundStyle(.dlInk)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Arrives for \(friend) at").dlText(.footnote).foregroundStyle(.dlInkQuiet)
-                Text(DLTime.time(of: now.addingTimeInterval(d))).font(.custom(DLFontName.manropeExtraBold.rawValue, size: 28, relativeTo: .title).monospacedDigit())
+                Text(t("discussions.arrivesForAt", ["friend": friend])).dlText(.footnote).foregroundStyle(.dlInkQuiet)
+                Text(DLTime.time(of: now.addingTimeInterval(d))).font(.custom(DLFontName.manropeExtraBold.name, size: 28, relativeTo: .title).monospacedDigit())
             }
-            (Text("Until ") + Text(DLTime.time(of: now.addingTimeInterval(w))).bold() + Text(" you can still edit or take it back."))
+            tText("discussions.untilEditOrTakeBack", slot: "time", Text(DLTime.time(of: now.addingTimeInterval(w))).bold())
                 .dlText(.callout)
             if let error { Text(error).dlText(.footnote).foregroundStyle(.dlError) }
             HStack(spacing: 8) {
-                Button("Keep writing", action: onClose).buttonStyle(DLButtonStyle(.grey, fullWidth: true)).disabled(posting)
-                Button(posting ? "Posting…" : "Post") {
+                Button(t("discussions.keepWriting"), action: onClose).buttonStyle(DLButtonStyle(.grey, fullWidth: true)).disabled(posting)
+                Button(posting ? t("common.posting") : t("discussions.post")) {
                     posting = true
                     error = nil
                     Task {

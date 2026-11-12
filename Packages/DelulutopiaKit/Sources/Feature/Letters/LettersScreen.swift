@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -31,7 +32,7 @@ public struct LettersScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle("Letters")
+        .navigationTitle(t("letters.letters"))
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -40,7 +41,7 @@ public struct LettersScreen: View {
                 } label: {
                     Image(systemName: list ? "square.grid.2x2" : "list.bullet")
                 }
-                .accessibilityLabel(list ? "Show as thumbnails" : "Show as list")
+                .accessibilityLabel(list ? t("letters.showAsThumbnails") : t("letters.showAsList"))
                 Button {
                     open(.write(editId: nil))
                 } label: {
@@ -49,7 +50,7 @@ public struct LettersScreen: View {
                             if draft { DLNewDot().offset(x: 4, y: -2) }
                         }
                 }
-                .accessibilityLabel(draft ? "Continue your draft" : "Write a letter")
+                .accessibilityLabel(draft ? t("letters.continueYourDraft") : t("letters.writeALetter"))
             }
         }
         .refreshable { await store.loadHead() }
@@ -69,7 +70,7 @@ private struct LettersContent: View {
     var body: some View {
         let rows = store.rows
         let home = backend.home.home
-        let friendName = home?.friend?.nickname ?? "Friend"
+        let friendName = home?.friend?.nickname ?? t("common.friend")
         let first = home?.firstCitizen
         let senderOf = { (row: LetterRow) -> Int in row.isMine ? (home?.me.id ?? 1) : (home?.friend?.id ?? 2) }
         ScrollView {
@@ -98,9 +99,9 @@ private struct LettersContent: View {
                 HStack(spacing: 8) {
                     if store.hasMore {
                         ProgressView().controlSize(.small)
-                        Text("Loading older letters…")
+                        Text(t("letters.loadingOlder"))
                     } else {
-                        Text("That is everything")
+                        Text(t("common.thatIsEverything"))
                     }
                 }
                 .dlText(.footnote)
@@ -127,7 +128,7 @@ private struct Direction: View {
 
     var body: some View {
         Text(text.uppercased())
-            .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 11, relativeTo: .caption2))
+            .font(.custom(DLFontName.manropeExtraBold.name, size: 11, relativeTo: .caption2))
             .tracking(0.77)
             .foregroundStyle(who == .a ? Color.dlInk : Color.dlInkQuiet)
             .lineLimit(1)
@@ -142,27 +143,27 @@ struct StatusChip: View {
 
     var body: some View {
         let to = row.isMine
-        let small = Font.custom(DLFontName.manropeSemiBold.rawValue, size: 12, relativeTo: .caption)
+        let small = Font.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption)
         if to, state == LetterState.inReach {
-            Text("\(DLTime.countdown(DLTime.remaining(until: row.windowEndsAt, now: now))) to edit")
-                .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 12, relativeTo: .caption).monospacedDigit())
+            Text(t("letters.toEdit", ["countdown": DLTime.countdown(DLTime.remaining(until: row.windowEndsAt, now: now))]))
+                .font(.custom(DLFontName.manropeExtraBold.name, size: 12, relativeTo: .caption).monospacedDigit())
                 .foregroundStyle(.dlLetterInk)
                 .padding(.horizontal, 10)
                 .frame(height: 26)
                 .background(.dlCountdownChip, in: Capsule())
         } else if !arrivedOf(state) {
             Text(DLTime.countdown(DLTime.remaining(until: row.arrivesAt, now: now)))
-                .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 18, relativeTo: .headline).monospacedDigit())
+                .font(.custom(DLFontName.manropeExtraBold.name, size: 18, relativeTo: .headline).monospacedDigit())
                 .foregroundStyle(.dlLetterInk)
         } else if !to, state == LetterState.delivered {
             NewChip()
         } else if !to {
-            Text("Opened \(DLTime.clock(row.readAt, now: now))").font(small).foregroundStyle(.dlInkQuiet)
+            Text(t("letters.opened", ["time": DLTime.clock(row.readAt, now: now)])).font(small).foregroundStyle(.dlInkQuiet)
         } else if state == LetterState.read {
-            Label("Read \(DLTime.clock(row.readAt, now: now))", systemImage: "checkmark.circle")
+            Label(t("letters.readAt", ["time": DLTime.clock(row.readAt, now: now)]), systemImage: "checkmark.circle")
                 .font(small).foregroundStyle(.dlInkQuiet).labelStyle(TightLabel())
         } else {
-            Label("Delivered", systemImage: "checkmark").font(small).foregroundStyle(.dlInkQuiet).labelStyle(TightLabel())
+            Label(t("letters.delivered"), systemImage: "checkmark").font(small).foregroundStyle(.dlInkQuiet).labelStyle(TightLabel())
         }
     }
 }
@@ -179,7 +180,7 @@ private struct TightLabel: LabelStyle {
 /// Replies B2: the row's letter answers another one.
 private struct ReplyMark: View {
     var body: some View {
-        Text("↰").foregroundStyle(.dlInkQuiet).accessibilityLabel("Reply to a letter")
+        Text("↰").foregroundStyle(.dlInkQuiet).accessibilityLabel(t("letters.replyMark"))
     }
 }
 
@@ -199,21 +200,21 @@ private struct ListRow: View {
         let isNew = !to && state == LetterState.delivered
         let arrives = DLTime.clock(row.arrivesAt, now: now)
         Button {
-            if incoming { notice(.text("Arrives at \(arrives)")) } else { open(.letter(row.id)) }
+            if incoming { notice(.text(t("letters.arrivesAt", ["time": arrives]))) } else { open(.letter(row.id)) }
         } label: {
             LetterTile(tileShapeOf(row, state: state), who: who) {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Direction(text: to ? "→ To \(friendName)" : "← From \(friendName)", who: who)
+                        Direction(text: to ? t("letters.toFriend", ["friend": friendName]) : t("letters.fromFriend", ["friend": friendName]), who: who)
                         HStack(spacing: 4) {
                             if !incoming, row.replyToId != nil { ReplyMark() }
-                            Text(incoming ? "On its way" : firstLineOf(row))
-                                .font(.custom(isNew ? DLFontName.manropeBold.rawValue : DLFontName.manropeMedium.rawValue, size: 15, relativeTo: .subheadline))
+                            Text(incoming ? t("letters.onItsWay") : firstLineOf(row))
+                                .font(.custom(isNew ? DLFontName.manropeBold.name : DLFontName.manropeMedium.name, size: 15, relativeTo: .subheadline))
                                 .foregroundStyle(incoming ? Color.dlInkQuiet : Color.dlLetterInk)
                                 .lineLimit(1)
                         }
-                        Text("Sent \(DLTime.clock(row.sentAt, now: now)) · \(arrived ? "Arrived" : "Arrives") \(arrives)")
-                            .font(.custom(DLFontName.manropeMedium.rawValue, size: 12, relativeTo: .caption))
+                        Text(arrived ? t("letters.timesArrived", ["sent": DLTime.clock(row.sentAt, now: now), "arrived": arrives]) : t("letters.timesArrives", ["sent": DLTime.clock(row.sentAt, now: now), "arrives": arrives]))
+                            .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption))
                             .foregroundStyle(.dlInkQuiet)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -250,14 +251,14 @@ private struct Thumb: View {
         let media = incoming ? nil : row.media
         let envelope = shape == .envelope
         Button {
-            if incoming { notice(.text("Arrives at \(DLTime.clock(row.arrivesAt, now: now))")) } else { open(.letter(row.id)) }
+            if incoming { notice(.text(t("letters.arrivesAt", ["time": DLTime.clock(row.arrivesAt, now: now)]))) } else { open(.letter(row.id)) }
         } label: {
             VStack(alignment: .leading, spacing: 6) {
-                Direction(text: to ? "→ To \(friendName)" : "← From \(friendName)", who: who)
+                Direction(text: to ? t("letters.toFriend", ["friend": friendName]) : t("letters.fromFriend", ["friend": friendName]), who: who)
                     .padding(.trailing, envelope ? 0 : 30)
                 (Text(!incoming && row.replyToId != nil ? "↰ " : "").foregroundColor(.dlInkQuiet)
-                    + Text(incoming ? "On its way" : firstLineOf(row)))
-                    .font(.custom(isNew ? DLFontName.literataBold.rawValue : DLFontName.literataRegular.rawValue, size: 15, relativeTo: .body))
+                    + Text(incoming ? t("letters.onItsWay") : firstLineOf(row)))
+                    .font(.custom(isNew ? DLFontName.literataBold.name : DLFontName.literataRegular.name, size: 15, relativeTo: .body))
                     .lineSpacing(envelope ? 1 : 0)
                     .foregroundStyle(incoming ? Color.dlInkQuiet : Color.dlLetterInk)
                     .lineLimit(envelope ? 2 : 3)
@@ -271,18 +272,18 @@ private struct Thumb: View {
                                 Text("\(media.photos)")
                             }
                             .accessibilityElement(children: .ignore)
-                            .accessibilityLabel(media.photos == 1 ? "1 photo" : "\(media.photos) photos")
+                            .accessibilityLabel(tn("letters.photos", media.photos))
                         }
-                        if media.audios > 0 { Image(systemName: "mic").accessibilityLabel("Voice note") }
-                        if media.doodles > 0 { Image(systemName: "scribble").accessibilityLabel("Doodle") }
+                        if media.audios > 0 { Image(systemName: "mic").accessibilityLabel(t("letters.preview.voiceNote")) }
+                        if media.doodles > 0 { Image(systemName: "scribble").accessibilityLabel(t("letters.doodle")) }
                     }
-                    .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 12, relativeTo: .caption))
+                    .font(.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption))
                     .foregroundStyle(.dlInkQuiet)
                 }
                 Spacer(minLength: 0)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Sent \(DLTime.clock(row.sentAt, now: now))")
-                        .font(.custom(DLFontName.manropeMedium.rawValue, size: 12, relativeTo: .caption))
+                    Text(t("letters.sent", ["time": DLTime.clock(row.sentAt, now: now)]))
+                        .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption))
                         .foregroundStyle(.dlInkQuiet)
                     StatusChip(row: row, state: state, now: now)
                 }
@@ -295,7 +296,7 @@ private struct Thumb: View {
             .background(alignment: .leading) {
                 if !envelope { Rectangle().fill(.dlLetterMargin).frame(width: 1).padding(.leading, 9) }
             }
-            .overlay(alignment: .topTrailing) {
+            .overlay(on: .topRight) {
                 if let stamp = row.stamp {
                     HStack(spacing: -8) {
                         if envelope { Postmark().frame(width: 30, height: 30).opacity(0.55) }
@@ -307,7 +308,7 @@ private struct Thumb: View {
                     .padding(.trailing, 10)
                 }
             }
-            .overlay(alignment: .bottomTrailing) { if !envelope { DogEar().scaleEffect(16 / 14, anchor: .bottomTrailing) } }
+            .overlay(on: .bottomRight) { if !envelope { DogEar().scaleEffect(16 / 14, anchor: .bottomTrailing) } }
             .background(envelope ? Color.dlLetterEnvelope : Color.dlLetterSheet, in: RoundedRectangle(cornerRadius: 4))
             .clipShape(RoundedRectangle(cornerRadius: 4))
             .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Color.dlLetterInk.opacity(0.22), lineWidth: 0.5))
@@ -389,7 +390,7 @@ private struct LettersLoading: View {
             .padding(16)
         }
         .scrollDisabled(true)
-        .accessibilityLabel("Loading")
+        .accessibilityLabel(t("letters.loading"))
     }
 }
 
@@ -413,11 +414,11 @@ private struct EmptyLetters: View {
             .dlEnter(.rise)
             .accessibilityHidden(true)
             VStack(spacing: 4) {
-                Text("No letters yet.").dlText(.headline).foregroundStyle(.dlInk)
-                Text("Write the first one.").dlText(.subheadline).foregroundStyle(.dlInkQuiet)
+                Text(t("letters.noLettersYet")).dlText(.headline).foregroundStyle(.dlInk)
+                Text(t("letters.writeTheFirstOne")).dlText(.subheadline).foregroundStyle(.dlInkQuiet)
             }
             .dlEnter(.rise, delay: 0.08)
-            Button(draft ? "Continue your draft" : "Write a letter", action: onWrite)
+            Button(draft ? t("letters.continueYourDraft") : t("letters.writeALetter"), action: onWrite)
                 .buttonStyle(DLButtonStyle(.filled))
         }
         .padding(24)

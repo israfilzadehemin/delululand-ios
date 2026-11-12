@@ -1,4 +1,5 @@
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import Observation
 import SwiftUI
@@ -290,7 +291,7 @@ public struct RichEditor: UIViewRepresentable {
         state.pending = nil
         state.applyTyping()
         tv.placeholder = placeholder
-        tv.accessibilityLabel = placeholder.isEmpty ? "Letter" : placeholder
+        tv.accessibilityLabel = placeholder.isEmpty ? t("letters.letter") : placeholder
         let bar = UIHostingController(rootView: FormatBar(state: state).environment(\.colorScheme, tv.traitCollection.userInterfaceStyle == .dark ? .dark : .light))
         bar.view.backgroundColor = .clear
         bar.view.frame = CGRect(x: 0, y: 0, width: 320, height: 52)
@@ -400,10 +401,10 @@ struct FormatBar: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            button("bold", "Bold", on: state.bold, action: state.toggleBold)
-            button("italic", "Italic", on: state.italic, action: state.toggleItalic)
-            button("underline", "Underline", on: state.underline, action: state.toggleUnderline)
-            button("list.bullet", "Bulleted list", on: state.bullet, action: state.toggleBullet)
+            button("bold", t("editor.bold"), on: state.bold, action: state.toggleBold)
+            button("italic", t("editor.italic"), on: state.italic, action: state.toggleItalic)
+            button("underline", t("editor.underline"), on: state.underline, action: state.toggleUnderline)
+            button("list.bullet", t("editor.bulletList"), on: state.bullet, action: state.toggleBullet)
             Spacer()
             Button {
                 state.textView?.resignFirstResponder()
@@ -413,7 +414,7 @@ struct FormatBar: View {
                     .foregroundStyle(.dlInk)
                     .frame(width: 44, height: 44)
             }
-            .accessibilityLabel("Hide keyboard")
+            .accessibilityLabel(t("editor.hideKeyboard"))
         }
         .padding(.horizontal, 10)
         .frame(height: 52)

@@ -1,3 +1,4 @@
+import DLI18n
 import Foundation
 
 // Response shapes of Technical Design §5.2, one-to-one with delululand-web `src/api/types.ts` and the
@@ -188,6 +189,8 @@ public struct Citizen: Codable, Sendable, Hashable, Identifiable {
     public var timezone: String?
     public var firstName: String?
     public var lastName: String?
+    /// L8: `en`, `az` or `fa`; absent from servers before the language feature.
+    public var language: String?
     @Default<True> public var draftEmpty: Bool
     @Default<True> public var discussionDraftEmpty: Bool
 }
@@ -244,7 +247,7 @@ public struct Home: Codable, Sendable, Hashable {
     public var universe: UniverseInfo
 
     /// The other citizen's name for sentences, or "your friend" while the creator is alone (Universe U8).
-    public var friendName: String { friend?.nickname ?? "your friend" }
+    public var friendName: String { friend?.nickname ?? t("settings.yourFriend") }
 }
 
 public struct HomeCounts: Codable, Sendable, Hashable {

@@ -1,3 +1,4 @@
+import DLI18n
 import DLNetwork
 import Foundation
 import Observation
@@ -17,7 +18,7 @@ public final class DraftSaver {
     public struct FlushError: Error, LocalizedError {
         public let conflict: Bool
         public var errorDescription: String? {
-            conflict ? "A newer version was saved on another device. Load it?" : "Couldn't save your draft"
+            conflict ? t("common.newerVersion") : t("common.draftNotSaved")
         }
     }
 

@@ -1,4 +1,5 @@
 import DLDesignSystem
+import DLI18n
 import SwiftUI
 import UIKit
 
@@ -32,11 +33,7 @@ public enum Zones {
 
     public static func option(_ zone: String, now: Date = Date()) -> ZoneOption {
         let tz = TimeZone(identifier: zone) ?? .gmt
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_GB")
-        f.timeZone = tz
-        f.dateFormat = "HH:mm"
-        return ZoneOption(zone: zone, city: city(zone), offset: offsetWords(tz.secondsFromGMT(for: now)), time: f.string(from: now))
+        return ZoneOption(zone: zone, city: city(zone), offset: offsetWords(tz.secondsFromGMT(for: now)), time: Dates.time(now, in: tz))
     }
 
     /// 3600 → "UTC+1", −12600 → "UTC−3:30", 0 → "UTC".
@@ -93,12 +90,12 @@ public struct DLTimeZonePicker: View {
                     Section {
                         row(Zones.option(device, now: now))
                     } header: {
-                        DLSectionLabel("This \(UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone")")
+                        DLSectionLabel(t("timezones.thisDevice", ["device": UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"]))
                     }
                 }
                 let matches = Zones.match(query).filter { $0 != device }
                 if matches.isEmpty && !query.isEmpty {
-                    Text("No time zone matches “\(query)”.")
+                    Text(t("profile.noTimeZoneMatches", ["trim": query]))
                         .dlText(.callout)
                         .foregroundStyle(.dlInkQuiet)
                         .dlListRow()
@@ -106,18 +103,18 @@ public struct DLTimeZonePicker: View {
                     Section {
                         ForEach(matches, id: \.self) { zone in row(Zones.option(zone, now: now)) }
                     } header: {
-                        DLSectionLabel(query.isEmpty ? "All zones" : "Matches")
+                        DLSectionLabel(query.isEmpty ? t("profile.allZones") : t("profile.matches"))
                     }
                 }
             }
             .dlGroupedList()
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search a city or zone")
-            .navigationTitle("Time zone")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: t("profile.searchACityOrZone"))
+            .navigationTitle(t("profile.timeZone"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button { dismiss() } label: { Image(systemName: "xmark") }
-                        .accessibilityLabel("Close")
+                        .accessibilityLabel(t("media.close"))
                 }
             }
         }
@@ -164,7 +161,7 @@ public struct DLTimeZoneField: View {
     public var body: some View {
         let option = Zones.option(zone)
         VStack(alignment: .leading, spacing: 6) {
-            Text("Time zone")
+            Text(t("profile.timeZone"))
                 .dlText(.fieldLabel)
                 .foregroundStyle(.dlInkQuiet)
                 .padding(.horizontal, 4)
@@ -176,7 +173,7 @@ public struct DLTimeZoneField: View {
                         .lineLimit(1)
                     Spacer(minLength: 4)
                     Text(option.time).dlText(.callout).monospacedDigit().foregroundStyle(.dlInkQuiet)
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.dlInkQuiet)
                 }

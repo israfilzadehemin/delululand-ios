@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -28,9 +29,9 @@ public struct WriteScreen: View {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 case .failed, .notEditable:
                     VStack(spacing: 16) {
-                        Text(editId == nil ? "Couldn’t load your draft. Check your connection and try again." : "This letter can’t be edited.")
+                        Text(editId == nil ? t("write.couldntLoadYourDraftCheck") : t("write.thisLetterCantBeEdited"))
                             .dlText(.callout).foregroundStyle(.dlInkQuiet).multilineTextAlignment(.center)
-                        Button("Back") { dismiss() }.buttonStyle(DLButtonStyle(.outline))
+                        Button(t("letters.back")) { dismiss() }.buttonStyle(DLButtonStyle(.outline))
                     }
                     .padding(24)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -74,7 +75,7 @@ private struct WriteForm: View {
     @State private var lateHandled = false
 
     private var editing: Bool { model.letter != nil }
-    private var friend: String { backend.home.home?.friend?.nickname ?? "Friend" }
+    private var friend: String { backend.home.home?.friend?.nickname ?? t("common.friend") }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
@@ -115,8 +116,8 @@ private struct WriteForm: View {
         let saver = model.saver
         let savedLine: String = {
             guard let saver else { return "" }
-            if saver.status == .error { return "Couldn’t save your draft" }
-            if let at = saver.savedAt, saver.status != .conflict { return "Draft saved \(DLTime.time(at))" }
+            if saver.status == .error { return t("common.draftNotSaved") }
+            if let at = saver.savedAt, saver.status != .conflict { return t("common.draftSaved", ["time": DLTime.time(at)]) }
             return ""
         }()
         VStack(spacing: 0) {
@@ -143,7 +144,7 @@ private struct WriteForm: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 10)
-                        RichEditor(editor, initial: model.initial, enabled: !late, placeholder: "Dear \(friend),") { doc in
+                        RichEditor(editor, initial: model.initial, enabled: !late, placeholder: t("write.dear", ["friend": friend])) { doc in
                             model.onBody(doc)
                         }
                         .padding(EdgeInsets(top: 16, leading: 20, bottom: 30, trailing: 20))
@@ -158,7 +159,7 @@ private struct WriteForm: View {
                     Rectangle().fill(.dlLetterMargin).frame(width: 1).padding(.leading, 11)
                 }
                 .background(.dlLetterSheet)
-                .overlay(alignment: .bottomTrailing) { DogEar().scaleEffect(22 / 14, anchor: .bottomTrailing) }
+                .overlay(on: .bottomRight) { DogEar().scaleEffect(22 / 14, anchor: .bottomTrailing) }
                 if sealing { SealOverlay(seal: Who.of(backend.home.home?.me.id, first: backend.home.home?.firstCitizen).signature) }
             }
             if !late {
@@ -179,27 +180,27 @@ private struct WriteForm: View {
                 .background(.dlLetterEnvelope)
             }
         }
-        .navigationTitle(editing ? "Editing a sent letter" : "To \(friend)")
+        .navigationTitle(editing ? t("write.editingASentLetter") : t("letters.to", ["friend": friend]))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(editing)
         .toolbar {
             if editing {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { if changed { confirmDiscard = true } else { dismiss() } } label: { Image(systemName: "chevron.left") }
+                    Button { if changed { confirmDiscard = true } else { dismiss() } } label: { Image(systemName: "chevron.backward") }
                         .disabled(late)
-                        .accessibilityLabel("Back, discard changes")
+                        .accessibilityLabel(t("write.backDiscardChanges"))
                 }
             }
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 0) {
-                    Text(editing ? "Editing a sent letter" : "To \(friend)").font(.headline)
+                    Text(editing ? t("write.editingASentLetter") : t("letters.to", ["friend": friend])).font(.headline)
                     if !editing, !savedLine.isEmpty {
                         Text(savedLine).font(.caption).foregroundStyle(saver?.status == .error ? Color.dlError : Color.dlInkQuiet)
                     }
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button(editing ? "Send again" : "Send") {
+                Button(editing ? t("write.sendAgain") : t("write.send")) {
                     if editing { sendAgain() } else { sendOpen = true }
                 }
                 .buttonStyle(.borderedProminent)
@@ -226,41 +227,41 @@ private struct WriteForm: View {
             }, onClose: { doodleOpen = false })
                 .environment(backend)
         }
-        .alert("A newer version was saved on another device. Load it?", isPresented: Binding(get: { saver?.status == .conflict }, set: { _ in })) {
-            Button("Keep mine", role: .cancel) { model.keepMine() }
-            Button("Load") { Task { if let doc = await model.loadServer() { editor.set(doc) } } }
+        .alert(t("write.aNewerVersionWasSaved"), isPresented: Binding(get: { saver?.status == .conflict }, set: { _ in })) {
+            Button(t("write.keepMine"), role: .cancel) { model.keepMine() }
+            Button(t("write.load")) { Task { if let doc = await model.loadServer() { editor.set(doc) } } }
         }
-        .alert("Too late: the original version is on its way.", isPresented: Binding(get: { editing && late && !lateHandled }, set: { _ in })) {
-            Button("Discard", role: .cancel) {
+        .alert(t("write.tooLateTheOriginalVersion"), isPresented: Binding(get: { editing && late && !lateHandled }, set: { _ in })) {
+            Button(t("write.discard"), role: .cancel) {
                 lateHandled = true
                 Task {
                     await model.discardEdit()
                     dismiss()
                 }
             }
-            Button("Keep text in draft") {
+            Button(t("write.keepTextInDraft")) {
                 lateHandled = true
                 Task {
                     if await model.keepInDraft() {
                         dismiss()
                         open(.write())
                     } else {
-                        error = "Couldn’t save your draft"
+                        error = t("common.draftNotSaved")
                     }
                 }
             }
         } message: {
-            Text("\(friend) gets the letter as you first sent it, at \(model.letter.map { DLTime.time($0.arrivesAt) } ?? ""). The text you changed is still here."
-                + (backend.home.home?.me.draftEmpty == false ? " Keeping it replaces your current draft." : ""))
+            Text(t("write.getsTheLetterAsYou", ["friend": friend, "arrives": model.letter.map { DLTime.time($0.arrivesAt) } ?? ""])
+                + (backend.home.home?.me.draftEmpty == false ? " " + t("write.keepingItReplacesYourCurrent") : ""))
         }
-        .confirmationDialog("Discard your changes?", isPresented: $confirmDiscard, titleVisibility: .visible) {
-            Button("Yes", role: .destructive) {
+        .confirmationDialog(t("write.discardYourChanges"), isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button(t("write.yes"), role: .destructive) {
                 Task {
                     await model.discardEdit()
                     dismiss()
                 }
             }
-            Button("No", role: .cancel) {}
+            Button(t("letters.no"), role: .cancel) {}
         }
     }
 
@@ -303,8 +304,8 @@ private struct EditingHead: View {
     let late: Bool
 
     var body: some View {
-        Text("\(DLTime.countdown(left)) left · arrives at \(arrives)\(late ? "" : " whatever you change")")
-            .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 13, relativeTo: .footnote).monospacedDigit())
+        Text(t(late ? "write.leftArrivesAt" : "write.leftArrivesAtChange", ["countdown": DLTime.countdown(left), "time": arrives]))
+            .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
             .foregroundStyle(.dlInk)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
@@ -352,7 +353,7 @@ private struct StampSlot: View {
         }
         .buttonStyle(DLPressStyle())
         .disabled(!enabled)
-        .accessibilityLabel(stamp.map { "Stamp: \($0.name). Change it" } ?? "Add a stamp")
+        .accessibilityLabel(stamp.map { t("stamps.stampChangeIt", ["name": $0.name]) } ?? t("stamps.addAStamp"))
     }
 }
 
@@ -368,10 +369,10 @@ private struct ReplySlip: View {
         let i = model.pinned.flatMap { ids.firstIndex(of: $0) }
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("REPLYING TO").font(.custom(DLFontName.manropeExtraBold.rawValue, size: 11, relativeTo: .caption2)).tracking(0.77)
+                Text(t("write.replyingTo").uppercased(with: I18n.shared.lang.locale)).font(.custom(DLFontName.manropeExtraBold.name, size: 11, relativeTo: .caption2)).tracking(0.77)
                     .foregroundStyle(.dlInkQuiet)
                 Text(l.map { firstLineOf($0.firstLine, media: $0.media) } ?? "…")
-                    .font(.custom(DLFontName.literataRegular.rawValue, size: 14, relativeTo: .body))
+                    .font(.custom(DLFontName.literataRegular.name, size: 14, relativeTo: .body))
                     .foregroundStyle(.dlLetterInk)
                     .lineLimit(1)
                 if let l {
@@ -379,15 +380,15 @@ private struct ReplySlip: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Button { if let i, i > 0 { model.pin(ids[i - 1]) } } label: { Image(systemName: "chevron.left").frame(width: 32, height: 44) }
+            Button { if let i, i > 0 { model.pin(ids[i - 1]) } } label: { Image(systemName: "chevron.backward").frame(width: 32, height: 44) }
                 .disabled(i == nil || i == 0)
-                .accessibilityLabel("Newer received letter")
+                .accessibilityLabel(t("write.newerReceivedLetter"))
             Button {
                 if let i, i + 1 < ids.count { model.pin(ids[i + 1]) } else { model.loadReceived() }
-            } label: { Image(systemName: "chevron.right").frame(width: 32, height: 44) }
-                .accessibilityLabel("Older received letter")
+            } label: { Image(systemName: "chevron.forward").frame(width: 32, height: 44) }
+                .accessibilityLabel(t("write.olderReceivedLetter"))
             Button { model.pin(nil) } label: { Image(systemName: "xmark").font(.system(size: 12, weight: .bold)).frame(width: 32, height: 44) }
-                .accessibilityLabel("Not a reply: send as a new letter")
+                .accessibilityLabel(t("write.notAReplySendAs"))
         }
         .foregroundStyle(.dlInk)
         .padding(.leading, 15)
@@ -397,7 +398,7 @@ private struct ReplySlip: View {
         .background(.dlLetterSlip, in: UnevenRoundedRectangle(bottomTrailingRadius: 8, topTrailingRadius: 8))
         .shadow(color: .dlShade.opacity(0.15), radius: 1.5, y: 1)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("The letter you are answering")
+        .accessibilityLabel(t("write.theLetterYouAreAnswering"))
         .onAppear { model.loadReceived() }
     }
 }
@@ -425,22 +426,22 @@ private struct SendSheet: View {
                     .foregroundStyle(.dlSeal)
                     .frame(width: 48, height: 48)
                     .background(.dlSealTint, in: Circle())
-                Text("Send this letter?").dlText(.title2).foregroundStyle(.dlInk)
+                Text(t("write.sendThisLetter")).dlText(.title2).foregroundStyle(.dlInk)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Arrives at").dlText(.footnote).foregroundStyle(.dlInkQuiet)
-                    (Text(DLTime.time(of: now.addingTimeInterval(d))).font(.custom(DLFontName.manropeExtraBold.rawValue, size: 28, relativeTo: .title).monospacedDigit())
-                        + Text(" · in \(Int((d / 60).rounded())) min").font(DLTextStyle.callout.spec.dynamicFont).foregroundColor(.dlInkQuiet))
+                    Text(t("write.arrivesAt")).dlText(.footnote).foregroundStyle(.dlInkQuiet)
+                    (Text(DLTime.time(of: now.addingTimeInterval(d))).font(.custom(DLFontName.manropeExtraBold.name, size: 28, relativeTo: .title).monospacedDigit())
+                        + Text(" " + t("write.inMin", ["minutes": Int((d / 60).rounded())])).font(DLTextStyle.callout.spec.dynamicFont).foregroundColor(.dlInkQuiet))
                         .foregroundStyle(.dlInk)
                 }
-                (Text("Until ") + Text(DLTime.time(of: now.addingTimeInterval(w))).bold() + Text(" you can still edit or cancel it from Letters or Home."))
+                tText("write.untilEditOrCancel", slot: "time", Text(DLTime.time(of: now.addingTimeInterval(w))).bold())
                     .dlText(.callout).foregroundStyle(.dlInk)
-                if let feeling { Text("Feeling \(feeling)").dlText(.callout).foregroundStyle(.dlInk) }
+                if let feeling { Text(t("write.feeling", ["feeling": feeling])).dlText(.callout).foregroundStyle(.dlInk) }
                 if let error { Text(error).dlText(.footnote).foregroundStyle(.dlError) }
                 HStack(spacing: 8) {
-                    Button("Keep writing", action: onClose)
+                    Button(t("write.keepWriting"), action: onClose)
                         .buttonStyle(DLButtonStyle(.grey, fullWidth: true))
                         .disabled(sending)
-                    Button(sending ? "Sending…" : "Send") {
+                    Button(sending ? t("common.sending") : t("write.send")) {
                         sending = true
                         error = nil
                         Task {
@@ -527,18 +528,18 @@ private struct StampPicker: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 12) {
                         if model.stampsFailed {
-                            Text("Couldn’t load the stamps. Check your connection and try again.").dlText(.callout).foregroundStyle(.dlInkQuiet)
+                            Text(t("stamps.couldntLoadTheStampsCheck")).dlText(.callout).foregroundStyle(.dlInkQuiet)
                         } else if catalogue == nil {
-                            Text("Loading stamps…").dlText(.callout).foregroundStyle(.dlInkQuiet)
+                            Text(t("stamps.loadingStamps")).dlText(.callout).foregroundStyle(.dlInkQuiet)
                         } else if !q.isEmpty {
-                            if found.isEmpty { Text("Nothing found").dlText(.callout).foregroundStyle(.dlInkQuiet) }
+                            if found.isEmpty { Text(t("stamps.nothingFound")).dlText(.callout).foregroundStyle(.dlInkQuiet) }
                             grid(found)
                         } else {
                             if !recent.isEmpty {
-                                heading("Recent")
+                                heading(t("stamps.recent"))
                                 grid(recent)
                             }
-                            Button("No stamp") {
+                            Button(t("stamps.noStamp")) {
                                 model.chooseStamp(nil)
                                 onClose()
                             }
@@ -567,12 +568,12 @@ private struct StampPicker: View {
                     }
                 }
             }
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search stamps")
-            .navigationTitle("Stamps")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: t("stamps.searchStamps"))
+            .navigationTitle(t("stamps.stamps"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    DLGlassIconButton("xmark", label: "Close", action: onClose)
+                    DLGlassIconButton("xmark", label: t("letters.close"), action: onClose)
                 }
             }
             .background(Color.dlSheet)
@@ -582,7 +583,7 @@ private struct StampPicker: View {
 
     private func heading(_ text: String) -> some View {
         Text(text.uppercased())
-            .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 11, relativeTo: .caption2))
+            .font(.custom(DLFontName.manropeExtraBold.name, size: 11, relativeTo: .caption2))
             .tracking(0.77)
             .foregroundStyle(.dlInkQuiet)
             .padding(.top, 6)

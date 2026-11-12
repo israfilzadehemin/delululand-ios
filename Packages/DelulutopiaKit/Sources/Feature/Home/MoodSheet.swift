@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -53,11 +54,11 @@ struct MoodSheet: View {
     private var grid: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("How do you feel?")
-                    .font(.custom(DLFontName.manropeBold.rawValue, size: 18, relativeTo: .title3))
+                Text(t("home.howDoYouFeel"))
+                    .font(.custom(DLFontName.manropeBold.name, size: 18, relativeTo: .title3))
                     .foregroundStyle(.dlInk)
                 Spacer()
-                DLGlassIconButton("xmark", label: "Close", action: onClose)
+                DLGlassIconButton("xmark", label: t("home.close"), action: onClose)
             }
             .padding(.leading, 20)
             .padding(.trailing, 12)
@@ -73,18 +74,18 @@ struct MoodSheet: View {
             .frame(height: 76 * 2 + 10)
 
             HStack(spacing: 16) {
-                pageArrow("chevron.left", "Previous moods", enabled: page > 0) { page -= 1 }
+                pageArrow("chevron.backward", t("home.previousMoods"), enabled: page > 0) { page -= 1 }
                 HStack(spacing: 6) {
                     ForEach(pages.indices, id: \.self) { p in
                         Capsule()
                             .fill(p == page ? Color.dlSeal : Color.dlLine)
                             .frame(width: p == page ? 18 : 6, height: 6)
                             .onTapGesture { withAnimation { page = p } }
-                            .accessibilityLabel("Mood page \(p + 1)")
+                            .accessibilityLabel(t("home.moodPage", ["n": p + 1]))
                     }
                 }
                 .animation(DLMotion.easeOut(0.2), value: page)
-                pageArrow("chevron.right", "More moods", enabled: page < pages.count - 1) { page += 1 }
+                pageArrow("chevron.forward", t("home.moreMoods"), enabled: page < pages.count - 1) { page += 1 }
             }
             .padding(.top, 12)
 
@@ -99,10 +100,10 @@ struct MoodSheet: View {
     }
 
     private var foot: String {
-        if error { return "Not saved. Try again." }
-        if canAdd, full { return "\(limit) of \(limit) — delete one to add another" }
-        if let friend { return "One tap sets it. \(friend) sees it right away, not after an hour." }
-        return "One tap sets it."
+        if error { return t("home.notSavedTryAgain") }
+        if canAdd, full { return t("home.ofDeleteOneToAdd", ["limit": limit, "limit": limit]) }
+        if let friend { return t("home.oneTapFriend", ["friend": friend]) }
+        return t("home.oneTap")
     }
 
     private func pageArrow(_ symbol: String, _ label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
@@ -152,7 +153,7 @@ struct MoodSheet: View {
             VStack(spacing: 6) {
                 Text(mood.emoji).font(.system(size: 26))
                 Text(mood.label)
-                    .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 12, relativeTo: .caption))
+                    .font(.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption))
                     .foregroundStyle(.dlInk)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
@@ -182,7 +183,7 @@ struct MoodSheet: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(busy)
-                .accessibilityLabel("Edit \(mood.label)")
+                .accessibilityLabel(t("home.edit2", ["label": mood.label]))
             }
         }
     }
@@ -192,8 +193,8 @@ struct MoodSheet: View {
         return Button { form = .new } label: {
             VStack(spacing: 6) {
                 Text("+").font(.system(size: 26)).foregroundStyle(enabled ? Color.dlSeal : Color.dlInkDisabled)
-                Text("New mood")
-                    .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 12, relativeTo: .caption))
+                Text(t("home.newMood"))
+                    .font(.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption))
                     .foregroundStyle(.dlInkQuiet)
             }
             .frame(maxWidth: .infinity, minHeight: 76, maxHeight: 76)
@@ -244,15 +245,15 @@ struct MoodForm: View {
         VStack(spacing: 14) {
             HStack(spacing: 4) {
                 Button { onDone(nil) } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.dlInk)
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
                 .disabled(busy)
-                .accessibilityLabel("Back to moods")
-                Text(editing != nil ? "Edit mood" : "New mood").dlText(.title3).foregroundStyle(.dlInk)
+                .accessibilityLabel(t("home.backToMoods"))
+                Text(editing != nil ? t("home.editMood") : t("home.newMood")).dlText(.title3).foregroundStyle(.dlInk)
                 Spacer()
             }
             .padding(.top, 10)
@@ -266,15 +267,15 @@ struct MoodForm: View {
                         .background(.dlPaper, in: RoundedRectangle(cornerRadius: 16))
                         .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(picking ? Color.dlSeal : Color.dlLine, lineWidth: picking ? 2 : 1))
                 }
-                .accessibilityLabel(emoji.isEmpty ? "Choose an emoji" : "Emoji \(emoji). Change it")
+                .accessibilityLabel(emoji.isEmpty ? t("home.chooseAnEmoji") : t("home.emojiChangeIt", ["emoji": emoji]))
                 .accessibilityAddTraits(.isButton)
                 if emoji.isEmpty {
-                    Text("Choose an emoji").dlText(.footnote).foregroundStyle(.dlInkQuiet)
+                    Text(t("home.chooseAnEmoji")).dlText(.footnote).foregroundStyle(.dlInkQuiet)
                 }
             }
 
             DLField(
-                "Label",
+                t("home.label"),
                 text: Binding(get: { label }, set: { value in
                     if value.count <= 40 { label = value }
                     error = nil
@@ -289,12 +290,12 @@ struct MoodForm: View {
                 Text(error).dlText(.footnote).foregroundStyle(.dlError).multilineTextAlignment(.center)
             }
 
-            Button(busy && !confirm ? "Saving…" : "Save") { save() }
+            Button(busy && !confirm ? t("common.saving") : t("common.save")) { save() }
                 .buttonStyle(DLButtonStyle(.filled, fullWidth: true))
                 .disabled(!canSave)
 
             if editing != nil {
-                Button("Delete mood", role: .destructive) { confirm = true }
+                Button(t("home.deleteMood"), role: .destructive) { confirm = true }
                     .buttonStyle(DLButtonStyle(.text))
                     .foregroundStyle(.dlError)
                     .disabled(busy)
@@ -306,9 +307,9 @@ struct MoodForm: View {
             emoji = editing?.emoji ?? ""
             label = editing?.label ?? ""
         }
-        .confirmationDialog("Delete this mood?", isPresented: $confirm, titleVisibility: .visible) {
-            Button("Yes, delete", role: .destructive) { delete() }
-            Button("No", role: .cancel) {}
+        .confirmationDialog(t("home.deleteThisMood"), isPresented: $confirm, titleVisibility: .visible) {
+            Button(t("home.yesDelete"), role: .destructive) { delete() }
+            Button(t("home.no"), role: .cancel) {}
         } message: {
             Text(deleteMessage)
         }
@@ -318,13 +319,13 @@ struct MoodForm: View {
         guard let editing else { return "" }
         let meWears = current == editing.key
         let friendWears = friend != nil && friendMood == editing.key
-        var text = "“\(editing.emoji) \(editing.label)” goes from the sheet\(friend != nil ? " for both of you" : ""). Letters already sent keep it."
+        var text = t(friend != nil ? "home.moodGoesShared" : "home.moodGoesAlone", ["mood": "\(editing.emoji) \(editing.label)"])
         if meWears, friendWears, let friend {
-            text += "\n\nYou and \(friend) are feeling this right now. Deleting it clears your moods."
+            text += "\n\n" + t("home.wearing.both", ["friend": friend])
         } else if friendWears, let friend {
-            text += "\n\n\(friend) is feeling this right now. Deleting it clears their mood."
+            text += "\n\n" + t("home.wearing.friend", ["friend": friend])
         } else if meWears {
-            text += "\n\nYou’re feeling this right now. Deleting it clears your mood."
+            text += "\n\n" + t("home.wearing.me")
         }
         return text
     }

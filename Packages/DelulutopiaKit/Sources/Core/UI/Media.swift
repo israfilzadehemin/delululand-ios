@@ -2,6 +2,7 @@ import AVFoundation
 import AVKit
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import Observation
 import SwiftUI
@@ -95,7 +96,7 @@ public struct VoicePlayer: View {
     @Environment(Backend.self) private var backend
     private var player: OnePlayer { OnePlayer.shared }
 
-    public init(url: String, durationMs: Int?, label: String = "voice note") {
+    public init(url: String, durationMs: Int?, label: String = t("media.voiceNoteLower")) {
         self.url = url
         self.durationMs = durationMs
         self.label = label
@@ -123,7 +124,7 @@ public struct VoicePlayer: View {
                 .contentShape(Circle())
             }
             .buttonStyle(DLPressStyle())
-            .accessibilityLabel(isPlaying ? "Pause \(label)" : "Play \(label)")
+            .accessibilityLabel(isPlaying ? t("media.pause", ["label": label]) : t("media.play", ["label": label]))
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.dlLetterInk.opacity(0.15)).frame(height: 4)
@@ -140,13 +141,15 @@ public struct VoicePlayer: View {
             .frame(height: 24)
             .accessibilityHidden(true)
             Text(DLTime.mediaLength(ms: Int((isPlaying ? player.position : total) * 1000)))
-                .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 13, relativeTo: .footnote).monospacedDigit())
+                .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
                 .foregroundStyle(.dlLetterInk)
         }
         .padding(.leading, 4)
         .padding(.trailing, 14)
         .padding(.vertical, 4)
         .background(Color.dlLetterInk.opacity(0.05), in: Capsule())
+        // L5: a player's track runs left to right in every language, like the phone's own players.
+        .environment(\.layoutDirection, .leftToRight)
     }
 }
 
@@ -184,9 +187,9 @@ public struct Lightbox: View {
                             .frame(width: 44, height: 44)
                             .background(.white.opacity(0.12), in: Circle())
                     }
-                    .accessibilityLabel("Close")
+                    .accessibilityLabel(t("media.close"))
                     Spacer()
-                    Text(title ?? (items.count > 1 ? "\(index + 1) of \(items.count)" : ""))
+                    Text(title ?? (items.count > 1 ? t("media.nOf", ["n": index + 1, "count": items.count]) : ""))
                         .dlText(.subheadline)
                         .foregroundStyle(.dlOnLightbox)
                     Spacer()
@@ -242,7 +245,7 @@ public struct VideoPlayerScreen: View {
             if let player {
                 VideoPlayer(player: player).ignoresSafeArea().onAppear { player.play() }
             } else if failed {
-                Text("Couldn’t load the video. Try again.").foregroundStyle(.white).frame(maxWidth: .infinity, maxHeight: .infinity)
+                Text(t("media.videoNotLoaded")).foregroundStyle(.white).frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ProgressView().tint(.white).frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -251,7 +254,7 @@ public struct VideoPlayerScreen: View {
                     .frame(width: 44, height: 44).background(.white.opacity(0.15), in: Circle())
             }
             .padding(16)
-            .accessibilityLabel("Close")
+            .accessibilityLabel(t("media.close"))
         }
         .task {
             guard let data = try? await backend.client.data(for: backend.client.makeRequest("GET", path), timeout: 120) else {

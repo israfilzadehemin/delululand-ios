@@ -1,4 +1,5 @@
 import DLDesignSystem
+import DLI18n
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -28,21 +29,21 @@ public struct DLPhotoChooser: ViewModifier {
 
     public func body(content: Content) -> some View {
         content
-            .confirmationDialog("Your photo", isPresented: $isPresented, titleVisibility: .hidden) {
-                Button("Choose photo") { library = true }
+            .confirmationDialog(t("universe.yourPhoto"), isPresented: $isPresented, titleVisibility: .hidden) {
+                Button(t("profile.choosePhoto")) { library = true }
                 if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                    Button("Take photo") { camera = true }
+                    Button(t("profile.takePhoto")) { camera = true }
                 }
                 if hasPhoto, onRemove != nil {
-                    Button("Remove photo", role: .destructive) { confirmRemove = true }
+                    Button(t("universe.removePhoto"), role: .destructive) { confirmRemove = true }
                 }
-                Button("Cancel", role: .cancel) {}
+                Button(t("app.cancel"), role: .cancel) {}
             }
-            .confirmationDialog("Remove your photo?", isPresented: $confirmRemove, titleVisibility: .visible) {
-                Button("Remove photo", role: .destructive) { onRemove?() }
-                Button("Cancel", role: .cancel) {}
+            .confirmationDialog(t("profile.removeYourPhoto"), isPresented: $confirmRemove, titleVisibility: .visible) {
+                Button(t("universe.removePhoto"), role: .destructive) { onRemove?() }
+                Button(t("app.cancel"), role: .cancel) {}
             } message: {
-                Text("Your initials show instead.")
+                Text(t("profile.yourInitialsShowInstead"))
             }
             .photosPicker(isPresented: $library, selection: $item, matching: .images)
             .onChange(of: item) { _, picked in
@@ -144,7 +145,7 @@ public struct DLAvatarCrop: View {
         ZStack {
             Color(red: 0x14 / 255, green: 0x17 / 255, blue: 0x1F / 255).ignoresSafeArea()
             VStack(spacing: 0) {
-                Text("Move and Scale")
+                Text(t("profile.moveAndZoom"))
                     .dlText(.headline)
                     .foregroundStyle(.white)
                     .padding(.top, 24)
@@ -171,14 +172,14 @@ public struct DLAvatarCrop: View {
                 }
                 .contentShape(Rectangle())
                 .gesture(drag.simultaneously(with: pinch))
-                .accessibilityLabel("Photo position: drag to move, pinch to zoom")
+                .accessibilityLabel(t("profile.photoPositionPinch"))
                 Spacer()
                 HStack {
-                    Button("Cancel") { onDone(nil) }
+                    Button(t("app.cancel")) { onDone(nil) }
                         .buttonStyle(.dlText)
                         .foregroundStyle(.white)
                     Spacer()
-                    Button("Choose") { onDone(crop()) }
+                    Button(t("profile.choose")) { onDone(crop()) }
                         .buttonStyle(.dlFilled)
                 }
                 .padding(.horizontal, 20)

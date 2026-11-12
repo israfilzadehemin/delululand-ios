@@ -1,15 +1,13 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
 
 func commentWords(_ count: Int?) -> String {
-    switch count ?? 0 {
-    case 0: ""
-    case 1: "1 comment"
-    case let n: "\(n) comments"
-    }
+    let n = count ?? 0
+    return n == 0 ? "" : tn("discussions.comments", n)
 }
 
 func dState(_ r: DRow, now: Date) -> String { LetterState.discussion(now: now, windowEndsAt: r.windowEndsAt, arrivesAt: r.arrivesAt) }
@@ -102,7 +100,7 @@ public struct DiscussionsScreen: View {
     public var body: some View {
         let me = backend.home.home?.me
         let draftEmpty = me?.discussionDraftEmpty ?? true
-        let startLabel = draftEmpty ? "Start a discussion" : "Continue your discussion draft"
+        let startLabel = draftEmpty ? t("discussions.startADiscussion") : t("discussions.continueDraft")
         Group {
             if let model, let rows = model.head.map({ _ in model.rows }) {
                 if rows.isEmpty, model.nextCursor == nil {
@@ -111,10 +109,10 @@ public struct DiscussionsScreen: View {
                         Spacer()
                         Image(systemName: "note.text").font(.system(size: 44, weight: .light)).foregroundStyle(.dlInkQuiet).dlEnter(.rise)
                         if archived {
-                            Text("Nothing archived yet.").dlText(.headline).foregroundStyle(.dlInk)
+                            Text(t("discussions.nothingArchivedYet")).dlText(.headline).foregroundStyle(.dlInk)
                         } else {
-                            Text("No discussions yet.").dlText(.headline).foregroundStyle(.dlInk)
-                            Text("Start the first one.").dlText(.subheadline).foregroundStyle(.dlInkQuiet)
+                            Text(t("discussions.noDiscussionsYet")).dlText(.headline).foregroundStyle(.dlInk)
+                            Text(t("discussions.startTheFirstOne")).dlText(.subheadline).foregroundStyle(.dlInkQuiet)
                             Button(startLabel) { open(.composeDiscussion(editId: nil)) }.buttonStyle(DLButtonStyle(.filled))
                         }
                         Spacer()
@@ -135,7 +133,7 @@ public struct DiscussionsScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle(archived ? "Archived" : "Discussions")
+        .navigationTitle(archived ? t("discussions.archived") : t("discussions.discussions"))
         .navigationBarTitleDisplayMode(archived ? .inline : .large)
         .toolbar {
             if !archived {
@@ -160,12 +158,12 @@ public struct DiscussionsScreen: View {
         HStack {
             Spacer()
             Button { open(.archived) } label: {
-                Label("Archived · \(count)", systemImage: "archivebox")
-                    .font(.custom(DLFontName.manropeBold.rawValue, size: 14, relativeTo: .subheadline))
+                Label(t("discussions.archivedCount", ["count": count]), systemImage: "archivebox")
+                    .font(.custom(DLFontName.manropeBold.name, size: 14, relativeTo: .subheadline))
                     .foregroundStyle(.dlSeal)
                     .frame(minHeight: 44)
             }
-            .accessibilityLabel("Archived discussions: \(count)")
+            .accessibilityLabel(t("discussions.archivedDiscussions", ["archivedCount": count]))
         }
     }
 
@@ -177,8 +175,8 @@ public struct DiscussionsScreen: View {
                 if !archived, model.archivedCount > 0 { archivedLink(model.archivedCount) }
                 ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
                     NoteRow(r: r, now: now,
-                            authorName: r.mine ? (home?.me.nickname ?? "Me") : (home?.friend?.nickname ?? "Friend"),
-                            friendName: home?.friend?.nickname ?? "Friend",
+                            authorName: r.mine ? (home?.me.nickname ?? t("common.me")) : (home?.friend?.nickname ?? t("common.friend")),
+                            friendName: home?.friend?.nickname ?? t("common.friend"),
                             tilt: i % 2 == 0 ? -0.6 : 0.5)
                         .padding(.top, 8)
                         .dlEnter(.rise, delay: DLMotion.stagger(i))
@@ -187,9 +185,9 @@ public struct DiscussionsScreen: View {
                 HStack(spacing: 8) {
                     if model.nextCursor != nil {
                         ProgressView().controlSize(.small)
-                        Text("Loading older discussions…")
+                        Text(t("discussions.loadingOlder"))
                     } else {
-                        Text("That is everything")
+                        Text(t("discussions.thatIsEverything"))
                     }
                 }
                 .dlText(.footnote)
@@ -224,18 +222,18 @@ private struct NoteRow: View {
         let comments = commentWords(r.commentCount)
         let lastActivity = r.lastCommentAt ?? (r.mine ? r.postedAt : r.arrivesAt)
         let active = r.activityAt.flatMap { a in (DLTime.date(a) ?? .distantPast) > (DLTime.date(r.postedAt) ?? .distantPast) ? a : nil }
-        let whenText = active.map { "Active \(DLTime.clock($0, now: now))" } ?? "Posted \(DLTime.clock(r.postedAt, now: now))"
+        let whenText = active.map { t("discussions.activeAt", ["time": DLTime.clock($0, now: now)]) } ?? t("discussions.postedAt", ["time": DLTime.clock(r.postedAt, now: now)])
         let meta = reactionWins(r.lastReaction, count: reacted, otherActivityAt: lastActivity)
             ? noticeLine(r.lastReaction!, count: reacted, reactorName: friendName)
             : "\(authorName) · \(whenText)\(r.editedAt != nil ? " · edited" : "")\(comments.isEmpty ? "" : " · \(comments)")"
         if hidden {
             let arrives = DLTime.clock(r.arrivesAt, now: now)
-            Button { notice(.text("Arrives at \(arrives)")) } label: {
+            Button { notice(.text(t("discussions.arrivesAt", ["time": arrives]))) } label: {
                 Note(.blank, tilt: tilt) {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("A discussion is on its way").font(.custom(DLFontName.literataSemiBold.rawValue, size: 17, relativeTo: .body))
-                            Text("\(authorName) · arrives \(arrives)").font(.custom(DLFontName.manropeMedium.rawValue, size: 13, relativeTo: .footnote))
+                            Text(t("discussions.aDiscussionIsOnIts")).font(.custom(DLFontName.literataSemiBold.name, size: 17, relativeTo: .body))
+                            Text(t("discussions.arrives", ["authorName": authorName, "arrives": arrives])).font(.custom(DLFontName.manropeMedium.name, size: 13, relativeTo: .footnote))
                         }
                         .foregroundStyle(.dlNoteInkQuiet)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -245,25 +243,25 @@ private struct NoteRow: View {
                 }
             }
             .buttonStyle(DLPressStyle(scale: 0.99))
-            .accessibilityLabel("A discussion is on its way, arrives \(arrives)")
+            .accessibilityLabel(t("discussions.aDiscussionIsOnIts2", ["arrives": arrives]))
         } else {
             Button { open(.discussion(r.id)) } label: {
                 Note(.of(r.color), unseen: fresh > 0, tilt: tilt) {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(r.title ?? firstLineOf(r.firstLine, media: nil))
-                                .font(.custom(DLFontName.literataSemiBold.rawValue, size: 17, relativeTo: .body))
+                                .font(.custom(DLFontName.literataSemiBold.name, size: 17, relativeTo: .body))
                                 .foregroundStyle(.dlNoteInk)
                                 .lineLimit(2)
                             Text(meta)
-                                .font(.custom(DLFontName.manropeMedium.rawValue, size: 13, relativeTo: .footnote))
+                                .font(.custom(DLFontName.manropeMedium.name, size: 13, relativeTo: .footnote))
                                 .foregroundStyle(.dlNoteInkQuiet)
                                 .lineLimit(2)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         if r.mine, state == LetterState.inReach {
-                            Text("\(DLTime.countdown(DLTime.remaining(until: r.windowEndsAt, now: now))) to take back")
-                                .font(.custom(DLFontName.manropeBold.rawValue, size: 12, relativeTo: .caption).monospacedDigit())
+                            Text(t("discussions.toTakeBack", ["countdown": DLTime.countdown(DLTime.remaining(until: r.windowEndsAt, now: now))]))
+                                .font(.custom(DLFontName.manropeBold.name, size: 12, relativeTo: .caption).monospacedDigit())
                                 .foregroundStyle(.dlLetterInk)
                                 .padding(.horizontal, 10)
                                 .frame(height: 28)
@@ -273,7 +271,7 @@ private struct NoteRow: View {
                         } else if r.isNew {
                             NewChip()
                         } else if fresh > 0 {
-                            NewChip("\(fresh) NEW")
+                            NewChip("\(formatNumber(fresh)) \(t("discussions.new"))")
                         }
                     }
                     .padding(EdgeInsets(top: 26, leading: 16, bottom: 18, trailing: 16))
@@ -285,7 +283,7 @@ private struct NoteRow: View {
 
     private func countdown(_ iso: String) -> some View {
         Text(DLTime.countdown(DLTime.remaining(until: iso, now: now)))
-            .font(.custom(DLFontName.manropeBold.rawValue, size: 16, relativeTo: .headline).monospacedDigit())
+            .font(.custom(DLFontName.manropeBold.name, size: 16, relativeTo: .headline).monospacedDigit())
             .foregroundStyle(.dlNoteInk)
     }
 }

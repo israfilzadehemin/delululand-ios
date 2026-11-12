@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -79,14 +80,14 @@ private struct HomeContent: View {
                     EmptyPost()
                 } else if let friend {
                     if !home.from.isEmpty {
-                        GroupHeading(text: "From \(friend.nickname)", who: Who.of(friend.id, first: first))
+                        GroupHeading(text: t("home.from", ["nickname": friend.nickname]), who: Who.of(friend.id, first: first))
                         ForEach(Array(home.from.enumerated()), id: \.element.id) { i, row in
                             FromRow(row: row, now: now, who: Who.of(friend.id, first: first))
                                 .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i))
                         }
                     }
                     if !home.to.isEmpty {
-                        GroupHeading(text: "To \(friend.nickname)", who: Who.of(home.me.id, first: first))
+                        GroupHeading(text: t("home.to", ["nickname": friend.nickname]), who: Who.of(home.me.id, first: first))
                         ForEach(Array(home.to.enumerated()), id: \.element.id) { i, row in
                             ToRow(row: row, now: now, who: Who.of(home.me.id, first: first)) { cancelId = row.id }
                                 .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i + home.from.count))
@@ -116,7 +117,7 @@ private struct HomeContent: View {
         }
         .takeBackDialog(
             isPresented: Binding(get: { cancelId != nil }, set: { if !$0, !cancelling { cancelId = nil } }),
-            friend: friend?.nickname ?? "Friend",
+            friend: friend?.nickname ?? t("common.friend"),
             draftEmpty: home.me.draftEmpty
         ) {
             guard let id = cancelId else { return }
@@ -148,14 +149,14 @@ private struct MyMood: View {
             Button(action: onOpen) {
                 Group {
                     if let mood = me.moodText {
-                        (Text(mood).font(.custom(DLFontName.manropeBold.rawValue, size: 14, relativeTo: .subheadline)).foregroundColor(.dlInk)
-                            + Text(" · set \(ageWords(me.moodSetAt, now: now))")
-                            .font(.custom(DLFontName.manropeMedium.rawValue, size: 13, relativeTo: .footnote))
+                        (Text(mood).font(.custom(DLFontName.manropeBold.name, size: 14, relativeTo: .subheadline)).foregroundColor(.dlInk)
+                            + Text(" " + t("home.set", ["age": ageWords(me.moodSetAt, now: now)]))
+                            .font(.custom(DLFontName.manropeMedium.name, size: 13, relativeTo: .footnote))
                             .foregroundColor(.dlInkQuiet))
                             .lineLimit(1)
                     } else {
-                        Text("Set your mood")
-                            .font(.custom(DLFontName.manropeBold.rawValue, size: 14, relativeTo: .subheadline))
+                        Text(t("home.setYourMood"))
+                            .font(.custom(DLFontName.manropeBold.name, size: 14, relativeTo: .subheadline))
                             .foregroundStyle(.dlSeal)
                     }
                 }
@@ -172,7 +173,7 @@ private struct MyMood: View {
                 .contentShape(Capsule())
             }
             .buttonStyle(DLPressStyle())
-            .accessibilityHint("Change your mood")
+            .accessibilityHint(t("home.changeYourMood"))
         }
     }
 }
@@ -187,17 +188,17 @@ private struct FriendCard: View {
         HStack(spacing: 12) {
             Button(action: onOpen) { CitizenAvatar(friend, size: 48) }
                 .buttonStyle(DLPressStyle())
-                .accessibilityLabel("\(friend.nickname)’s profile")
+                .accessibilityLabel(t("home.sProfile", ["nickname": friend.nickname]))
             VStack(alignment: .leading, spacing: 2) {
                 Text(friend.nickname)
-                    .font(.custom(DLFontName.manropeBold.rawValue, size: 15, relativeTo: .subheadline))
+                    .font(.custom(DLFontName.manropeBold.name, size: 15, relativeTo: .subheadline))
                     .foregroundStyle(.dlInk)
                 if let mood = friend.moodText {
-                    (Text(mood).foregroundColor(.dlInk) + Text(" · set \(ageWords(friend.moodSetAt, now: now))").foregroundColor(.dlInkQuiet))
-                        .font(.custom(DLFontName.manropeMedium.rawValue, size: 14, relativeTo: .subheadline))
+                    (Text(mood).foregroundColor(.dlInk) + Text(" " + t("home.set", ["age": ageWords(friend.moodSetAt, now: now)])).foregroundColor(.dlInkQuiet))
+                        .font(.custom(DLFontName.manropeMedium.name, size: 14, relativeTo: .subheadline))
                 } else {
-                    Text("No mood yet")
-                        .font(.custom(DLFontName.manropeMedium.rawValue, size: 14, relativeTo: .subheadline))
+                    Text(t("home.noMoodYet"))
+                        .font(.custom(DLFontName.manropeMedium.name, size: 14, relativeTo: .subheadline))
                         .foregroundStyle(.dlInkQuiet)
                 }
             }
@@ -217,12 +218,12 @@ private struct WaitingCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Waiting for someone to join").dlText(.headline).foregroundStyle(.dlInk)
-            Text("Send \(name)’s key to the one person you want here.\(isCreator ? " Lost it? Make a new one." : "")")
+            Text(t("home.waitingForSomeoneToJoin")).dlText(.headline).foregroundStyle(.dlInk)
+            Text(t(isCreator ? "home.waitingCreator" : "home.waiting", ["name": name]))
                 .dlText(.callout)
                 .foregroundStyle(.dlInk)
             if isCreator {
-                Button("You › Universe", action: onUniverse)
+                Button(t("home.youUniverse"), action: onUniverse)
                     .buttonStyle(DLButtonStyle(.outline))
             }
         }
@@ -248,7 +249,7 @@ private struct HomeClocks: View {
             .padding(.horizontal, 2)
             .padding(.vertical, 2)
             .accessibilityElement(children: .contain)
-            .accessibilityLabel("Local times")
+            .accessibilityLabel(t("home.localTimes"))
         }
     }
 }
@@ -262,19 +263,19 @@ private struct ZoneClock: View {
         let zone = person.timezone ?? "UTC"
         let (hour, minute) = DLTime.wallClock(now, zone: zone)
         let night = DLTime.isNight(hour: hour)
-        let hhmm = String(format: "%02d:%02d", hour, minute)
+        let hhmm = localDigits(String(format: "%02d:%02d", hour, minute))
         let city = DLTime.city(of: zone)
         HStack(spacing: 10) {
             ClockFace(hour: hour, minute: minute, night: night, ring: Who.of(person.id, first: first).signature)
                 .frame(width: 56, height: 56)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(person.nickname) · \(city)")
-                    .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 13, relativeTo: .footnote))
+                    .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote))
                     .foregroundStyle(.dlInk)
                     .lineLimit(1)
                 (Text(hhmm).foregroundColor(.dlSeal)
-                    + Text(night ? " · night" : "").font(.custom(DLFontName.manropeMedium.rawValue, size: 15, relativeTo: .subheadline)).foregroundColor(.dlInkQuiet))
-                    .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 15, relativeTo: .subheadline).monospacedDigit())
+                    + Text(night ? " " + t("home.night") : "").font(.custom(DLFontName.manropeMedium.name, size: 15, relativeTo: .subheadline)).foregroundColor(.dlInkQuiet))
+                    .font(.custom(DLFontName.manropeExtraBold.name, size: 15, relativeTo: .subheadline).monospacedDigit())
             }
             Spacer(minLength: 0)
         }
@@ -334,7 +335,7 @@ private struct GroupHeading: View {
 
     var body: some View {
         Text(text.uppercased())
-            .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 11, relativeTo: .caption2))
+            .font(.custom(DLFontName.manropeExtraBold.name, size: 11, relativeTo: .caption2))
             .tracking(0.99)
             .foregroundStyle(who == .a ? Color.dlSeal : Color.dlInkQuiet)
             .padding(.top, 4)
@@ -350,7 +351,7 @@ private struct RowLine: View {
 
     var body: some View {
         Text(text)
-            .font(.custom(strong ? DLFontName.manropeBold.rawValue : DLFontName.manropeMedium.rawValue, size: 15, relativeTo: .subheadline))
+            .font(.custom(strong ? DLFontName.manropeBold.name : DLFontName.manropeMedium.name, size: 15, relativeTo: .subheadline))
             .foregroundStyle(.dlLetterInk)
             .lineLimit(1)
             .truncationMode(.tail)
@@ -362,7 +363,7 @@ private struct RowMeta: View {
 
     var body: some View {
         Text(text)
-            .font(.custom(DLFontName.manropeMedium.rawValue, size: 13, relativeTo: .footnote))
+            .font(.custom(DLFontName.manropeMedium.name, size: 13, relativeTo: .footnote))
             .foregroundStyle(.dlInkQuiet)
     }
 }
@@ -376,7 +377,7 @@ private struct InTransit: View {
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                RowMeta(text: "On its way · arrives \(arrives)")
+                RowMeta(text: t("home.onItsWayArrives", ["arrives": arrives]))
                 LetterArc(progress: travelled(row, now: now), who: who)
             }
             Text(DLTime.countdown(DLTime.remaining(until: row.arrivesAt, now: now)))
@@ -403,7 +404,7 @@ private struct FromRow: View {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 0) {
                             RowLine(text: firstLineOf(row), strong: true)
-                            RowMeta(text: "Arrived \(DLTime.clock(row.arrivesAt, now: now))")
+                            RowMeta(text: t("home.arrived", ["time": DLTime.clock(row.arrivesAt, now: now)]))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         if let stamp = row.stamp { RowStamp(stamp, id: row.id) }
@@ -413,12 +414,12 @@ private struct FromRow: View {
             }
             .buttonStyle(DLPressStyle(scale: 0.99))
         } else {
-            Button { notice(.text("Arrives at \(arrives)")) } label: {
+            Button { notice(.text(t("home.arrivesAt", ["time": arrives]))) } label: {
                 LetterTile(.envelope, who: who) { InTransit(row: row, now: now, who: who, arrives: arrives) }
             }
             .buttonStyle(DLPressStyle(scale: 0.99))
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("On its way, arrives \(arrives)")
+            .accessibilityLabel(t("home.onItsWayArrives2", ["arrives": arrives]))
         }
     }
 }
@@ -438,11 +439,11 @@ private struct ToRow: View {
         case LetterState.inReach:
             LetterTile(.envelope, who: who, reach: true) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("\(DLTime.countdown(DLTime.remaining(until: row.windowEndsAt, now: now))) left to edit or cancel")
-                        .font(.custom(DLFontName.manropeBold.rawValue, size: 13, relativeTo: .footnote).monospacedDigit())
+                    Text(t("home.leftToEditOrCancel", ["countdown": DLTime.countdown(DLTime.remaining(until: row.windowEndsAt, now: now))]))
+                        .font(.custom(DLFontName.manropeBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
                         .foregroundStyle(.dlLetterInk)
                     Spacer(minLength: 8)
-                    RowMeta(text: "Arrives \(arrives)")
+                    RowMeta(text: t("home.arrives", ["arrives": arrives]))
                 }
                 Button { open(.letter(row.id)) } label: {
                     HStack(spacing: 8) {
@@ -453,8 +454,8 @@ private struct ToRow: View {
                 }
                 .buttonStyle(.plain)
                 HStack(spacing: 8) {
-                    ReachButton("Edit") { open(.write(editId: row.id)) }
-                    ReachButton("Cancel", action: onCancel)
+                    ReachButton(t("home.edit")) { open(.write(editId: row.id)) }
+                    ReachButton(t("home.cancel"), action: onCancel)
                 }
             }
         case LetterState.inTransit:
@@ -463,7 +464,7 @@ private struct ToRow: View {
             }
             .buttonStyle(DLPressStyle(scale: 0.99))
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("On its way, arrives \(arrives)")
+            .accessibilityLabel(t("home.onItsWayArrives2", ["arrives": arrives]))
         default:
             Button { open(.letter(row.id)) } label: {
                 LetterTile(.sheet, who: who) {
@@ -471,8 +472,8 @@ private struct ToRow: View {
                         VStack(alignment: .leading, spacing: 0) {
                             RowLine(text: firstLineOf(row), strong: false)
                             RowMeta(text: state == LetterState.read
-                                ? "Read \(DLTime.clock(row.readAt, now: now))"
-                                : "Delivered \(DLTime.clock(row.arrivesAt, now: now)) · not read yet")
+                                ? t("home.readAt", ["time": DLTime.clock(row.readAt, now: now)])
+                                : t("home.deliveredNotRead", ["time": DLTime.clock(row.arrivesAt, now: now)]))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         if let stamp = row.stamp { RowStamp(stamp, id: row.id, width: 24) }
@@ -514,7 +515,7 @@ private struct EmptyPost: View {
             .frame(width: 96, height: 72)
             .dlEnter(.rise)
             .accessibilityHidden(true)
-            Text("Nothing in the post yet")
+            Text(t("home.nothingInThePostYet"))
                 .dlText(.subheadline)
                 .foregroundStyle(.dlInkQuiet)
                 .dlEnter(.rise, delay: 0.08)
@@ -544,6 +545,6 @@ private struct HomeLoading: View {
             .padding(.top, 4)
         }
         .scrollDisabled(true)
-        .accessibilityLabel("Loading")
+        .accessibilityLabel(t("home.loading"))
     }
 }

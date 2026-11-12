@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import SwiftUI
 import UIKit
 
@@ -82,7 +83,7 @@ public struct DLStrongLink: View {
     public var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.custom(DLFontName.manropeBold.rawValue, size: 14, relativeTo: .subheadline))
+                .font(.custom(DLFontName.manropeBold.name, size: 14, relativeTo: .subheadline))
                 .underline()
                 .foregroundStyle(.dlInk)
                 .frame(minHeight: 44)
@@ -156,11 +157,11 @@ public struct DLUnreachable: View {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 34, weight: .light))
                 .foregroundStyle(.dlInkQuiet)
-            Text("Can’t reach \(universe). Try again.")
+            Text(t("common.cantReachTryAgain", ["brand": universe]))
                 .dlText(.callout)
                 .foregroundStyle(.dlError)
                 .multilineTextAlignment(.center)
-            Button("Try again", action: retry)
+            Button(t("entry.tryAgain"), action: retry)
                 .buttonStyle(.dlFilled)
         }
         .padding(24)

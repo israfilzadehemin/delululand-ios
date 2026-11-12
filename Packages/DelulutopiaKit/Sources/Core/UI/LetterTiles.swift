@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import SwiftUI
 
@@ -15,9 +16,9 @@ public enum TileShape: Sendable { case envelope, sheet }
 public func firstLineOf(_ firstLine: String?, media: LetterMedia?) -> String {
     if let firstLine, !firstLine.isEmpty { return firstLine }
     guard let media else { return "" }
-    if media.photos > 0 { return "Photo" }
-    if media.audios > 0 { return "Voice note" }
-    if media.doodles > 0 { return "Doodle" }
+    if media.photos > 0 { return t("emails.media.photo") }
+    if media.audios > 0 { return t("emails.media.voiceNote") }
+    if media.doodles > 0 { return t("media.doodle") }
     return ""
 }
 
@@ -71,7 +72,7 @@ public struct LetterTile<Content: View>: View {
                     .background(alignment: .leading) {
                         Rectangle().fill(.dlLetterMargin).frame(width: 1).padding(.leading, 7)
                     }
-                    .overlay(alignment: .bottomTrailing) { DogEar() }
+                    .overlay(on: .bottomRight) { DogEar() }
             }
         }
         .background(fill, in: corner)
@@ -230,7 +231,7 @@ public struct ReachButton: View {
     public var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 14, relativeTo: .subheadline))
+                .font(.custom(DLFontName.manropeExtraBold.name, size: 14, relativeTo: .subheadline))
                 .foregroundStyle(.dlSeal)
                 .frame(maxWidth: .infinity, minHeight: 40)
                 .background(.dlLetterEnvelope, in: Capsule())
@@ -246,14 +247,14 @@ public struct NewChip: View {
     let paper: Bool
     let text: String
 
-    public init(_ text: String = "NEW", paper: Bool = true) {
+    public init(_ text: String = t("board.new"), paper: Bool = true) {
         self.text = text
         self.paper = paper
     }
 
     public var body: some View {
         Text(text)
-            .font(.custom(DLFontName.manropeExtraBold.rawValue, fixedSize: 11))
+            .font(.custom(DLFontName.manropeExtraBold.name, fixedSize: 11))
             .tracking(0.88)
             .foregroundStyle(paper ? Color.dlOnNewBadge : Color.white)
             .padding(.horizontal, paper ? 9 : 8)
@@ -290,20 +291,20 @@ public extension View {
         draftEmpty: Bool,
         onYes: @escaping () -> Void
     ) -> some View {
-        confirmationDialog("Take it back?", isPresented: isPresented, titleVisibility: .visible) {
-            Button("Yes, take it back", role: .destructive, action: onYes)
-            Button("No", role: .cancel) {}
+        confirmationDialog(t("discussions.takeItBack"), isPresented: isPresented, titleVisibility: .visible) {
+            Button(t("discussions.yesTakeItBack"), role: .destructive, action: onYes)
+            Button(t("discussions.no"), role: .cancel) {}
         } message: {
-            Text("The letter leaves \(friend)’s Home right away and its text goes back into your draft."
-                + (draftEmpty ? "" : " This replaces your current draft."))
+            Text(t("letters.theLetterLeavesSHome", ["friend": friend])
+                + (draftEmpty ? "" : " " + t("letters.thisReplacesYourCurrentDraft")))
         }
     }
 }
 
 /// The copy of a cancel that failed, and the cancel itself (from Home or a letter page).
 public enum LetterActions {
-    public static let tooLate = "Too late: it’s on its way."
-    public static let notCancelled = "Not cancelled. Try again."
+    public static var tooLate: String { t("common.tooLate") }
+    public static var notCancelled: String { t("letters.notCancelled") }
 
     public enum CancelResult: Sendable { case done, tooLate, failed }
 
@@ -337,7 +338,7 @@ public struct ReachBar<Actions: View>: View {
     public var body: some View {
         HStack(spacing: 10) {
             Text(text)
-                .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 13, relativeTo: .footnote).monospacedDigit())
+                .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
                 .foregroundStyle(.dlInk)
                 .frame(maxWidth: .infinity, alignment: .leading)
             actions
@@ -363,7 +364,7 @@ public struct ReachChip: View {
     public var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 14, relativeTo: .subheadline))
+                .font(.custom(DLFontName.manropeExtraBold.name, size: 14, relativeTo: .subheadline))
                 .foregroundStyle(.dlSeal)
                 .padding(.horizontal, 14)
                 .frame(height: 36)

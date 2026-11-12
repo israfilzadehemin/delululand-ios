@@ -65,7 +65,7 @@ public struct LetterBody: View {
 
     private func content(shown: Double) -> some View {
         let fontSize = size * scale
-        let natural = UIFont(name: DLFontName.literataRegular.rawValue, size: fontSize)?.lineHeight ?? fontSize * 1.3
+        let natural = UIFont(name: DLFontName.literataRegular.name, size: fontSize)?.lineHeight ?? fontSize * 1.3
         let spacing = max(0, lineHeight * scale - natural)
         let starts = starts
         return VStack(alignment: .leading, spacing: 0) {
@@ -86,7 +86,7 @@ public struct LetterBody: View {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(items.enumerated()), id: \.offset) { k, item in
                             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                                Text("•").font(.custom(DLFontName.literataRegular.rawValue, fixedSize: fontSize)).foregroundStyle(color)
+                                Text("•").font(.custom(DLFontName.literataRegular.name, fixedSize: fontSize)).foregroundStyle(color)
                                     .padding(.leading, 6)
                                 Text(Self.attributed(item, start: itemStarts[k], shown: shown, color: color, size: fontSize).0)
                                     .lineSpacing(spacing)
@@ -136,7 +136,7 @@ public struct LetterBody: View {
             if !current.isEmpty, let inSpace { pieces.append((current, inSpace)) }
             for (piece, space) in pieces {
                 var a = AttributedString(piece)
-                a.font = .custom(face.rawValue, fixedSize: size)
+                a.font = .custom(face.name, fixedSize: size)
                 if run.underline { a.underlineStyle = .single }
                 if space {
                     a.foregroundColor = color

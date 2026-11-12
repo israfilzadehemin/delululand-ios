@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import SwiftUI
 
 public enum PIN {
@@ -48,7 +49,7 @@ public struct DLPinPad: View {
                             .contentShape(Circle())
                     }
                     .buttonStyle(DLPressStyle(scale: 0.9))
-                    .accessibilityLabel(biometric == .faceID ? "Unlock with Face ID" : "Unlock with Touch ID")
+                    .accessibilityLabel(t(biometric == .faceID ? "pin.unlockWithFaceId" : "pin.unlockWithTouchId"))
                 } else {
                     Color.clear.frame(width: 78, height: 78)
                 }
@@ -65,11 +66,13 @@ public struct DLPinPad: View {
                         .contentShape(Circle())
                 }
                 .buttonStyle(DLPressStyle(scale: 0.9))
-                .accessibilityLabel("Backspace")
+                .accessibilityLabel(t("common.backspace"))
             }
         }
         .disabled(!enabled)
         .sensoryFeedback(.selection, trigger: ticks)
+        // L5: a keypad keeps its order in every language (1 2 3 left to right; backspace bottom right).
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private func key(_ d: Character) -> some View {
@@ -79,7 +82,7 @@ public struct DLPinPad: View {
             ticks += 1
             if digits.count == PIN.length { onComplete(digits) }
         } label: {
-            Text(String(d))
+            Text(localDigits(String(d)))
                 .font(.system(size: 34, weight: .regular))
                 .foregroundStyle(.dlInk)
                 .frame(width: 78, height: 78)

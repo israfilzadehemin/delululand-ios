@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import SwiftUI
 import UIKit
@@ -26,12 +27,12 @@ public struct DoodleSurface: Sendable, Equatable {
 
 /// Q4 Standard: 8 palette colours (the ink baked into the PNG, the same on every client).
 public let doodleColours: [(name: String, rgb: UInt32)] = [
-    ("Ink", 0x33323B), ("Navy", 0x202B45), ("Terracotta", 0xC96F52), ("Red", 0xB23A3A),
-    ("Mustard", 0xD4A24C), ("Sage", 0x5F8A7D), ("Sky", 0x5B8FC7), ("Lavender", 0x8A7BC0),
+    (t("doodle.colour.ink"), 0x33323B), (t("doodle.colour.navy"), 0x202B45), (t("doodle.colour.terracotta"), 0xC96F52), (t("doodle.colour.red"), 0xB23A3A),
+    (t("doodle.colour.mustard"), 0xD4A24C), (t("doodle.colour.sage"), 0x5F8A7D), (t("doodle.colour.sky"), 0x5B8FC7), (t("doodle.colour.lavender"), 0x8A7BC0),
 ]
 
 /// Q4 Standard: 3 brush sizes in canvas pixels; the eraser is 2.5 × wider.
-public let doodleSizes: [(name: String, width: CGFloat, dot: CGFloat)] = [("Fine", 6, 5), ("Medium", 14, 9), ("Bold", 32, 14)]
+public let doodleSizes: [(name: String, width: CGFloat, dot: CGFloat)] = [(t("doodle.size.fine"), 6, 5), (t("doodle.size.medium"), 14, 9), (t("doodle.size.bold"), 32, 14)]
 private let eraserFactor: CGFloat = 2.5
 private let minStep: CGFloat = 1.5
 
@@ -192,6 +193,8 @@ public struct BoardFrame<Content: View>: View {
                     .padding(.trailing, 16)
                     .padding(.bottom, 2)
                 }
+                // L5: the tray is drawn, not read; its markers stay on the right in Persian.
+                .environment(\.layoutDirection, .leftToRight)
             }
             .background(.dlBoardFrame, in: RoundedRectangle(cornerRadius: 6))
             .overlay(
@@ -236,8 +239,8 @@ public struct DoodlePad: View {
 
     public init(
         surface: DoodleSurface = .letter,
-        title: String = "Doodle",
-        doneLabel: String = "Done",
+        title: String = t("media.doodle"),
+        doneLabel: String = t("doodle.done"),
         busyLabel: String? = nil,
         busy: Bool = false,
         note: String? = nil,
@@ -277,9 +280,9 @@ public struct DoodlePad: View {
             }
         }
         .interactiveDismissDisabled(!history.isUnchanged)
-        .confirmationDialog("Discard doodle?", isPresented: $askDiscard, titleVisibility: .visible) {
-            Button("Discard", role: .destructive, action: onClose)
-            Button("Keep drawing", role: .cancel) {}
+        .confirmationDialog(t("doodle.discardDoodle"), isPresented: $askDiscard, titleVisibility: .visible) {
+            Button(t("doodle.discard"), role: .destructive, action: onClose)
+            Button(t("doodle.keepDrawing"), role: .cancel) {}
         }
         .task(id: backdropURL) {
             guard let backdropURL else { return }
@@ -295,12 +298,12 @@ public struct DoodlePad: View {
         ZStack {
             VStack(spacing: 1) {
                 Text(title)
-                    .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 17, relativeTo: .headline))
+                    .font(.custom(DLFontName.manropeExtraBold.name, size: 17, relativeTo: .headline))
                     .tracking(-0.17)
                     .lineLimit(1)
                 if let note {
                     Text(note)
-                        .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 12, relativeTo: .caption))
+                        .font(.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption))
                         .foregroundStyle(.dlInkQuiet)
                         .lineLimit(1)
                 }
@@ -308,7 +311,7 @@ public struct DoodlePad: View {
             .foregroundStyle(.dlInk)
             .padding(.horizontal, 96)
             HStack {
-                DLGlassIconButton("xmark", label: "Close") {
+                DLGlassIconButton("xmark", label: t("media.close")) {
                     if history.isUnchanged { onClose() } else { askDiscard = true }
                 }
                 Spacer()
@@ -334,7 +337,7 @@ public struct DoodlePad: View {
 
     @ViewBuilder
     private var paper: some View {
-        let label = backdropURL != nil ? "The doodle you are editing" : (blank ? (isBoard ? "Empty board" : "Empty drawing paper") : "Your doodle")
+        let label = backdropURL != nil ? t("doodle.editing") : (blank ? (isBoard ? t("doodle.emptyBoard") : t("doodle.emptyPaper")) : t("doodle.yours"))
         let canvas = GeometryReader { geo in
             let scale = geo.size.width / surface.width
             Canvas { context, _ in
@@ -422,10 +425,10 @@ public struct DoodlePad: View {
                 }
                 Spacer()
                 HStack(spacing: 2) {
-                    tool("eraser", "Eraser", on: eraser) { eraser.toggle() }
-                    tool("arrow.uturn.backward", "Undo", enabled: history.canUndo) { history.undo() }
-                    tool("arrow.uturn.forward", "Redo", enabled: history.canRedo) { history.redo() }
-                    tool("trash", "Clear", enabled: history.canClear(backdrop: backdropURL != nil)) { history.clear(backdrop: backdropURL != nil) }
+                    tool("eraser", t("doodle.eraser"), on: eraser) { eraser.toggle() }
+                    tool("arrow.uturn.backward", t("doodle.undo"), enabled: history.canUndo) { history.undo() }
+                    tool("arrow.uturn.forward", t("doodle.redo"), enabled: history.canRedo) { history.redo() }
+                    tool("trash", t("doodle.clear"), enabled: history.canClear(backdrop: backdropURL != nil)) { history.clear(backdrop: backdropURL != nil) }
                 }
             }
         }

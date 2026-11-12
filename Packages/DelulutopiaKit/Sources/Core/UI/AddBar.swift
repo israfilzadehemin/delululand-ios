@@ -1,6 +1,7 @@
 import AVFoundation
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import Observation
 import PhotosUI
@@ -110,7 +111,7 @@ public struct AddBar: View {
                 AddIcon(symbol: "photo.on.rectangle", enabled: on)
             }
             .disabled(!enabled)
-            .accessibilityLabel("Add photo")
+            .accessibilityLabel(t("media.addPhoto"))
             if recorder.recording {
                 Button { recorder.stop() } label: {
                     HStack(spacing: 6) {
@@ -118,32 +119,32 @@ public struct AddBar: View {
                         Text(DLTime.mediaLength(ms: Int(recorder.elapsed * 1000))).monospacedDigit()
                         Image(systemName: "stop.fill")
                     }
-                    .font(.custom(DLFontName.manropeBold.rawValue, size: 14, relativeTo: .subheadline))
+                    .font(.custom(DLFontName.manropeBold.name, size: 14, relativeTo: .subheadline))
                     .foregroundStyle(.dlError)
                     .padding(.horizontal, 12)
                     .frame(height: 40)
                     .background(.dlErrorTint, in: Capsule())
                 }
-                .accessibilityLabel("Stop recording")
+                .accessibilityLabel(t("media.stopRecording"))
             } else {
                 Button {
                     Task {
                         if await !recorder.start() {
-                            notice(DLToastItem("Microphone is off for \(brand)", actionTitle: "Settings") {
+                            notice(DLToastItem(t("media.microphoneOffFor", ["brand": brand]), actionTitle: t("settings.settings")) {
                                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                             })
                         }
                     }
                 } label: { icon("mic") }
                     .disabled(!enabled)
-                    .accessibilityLabel("Record a voice note")
+                    .accessibilityLabel(t("media.recordAVoiceNote"))
             }
             Button { importing = true } label: { icon("waveform.badge.plus") }
                 .disabled(!enabled || recorder.recording)
-                .accessibilityLabel("Attach audio file")
+                .accessibilityLabel(t("media.attachAudioFile"))
             Button(action: onDoodle) { icon("scribble") }
                 .disabled(!enabled || doodleFull || recorder.recording)
-                .accessibilityLabel(doodleFull ? "Doodle attached · one per letter" : "Draw a doodle")
+                .accessibilityLabel(doodleFull ? t("media.doodleAttached") : t("media.drawADoodle"))
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 8)

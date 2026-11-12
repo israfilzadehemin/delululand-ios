@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -23,7 +24,7 @@ struct ProfileScreen: View {
     @State private var confirmRemove = false
 
     var body: some View {
-        let friend = backend.home.home?.friend?.nickname ?? "your friend"
+        let friend = backend.home.home?.friend?.nickname ?? t("settings.yourFriend")
         ScrollView {
             if let profile {
                 VStack(alignment: .leading, spacing: 16) {
@@ -31,23 +32,23 @@ struct ProfileScreen: View {
                         DLRemoteAvatar(url: profile.avatarUrl, name: profile.username, size: 72, signature: .a, ring: true)
                             .overlay { if photoBusy { ProgressView() } }
                         VStack(alignment: .leading, spacing: 6) {
-                            Button("Change photo", systemImage: "camera") { choosing = true }
+                            Button(t("profile.changePhoto"), systemImage: "camera") { choosing = true }
                                 .buttonStyle(DLButtonStyle(.tint))
                             if profile.avatarUrl != nil {
-                                Button("Remove", systemImage: "trash", role: .destructive) { confirmRemove = true }
+                                Button(t("profile.remove"), systemImage: "trash", role: .destructive) { confirmRemove = true }
                                     .foregroundStyle(.dlError)
                             }
                         }
                         .disabled(photoBusy)
                     }
-                    DLField("Username", text: $username)
-                    DLField("Name", text: $first)
-                    DLField("Surname", text: $last)
+                    DLField(t("profile.username"), text: $username)
+                    DLField(t("settings.name"), text: $first)
+                    DLField(t("profile.surname"), text: $last)
                     DLTimeZoneField(zone: zone) { zone = $0 }
-                    Text("Your username is what \(friend) sees everywhere. Name and surname show only on your profiles. Your time zone sets your clock on Home.")
+                    Text(t("profile.yourUsernameIsWhatSees", ["friend": friend]))
                         .dlText(.footnote).foregroundStyle(.dlInkQuiet)
                     if let error { Text(error).dlText(.footnote).foregroundStyle(.dlError) }
-                    Button(busy ? "Saving…" : "Save") { save() }
+                    Button(busy ? t("common.saving") : t("common.save")) { save() }
                         .buttonStyle(DLButtonStyle(.filled, fullWidth: true))
                         .disabled(busy || username.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
@@ -57,19 +58,19 @@ struct ProfileScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle("Profile")
+        .navigationTitle(t("profile.profile"))
         .navigationBarTitleDisplayMode(.inline)
         .dlPhotoChooser(isPresented: $choosing, hasPhoto: profile?.avatarUrl != nil, onPhoto: upload) { confirmRemove = true }
-        .confirmationDialog("Remove your photo?", isPresented: $confirmRemove, titleVisibility: .visible) {
-            Button("Remove", role: .destructive) {
+        .confirmationDialog(t("profile.removeYourPhoto"), isPresented: $confirmRemove, titleVisibility: .visible) {
+            Button(t("profile.remove"), role: .destructive) {
                 Task {
                     photoBusy = true
                     if let p = try? await backend.api.removeAvatar() { profile = p; backend.home.refreshSoon() }
                     photoBusy = false
                 }
             }
-            Button("Keep it", role: .cancel) {}
-        } message: { Text("Your initials show instead, for you and for \(friend).") }
+            Button(t("profile.keepIt"), role: .cancel) {}
+        } message: { Text(t("profile.yourInitialsShowInsteadFor", ["friend": friend])) }
         .task {
             guard profile == nil, let p = try? await backend.api.profile() else { return }
             profile = p
@@ -87,9 +88,9 @@ struct ProfileScreen: View {
                 profile = try await backend.api.uploadAvatar(jpeg: jpeg)
                 backend.home.refreshSoon()
             } catch let e as APIError {
-                notice(.text(e.isOffline ? "Upload failed. Try again." : e.message))
+                notice(.text(e.isOffline ? t("media.uploadFailed") : e.message))
             } catch {
-                notice(.text("Upload failed. Try again."))
+                notice(.text(t("media.uploadFailed")))
             }
             photoBusy = false
         }
@@ -102,11 +103,11 @@ struct ProfileScreen: View {
             do {
                 profile = try await backend.api.saveProfile(username: username.trimmingCharacters(in: .whitespaces), firstName: first, lastName: last, timezone: zone)
                 backend.home.refreshSoon()
-                notice(.text("Profile saved"))
+                notice(.text(t("profile.saved")))
             } catch let e as APIError where (400 ..< 500).contains(e.status) {
                 error = e.message
             } catch {
-                self.error = "Not saved. Try again."
+                self.error = t("common.notSavedTryAgain")
             }
             busy = false
         }
@@ -127,17 +128,17 @@ struct FriendScreen: View {
                             CitizenAvatar(f, size: 96)
                             Text(f.nickname).dlText(.title2).foregroundStyle(.dlInk)
                             let full = [f.firstName, f.lastName].compactMap { $0 }.joined(separator: " ")
-                            Text(full.isEmpty ? "No name added" : full).dlText(.subheadline).foregroundStyle(.dlInkQuiet)
+                            Text(full.isEmpty ? t("profile.noNameAdded") : full).dlText(.subheadline).foregroundStyle(.dlInkQuiet)
                         }
                         .frame(maxWidth: .infinity)
                         .listRowBackground(Color.clear)
                     }
                     Section {
                         if let tz = f.timezone {
-                            let t = DLTime.wallClock(now, zone: tz)
-                            fact("Local time", String(format: "%02d:%02d", t.hour, t.minute) + " · " + DLTime.city(of: tz))
+                            let wall = DLTime.wallClock(now, zone: tz)
+                            fact(t("profile.localTime"), localDigits(String(format: "%02d:%02d", wall.hour, wall.minute)) + " · " + DLTime.city(of: tz))
                         }
-                        fact("Mood", f.moodText.map { "\($0) · \(ageWords(f.moodSetAt, now: now))" } ?? "No mood yet")
+                        fact(t("profile.mood"), f.moodText.map { "\($0) · \(ageWords(f.moodSetAt, now: now))" } ?? t("profile.noMoodYet"))
                     }
                 }
                 .dlGroupedList()
@@ -174,42 +175,42 @@ struct UniverseScreen: View {
             if let v = view {
                 VStack(alignment: .leading, spacing: 16) {
                     if v.isCreator {
-                        DLField("Name", text: $name)
-                        DLField("Welcome message", text: $welcome, multilineMinHeight: 140)
-                        Button(busy ? "Saving…" : "Save") {
+                        DLField(t("settings.name"), text: $name)
+                        DLField(t("settings.welcomeMessage"), text: $welcome, multilineMinHeight: 140)
+                        Button(busy ? t("common.saving") : t("common.save")) {
                             busy = true
                             Task {
                                 do {
                                     view = try await backend.api.updateUniverse(name: name, welcome: welcome)
                                     backend.home.refreshSoon()
-                                    notice(.text("Saved"))
+                                    notice(.text(t("settings.universeSaved")))
                                 } catch let e as APIError {
-                                    notice(.text((400 ..< 500).contains(e.status) ? e.message : "Not saved. Try again."))
+                                    notice(.text((400 ..< 500).contains(e.status) ? e.message : t("common.notSavedTryAgain")))
                                 } catch {}
                                 busy = false
                             }
                         }
                         .buttonStyle(DLButtonStyle(.filled, fullWidth: true))
                         .disabled(busy || name.trimmingCharacters(in: .whitespaces).isEmpty || (name == v.name && welcome == v.welcome))
-                        DLSectionLabel("Entry key")
+                        DLSectionLabel(t("settings.entryKey"))
                         if let key = newKey {
                             Text(groupKey(key)).font(.system(.title2, design: .monospaced).weight(.semibold)).foregroundStyle(.dlInk).textSelection(.enabled)
                             HStack {
-                                Button("Copy") { UIPasteboard.general.string = groupKey(key); notice(.text("Copied")) }.buttonStyle(DLButtonStyle(.tint))
-                                ShareLink(item: groupKey(key)) { Label("Share", systemImage: "square.and.arrow.up") }.buttonStyle(DLButtonStyle(.tint))
+                                Button(t("universe.copy")) { UIPasteboard.general.string = groupKey(key); notice(.text(t("universe.copied"))) }.buttonStyle(DLButtonStyle(.tint))
+                                ShareLink(item: groupKey(key)) { Label(t("universe.share"), systemImage: "square.and.arrow.up") }.buttonStyle(DLButtonStyle(.tint))
                             }
                         }
-                        Text("\(v.codeRotatedAt.map { "Made \(DLTime.day($0)). " } ?? "")Keys can’t be shown again; make a new one if it’s lost.")
+                        Text(v.codeRotatedAt.map { t("settings.keyMadeOn", ["day": DLTime.day($0)]) } ?? t("settings.keysCantBeShown"))
                             .dlText(.footnote).foregroundStyle(.dlInkQuiet)
-                        Button("Make a new key") { confirmKey = true }.buttonStyle(DLButtonStyle(.outline))
+                        Button(t("settings.makeANewKey")) { confirmKey = true }.buttonStyle(DLButtonStyle(.outline))
                     } else {
-                        Text("Only \(v.creator?.username ?? "the creator") can change this.").dlText(.footnote).foregroundStyle(.dlInkQuiet)
-                        DLSectionLabel("Name")
+                        Text(t("settings.onlyCanChangeThis", ["username": v.creator?.username ?? t("settings.theCreator")])).dlText(.footnote).foregroundStyle(.dlInkQuiet)
+                        DLSectionLabel(t("settings.name"))
                         Text(v.name).dlText(.body).foregroundStyle(.dlInk)
-                        DLSectionLabel("Welcome message")
+                        DLSectionLabel(t("settings.welcomeMessage"))
                         Text(v.welcome).dlText(.letterBody).foregroundStyle(.dlInk)
                         if let c = v.creator {
-                            DLSectionLabel("Created by")
+                            DLSectionLabel(t("settings.createdBy"))
                             Text(c.username).dlText(.body).foregroundStyle(.dlInk)
                         }
                     }
@@ -220,22 +221,22 @@ struct UniverseScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle("Universe")
+        .navigationTitle(t("settings.universe"))
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Make a new key?", isPresented: $confirmKey) {
-            Button("Cancel", role: .cancel) {}
-            Button("Make a new key") {
+        .alert(t("settings.makeANewKey2"), isPresented: $confirmKey) {
+            Button(t("settings.cancel"), role: .cancel) {}
+            Button(t("settings.makeANewKey")) {
                 Task {
                     if let k = try? await backend.api.rotateKey() {
                         newKey = k.code
                         view = try? await backend.api.universe()
                     } else {
-                        notice(.text("Not made. Try again."))
+                        notice(.text(t("settings.keyNotMade")))
                     }
                 }
             }
         } message: {
-            Text("The old key stops working. Devices that are logged in stay in; devices that only entered the key will need the new one.")
+            Text(t("settings.theOldKeyStopsWorking"))
         }
         .task {
             guard view == nil, let v = try? await backend.api.universe() else { return }
@@ -260,12 +261,12 @@ struct NotificationsScreen: View {
             Section {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("This \(deviceWord) · \(permission.word)").dlText(.subheadlineBold).foregroundStyle(.dlInk)
+                        Text(t("settings.thisDeviceNamed", ["device": deviceWord, "state": permission.word])).dlText(.subheadlineBold).foregroundStyle(.dlInk)
                         Text(permission.line).dlText(.footnote).foregroundStyle(.dlInkQuiet)
                     }
                     Spacer()
                     if permission != .on {
-                        Button(permission == .blocked ? "Settings" : "Allow") { allow() }.buttonStyle(DLButtonStyle(.tint))
+                        Button(permission == .blocked ? t("settings.settings") : t("settings.allow")) { allow() }.buttonStyle(DLButtonStyle(.tint))
                     }
                 }
                 .dlListRow()
@@ -273,7 +274,7 @@ struct NotificationsScreen: View {
             if let s = settings {
                 Section {
                     Toggle(isOn: Binding(get: { s.paused }, set: { change(paused: $0) })) {
-                        DLRowLabel("Pause all", subtitle: s.paused ? "Nothing is pushed to any of your devices" : "Stop every push on all your devices")
+                        DLRowLabel(t("settings.pauseAll"), subtitle: s.paused ? t("settings.pausedSub") : t("settings.pauseSub"))
                     }
                     .tint(.dlSeal)
                     .dlListRow()
@@ -298,14 +299,14 @@ struct NotificationsScreen: View {
                     }
                 }
                 Section {
-                    Text("These choices follow you to every device. Dots and NEW marks inside the app stay as they are.")
+                    Text(t("settings.theseChoicesFollowYouTo"))
                         .dlText(.footnote).foregroundStyle(.dlInkQuiet)
                         .listRowBackground(Color.clear)
                 }
             }
         }
         .dlGroupedList()
-        .navigationTitle("Notifications")
+        .navigationTitle(t("settings.notifications"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             permission = await UNAuthorizationStatusWord.current()
@@ -322,7 +323,7 @@ struct NotificationsScreen: View {
             if let s = try? await backend.api.saveNotifications(paused: paused, values: values) {
                 settings = s
             } else {
-                notice(.text("Couldn’t save. Try again."))
+                notice(.text(t("common.couldntSave")))
             }
         }
     }
@@ -353,9 +354,9 @@ enum UNAuthorizationStatusWord {
 
     var word: String {
         switch self {
-        case .on: "On"
-        case .blocked: "Blocked"
-        default: "Off"
+        case .on: t("settings.device.on")
+        case .blocked: t("settings.device.blocked")
+        default: t("settings.device.off")
         }
     }
 
@@ -365,9 +366,9 @@ enum UNAuthorizationStatusWord {
 
     var line: String {
         switch self {
-        case .on: "Notifications reach this \(device)."
-        case .blocked: "Notifications are off for Delulutopia in iOS Settings."
-        default: "This \(device) won’t show notifications."
+        case .on: t("settings.device.onSubDevice", ["device": device])
+        case .blocked: t("settings.device.blockedSubIos")
+        default: t("settings.device.offSubDevice", ["device": device])
         }
     }
 }
@@ -384,23 +385,23 @@ struct ChangePinSheet: View {
     @State private var busy = false
     @State private var done = false
 
-    private let steps = ["Current PIN", "New PIN", "Confirm new PIN"]
+    private let steps = [t("home.pinStep.current"), t("home.pinStep.new"), t("home.pinStep.confirm")]
 
     var body: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("Change PIN").dlText(.title3).foregroundStyle(.dlInk)
+                Text(t("settings.changePin")).dlText(.title3).foregroundStyle(.dlInk)
                 Spacer()
-                DLGlassIconButton("xmark", label: "Close") { dismiss() }
+                DLGlassIconButton("xmark", label: t("universe.close")) { dismiss() }
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
             if done {
                 Spacer()
-                Label("PIN changed", systemImage: "checkmark.circle.fill").dlText(.headline).foregroundStyle(.dlInk)
+                Label(t("home.pinChanged"), systemImage: "checkmark.circle.fill").dlText(.headline).foregroundStyle(.dlInk)
                 Spacer()
             } else {
-                DLPinPanel(prompt: steps[step], hint: step == 0 ? "Your other devices stay logged in. Forgot the current one? It can be cleared on the server; there is no e-mail reset." : nil,
+                DLPinPanel(prompt: steps[step], hint: step == 0 ? t("home.yourOtherDevicesStayLogged") : nil,
                            error: error, digits: $digits, busy: busy, onComplete: complete) { EmptyView() }
             }
         }
@@ -421,7 +422,7 @@ struct ChangePinSheet: View {
             digits = ""
         default:
             guard pin == new else {
-                error = "PINs differ. Start again."
+                error = t("common.pinsDiffer")
                 step = 1
                 digits = ""
                 return
@@ -437,11 +438,11 @@ struct ChangePinSheet: View {
                     try? await Task.sleep(for: .seconds(1.2))
                     dismiss()
                 } catch let e as APIError {
-                    error = e.code == "WRONG_PIN" ? "Wrong PIN. Try again." : ((400 ..< 500).contains(e.status) ? e.message : "Not changed. Try again.")
+                    error = e.code == "WRONG_PIN" ? t("common.wrongPin") : ((400 ..< 500).contains(e.status) ? e.message : t("settings.pinNotChanged"))
                     step = 0
                     digits = ""
                 } catch {
-                    self.error = "Not changed. Try again."
+                    self.error = t("settings.pinNotChanged")
                 }
                 busy = false
             }
@@ -459,7 +460,7 @@ struct BiometricPinSheet: View {
     @State private var busy = false
 
     var body: some View {
-        DLPinPanel(prompt: "Enter your PIN", hint: "Kept on this \(deviceWord) only, opened by \(backend.biometrics.kind == .touchID ? "Touch ID" : "Face ID").",
+        DLPinPanel(prompt: t("pin.enterYourPin"), hint: t("settings.bioKept", ["device": deviceWord, "bio": backend.biometrics.kind == .touchID ? "Touch ID" : "Face ID"]),
                    error: error, digits: $digits, busy: busy, onComplete: { pin in
                        busy = true
                        Task {
@@ -467,13 +468,13 @@ struct BiometricPinSheet: View {
                                try await backend.api.login(userId: userId, pin: pin)
                                onDone(backend.biometrics.store(pin: pin, userId: userId))
                            } catch let e as APIError {
-                               error = e.code == "WRONG_PIN" ? "Wrong PIN. Try again." : "Can’t check your PIN. Try again."
+                               error = e.code == "WRONG_PIN" ? t("common.wrongPin") : t("pin.cantCheck")
                                digits = ""
                            } catch {}
                            busy = false
                        }
                    }) {
-            Text(backend.biometrics.kind == .touchID ? "Touch ID unlock" : "Face ID unlock").dlText(.title3).foregroundStyle(.dlInk)
+            Text(t("settings.bioUnlock", ["bio": backend.biometrics.kind == .touchID ? "Touch ID" : "Face ID"])).dlText(.title3).foregroundStyle(.dlInk)
         }
         .padding(.top, 24)
         .presentationDetents([.large])

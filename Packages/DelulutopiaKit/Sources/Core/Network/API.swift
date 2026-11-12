@@ -1,3 +1,4 @@
+import DLI18n
 import Foundation
 
 /// The API, one function per endpoint (Technical Design §5.2 and the story docs; web `src/api`;
@@ -37,7 +38,7 @@ public struct API: Sendable {
     public func checkInvite(_ invite: String) async throws { try await client.run("POST", "api/invites/check", body: InviteBody(invite: invite)) }
     public func createUniverse(_ request: CreateUniverseRequest) async throws -> CreatedUniverse { try await client.call("POST", "api/universes", body: request) }
     public func join(username: String, timezone: String, pin: String) async throws {
-        try await client.run("POST", "api/universe/join", body: JoinBody(username: username, timezone: timezone, pin: pin))
+        try await client.run("POST", "api/universe/join", body: JoinBody(username: username, timezone: timezone, pin: pin, language: I18n.shared.lang.tag))
     }
     public func universe() async throws -> UniverseView { try await client.call("GET", "api/universe") }
     public func updateUniverse(name: String, welcome: String) async throws -> UniverseView {
@@ -50,6 +51,8 @@ public struct API: Sendable {
     public func homeSession() async throws -> HomeSession { try await client.call("GET", "api/home") }
     public func home() async throws -> Home { try await client.call("GET", "api/home") }
     public func homeCounts() async throws -> HomeCounts { try await client.call("GET", "api/home/counts") }
+    /// L8: the citizen's language, for every device and the notifications they get.
+    public func setLanguage(_ lang: Lang) async throws { try await client.run("PUT", "api/me/language", body: LanguageBody(language: lang.tag)) }
     public func setMood(_ mood: String) async throws -> MoodChange { try await client.call("PUT", "api/me/mood", body: MoodBody(mood: mood)) }
     public func moods() async throws -> MoodCatalogue { try await client.call("GET", "api/moods") }
     public func addMood(emoji: String, label: String) async throws -> Mood {
@@ -212,10 +215,10 @@ public struct API: Sendable {
 
         public var tooLarge: String {
             switch self {
-            case .photo: "This photo is larger than 10 MB"
-            case .audio: "This audio file is larger than 60 MB"
-            case .video: "This video is larger than 100 MB"
-            case .doodle: "This doodle is larger than 2 MB"
+            case .photo: t("media.photoTooLarge")
+            case .audio: t("media.audioTooLarge")
+            case .video: t("media.videoTooLarge")
+            case .doodle: t("media.doodleTooLarge")
             }
         }
 

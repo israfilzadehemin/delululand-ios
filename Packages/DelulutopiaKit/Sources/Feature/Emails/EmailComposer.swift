@@ -1,6 +1,7 @@
 import AVFoundation
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import PhotosUI
@@ -11,7 +12,7 @@ import UniformTypeIdentifiers
 /// Emails Q4, Q5: plain text, counted in grapheme clusters, at most 1024.
 let emailMax = 1024
 let subjectMax = 120
-let trimmedLine = "Trimmed to 1024 characters"
+var trimmedLine: String { t("emails.trimmed") }
 
 func normalize(_ text: String) -> String { text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n") }
 
@@ -25,18 +26,18 @@ func clamp(_ text: String, max: Int = emailMax) -> (String, Bool) {
 func creditsLine(_ c: EmailCredits?) -> String? {
     guard let c else { return nil }
     let renews = DLTime.time(c.renewsAt)
-    return c.left > 0 ? "\(c.left) left today · renews at \(renews)" : "No emails left today · renews at \(renews)"
+    return c.left > 0 ? t("emails.creditsLeft", ["n": c.left, "time": renews]) : t("emails.noCredits", ["time": renews])
 }
 
 /// Words for an email without text (FS-E3, Q3).
 func mediaWords(photos: Int, audios: Int, videos: Int) -> String? {
-    if videos > 0 { return "Video" }
-    if photos > 0 { return photos > 1 ? "\(photos) photos" : "Photo" }
-    if audios > 0 { return audios > 1 ? "\(audios) voice notes" : "Voice note" }
+    if videos > 0 { return t("emails.media.video") }
+    if photos > 0 { return photos > 1 ? t("emails.media.photos", ["n": photos]) : t("emails.media.photo") }
+    if audios > 0 { return audios > 1 ? t("emails.media.voiceNotes", ["n": audios]) : t("emails.media.voiceNote") }
     return nil
 }
 
-func emailCountWords(_ n: Int) -> String { n == 1 ? "1 email" : "\(n) emails" }
+func emailCountWords(_ n: Int) -> String { tn("emails.count", n) }
 
 /// One email composer's state (FS-E11–E16; web emails/EmailComposer.tsx): an optional Subject (a new
 /// email), the text with its 1024 counter, the strip with one video, one autosaved draft per key
@@ -113,7 +114,7 @@ final class EmailComposer {
         } catch let e as DraftSaver.FlushError where e.conflict {
             return .conflict
         } catch {
-            return .failed("Not sent. Try again.")
+            return .failed(t("common.notSent"))
         }
         do {
             let sent = key == "new" ? try await backend.api.sendNewEmail(draftVersion: version)
@@ -134,9 +135,9 @@ final class EmailComposer {
                 return .failed(creditsLine(c) ?? e.message)
             }
             if e.status == 422 || e.code == "VIDEO_LIMIT" { return .failed(e.message) }
-            return .failed("Not sent. Try again.")
+            return .failed(t("common.notSent"))
         } catch {
-            return .failed("Not sent. Try again.")
+            return .failed(t("common.notSent"))
         }
     }
 
@@ -171,13 +172,13 @@ struct ComposerView: View {
             && (!composer.withSubject || !composer.subject.trimmingCharacters(in: .whitespaces).isEmpty)
         VStack(alignment: .leading, spacing: 10) {
             if composer.withSubject {
-                TextField("Subject", text: Binding(get: { composer.subject }, set: { composer.changeSubject($0) }))
-                    .font(.custom(DLFontName.literataSemiBold.rawValue, size: 18, relativeTo: .headline))
+                TextField(t("emails.subject"), text: Binding(get: { composer.subject }, set: { composer.changeSubject($0) }))
+                    .font(.custom(DLFontName.literataSemiBold.name, size: 18, relativeTo: .headline))
                     .foregroundStyle(.dlMailInk)
                     .padding(.vertical, 8)
                     .overlay(alignment: .bottom) { Rectangle().fill(.dlMailLine).frame(height: 1) }
             }
-            TextField(composer.withSubject ? "Write your email" : "Reply", text: Binding(get: { composer.text }, set: { composer.changeText($0) }), axis: .vertical)
+            TextField(composer.withSubject ? t("emails.writeAnEmail") : t("emails.reply"), text: Binding(get: { composer.text }, set: { composer.changeText($0) }), axis: .vertical)
                 .font(.system(size: 16))
                 .foregroundStyle(.dlMailInk)
                 .lineLimit(composer.withSubject ? 8 ... 30 : 3 ... 12)
@@ -199,8 +200,8 @@ struct ComposerView: View {
                             .fixedSize()
                     }
                     Menu {
-                        Button("Record a video", systemImage: "video") { camera = true }
-                        PhotosPicker(selection: $videoPick, matching: .videos) { Label("Pick a video", systemImage: "film") }
+                        Button(t("media.recordAVideo"), systemImage: "video") { camera = true }
+                        PhotosPicker(selection: $videoPick, matching: .videos) { Label(t("media.pickAVideo"), systemImage: "film") }
                     } label: {
                         Image(systemName: "video")
                             .font(.system(size: 19, weight: .medium))
@@ -208,9 +209,9 @@ struct ComposerView: View {
                             .frame(width: 44, height: 44)
                     }
                     .disabled(hasVideo || recording)
-                    .accessibilityLabel(hasVideo ? "Video attached · one per email" : "Add a video")
+                    .accessibilityLabel(hasVideo ? t("media.videoAttachedOnePerEmail") : t("media.addAVideo"))
                     Spacer()
-                    Button(sending ? "Sending…" : "Send") { send() }
+                    Button(sending ? t("common.sending") : t("common.send")) { send() }
                         .buttonStyle(.borderedProminent)
                         .tint(.dlMailBlue)
                         .disabled(!canSend)
@@ -245,9 +246,9 @@ struct ComposerView: View {
             }
             .ignoresSafeArea()
         }
-        .alert("A newer version was saved on another device. Load it?", isPresented: Binding(get: { composer.saver.status == .conflict }, set: { _ in })) {
-            Button("Keep mine", role: .cancel) { composer.saver.keepMine() }
-            Button("Load") { Task { await composer.loadServer() } }
+        .alert(t("emails.aNewerVersionWasSaved"), isPresented: Binding(get: { composer.saver.status == .conflict }, set: { _ in })) {
+            Button(t("emails.keepMine"), role: .cancel) { composer.saver.keepMine() }
+            Button(t("emails.load")) { Task { await composer.loadServer() } }
         }
     }
 

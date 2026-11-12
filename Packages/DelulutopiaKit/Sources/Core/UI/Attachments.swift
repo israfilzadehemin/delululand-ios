@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import ImageIO
 import Observation
@@ -36,8 +37,8 @@ public final class Attachments {
         public let text: String
     }
 
-    public static let uploadFailed = "Upload failed. Try again."
-    static let readFailed = "This file couldn’t be read from your \(UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone")"
+    public static var uploadFailed: String { t("media.uploadFailed") }
+    static var readFailed: String { t("media.readFailedDevice", ["device": UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"]) }
 
     public private(set) var items: [Item]
     public private(set) var errors: [Problem] = []
@@ -205,7 +206,7 @@ public struct AttachmentStrip: View {
                     Button { attachments.dismissError(problem.id) } label: {
                         Image(systemName: "xmark").font(.system(size: 12, weight: .bold)).foregroundStyle(.dlInkQuiet).frame(width: 44, height: 32)
                     }
-                    .accessibilityLabel("Dismiss")
+                    .accessibilityLabel(t("media.dismiss"))
                 }
             }
         }
@@ -214,7 +215,7 @@ public struct AttachmentStrip: View {
 
     @ViewBuilder
     private func tile(_ item: Attachments.Item) -> some View {
-        let label = item.kind == "audio" ? "Voice note" : item.kind == "doodle" ? "Doodle" : item.kind == "video" ? "Video" : "Photo"
+        let label = item.kind == "audio" ? t("emails.media.voiceNote") : item.kind == "doodle" ? t("media.doodle") : item.kind == "video" ? t("media.video") : t("emails.media.photo")
         ZStack(alignment: .topTrailing) {
             Button { if item.att != nil { onOpen(item) } } label: {
                 Group {
@@ -224,7 +225,7 @@ public struct AttachmentStrip: View {
                             Text(DLTime.mediaLength(ms: item.att?.durationMs ?? item.pending?.durationMs))
                                 .monospacedDigit()
                         }
-                        .font(.custom(DLFontName.manropeBold.rawValue, size: 13, relativeTo: .footnote))
+                        .font(.custom(DLFontName.manropeBold.name, size: 13, relativeTo: .footnote))
                         .foregroundStyle(.dlInk)
                         .padding(.horizontal, 12)
                         .frame(height: 64)
@@ -264,7 +265,7 @@ public struct AttachmentStrip: View {
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(item.pending != nil ? "\(label), uploading" : label)
+            .accessibilityLabel(item.pending != nil ? t("media.labelUploading", ["label": label]) : label)
             Button { onRemove(item) } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 10, weight: .bold))
@@ -276,7 +277,7 @@ public struct AttachmentStrip: View {
             }
             .buttonStyle(.plain)
             .offset(x: 14, y: -14)
-            .accessibilityLabel("Remove \(label.lowercased())")
+            .accessibilityLabel(t(item.kind == "audio" ? "media.removeVoiceNote" : item.kind == "doodle" ? "media.removeDoodle" : item.kind == "video" ? "media.removeVideo" : "media.removeThePhoto"))
         }
     }
 }

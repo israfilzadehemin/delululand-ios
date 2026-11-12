@@ -1,26 +1,30 @@
+import DLI18n
 import DLNetwork
 import Foundation
 
 /// Moods (web `src/text/moods.ts`, doc "Delululand — Moods"). The API's catalogue is the source; these
 /// show while it loads.
 public enum Moods {
-    public static let defaults: [Mood] = [
-        ("HAPPY", "😊", "Happy"), ("CALM", "🍵", "Calm"), ("CURIOUS", "🤔", "Curious"), ("INSPIRED", "✨", "Inspired"),
-        ("BUSY", "🏃", "Busy"), ("TIRED", "😴", "Tired"), ("SAD", "🌧️", "Sad"), ("MISSING_YOU", "💌", "Missing you"),
-        ("LOVED", "🥰", "Loved"), ("GRATEFUL", "🙏", "Grateful"), ("EXCITED", "🤩", "Excited"), ("PLAYFUL", "😜", "Playful"),
-        ("COZY", "🧸", "Cozy"), ("HOPEFUL", "🌱", "Hopeful"), ("PROUD", "🏆", "Proud"), ("THINKING_OF_YOU", "💭", "Thinking of you"),
-        ("NEED_A_HUG", "🤗", "Need a hug"), ("BUTTERFLIES", "🦋", "Butterflies"), ("TOUCHED", "🥹", "Touched"),
-        ("SAFE_WITH_YOU", "🫶", "Safe with you"), ("BLISSFUL", "🌸", "Blissful"), ("FLIRTY", "😏", "Flirty"),
-        ("CONTENT", "☺️", "Content"), ("DREAMY", "🌙", "Dreamy"),
-        ("ANXIOUS", "😰", "Anxious"), ("STRESSED", "🤯", "Stressed"), ("ANGRY", "😤", "Angry"), ("LONELY", "🥀", "Lonely"),
-        ("BORED", "🥱", "Bored"), ("SICK", "🤒", "Sick"), ("OVERWHELMED", "🌊", "Overwhelmed"), ("HOMESICK", "🏡", "Homesick"),
-    ].map { Mood(key: $0.0, emoji: $0.1, label: $0.2) }
+    /// Built when asked, so the labels are in the language in force.
+    public static var defaults: [Mood] {
+        [
+        ("HAPPY", "😊", t("mood.HAPPY")), ("CALM", "🍵", t("mood.CALM")), ("CURIOUS", "🤔", t("mood.CURIOUS")), ("INSPIRED", "✨", t("mood.INSPIRED")),
+        ("BUSY", "🏃", t("mood.BUSY")), ("TIRED", "😴", t("mood.TIRED")), ("SAD", "🌧️", t("mood.SAD")), ("MISSING_YOU", "💌", t("mood.MISSING_YOU")),
+        ("LOVED", "🥰", t("mood.LOVED")), ("GRATEFUL", "🙏", t("mood.GRATEFUL")), ("EXCITED", "🤩", t("mood.EXCITED")), ("PLAYFUL", "😜", t("mood.PLAYFUL")),
+        ("COZY", "🧸", t("mood.COZY")), ("HOPEFUL", "🌱", t("mood.HOPEFUL")), ("PROUD", "🏆", t("mood.PROUD")), ("THINKING_OF_YOU", "💭", t("mood.THINKING_OF_YOU")),
+        ("NEED_A_HUG", "🤗", t("mood.NEED_A_HUG")), ("BUTTERFLIES", "🦋", t("mood.BUTTERFLIES")), ("TOUCHED", "🥹", t("mood.TOUCHED")),
+        ("SAFE_WITH_YOU", "🫶", t("mood.SAFE_WITH_YOU")), ("BLISSFUL", "🌸", t("mood.BLISSFUL")), ("FLIRTY", "😏", t("mood.FLIRTY")),
+        ("CONTENT", "☺️", t("mood.CONTENT")), ("DREAMY", "🌙", t("mood.DREAMY")),
+        ("ANXIOUS", "😰", t("mood.ANXIOUS")), ("STRESSED", "🤯", t("mood.STRESSED")), ("ANGRY", "😤", t("mood.ANGRY")), ("LONELY", "🥀", t("mood.LONELY")),
+        ("BORED", "🥱", t("mood.BORED")), ("SICK", "🤒", t("mood.SICK")), ("OVERWHELMED", "🌊", t("mood.OVERWHELMED")), ("HOMESICK", "🏡", t("mood.HOMESICK")),
+        ].map { Mood(key: $0.0, emoji: $0.1, label: $0.2) }
+    }
 
     public static let perPage = 8
     public static let limit = 48
     public static let labelMax = 16
-    public static let labelRule = "Up to 16 letters, digits or simple punctuation"
-    public static let labelTaken = "That mood already exists."
+    public static var labelRule: String { t("home.moodLabelRule") }
+    public static var labelTaken: String { t("home.moodTaken") }
 
     /// "🌧️ Sad", or nil for no mood. An emoji and label from the API win over the code.
     public static func text(_ code: String?, emoji: String? = nil, label: String? = nil, catalogue: [Mood] = defaults) -> String? {

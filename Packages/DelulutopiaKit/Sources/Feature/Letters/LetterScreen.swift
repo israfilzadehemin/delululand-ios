@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
@@ -151,7 +152,7 @@ public struct LetterScreen: View {
 
     public var body: some View {
         let ids = ids
-        let friend = backend.home.home?.friend?.nickname ?? "Friend"
+        let friend = backend.home.home?.friend?.nickname ?? t("common.friend")
         let shown: LetterFull? = if case let .shown(l) = reader?.letters[current] { l } else { nil }
         Group {
             if let reader {
@@ -173,14 +174,14 @@ public struct LetterScreen: View {
             if let shown, !shown.isMine {
                 ToolbarItemGroup(placement: .bottomBar) {
                     let i = ids.firstIndex(of: current) ?? 0
-                    Button { withAnimation { current = ids[i + 1] } } label: { Image(systemName: "chevron.left") }
+                    Button { withAnimation { current = ids[i + 1] } } label: { Image(systemName: "chevron.backward") }
                         .disabled(i >= ids.count - 1)
-                        .accessibilityLabel("Older letter")
+                        .accessibilityLabel(t("letters.olderLetter"))
                     Spacer()
                     Button { open(.write(replyTo: shown.id)) } label: {
-                        Label("Reply", systemImage: "arrowshape.turn.up.left")
+                        Label(t("letters.reply"), systemImage: "arrowshape.turn.up.backward")
                             .labelStyle(.titleAndIcon)
-                            .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 16, relativeTo: .headline))
+                            .font(.custom(DLFontName.manropeExtraBold.name, size: 16, relativeTo: .headline))
                             .padding(.horizontal, 22)
                             .frame(height: 44)
                             .foregroundStyle(.dlOnSeal)
@@ -188,9 +189,9 @@ public struct LetterScreen: View {
                     }
                     .buttonStyle(DLPressStyle())
                     Spacer()
-                    Button { withAnimation { current = ids[i - 1] } } label: { Image(systemName: "chevron.right") }
+                    Button { withAnimation { current = ids[i - 1] } } label: { Image(systemName: "chevron.forward") }
                         .disabled(i <= 0)
-                        .accessibilityLabel("Newer letter")
+                        .accessibilityLabel(t("letters.newerLetter"))
                 }
             }
         }
@@ -214,11 +215,11 @@ public struct LetterScreen: View {
         case let .shown(letter):
             LetterContent(letter: letter, swiped: letterId != id, reader: reader)
         case let .notArrived(at):
-            Gone(text: "Arrives at \(DLTime.clock(at))") { dismiss() }
+            Gone(text: t("letters.arrivesAt", ["time": DLTime.clock(at)])) { dismiss() }
         case .gone:
-            Gone(text: "This letter isn’t here anymore.") { dismiss() }
+            Gone(text: t("letters.thisLetterIsntHereAnymore")) { dismiss() }
         case .unreachable:
-            Gone(text: "Can’t reach \(backend.home.home?.universe.name ?? "Delulutopia"). Try again.") { dismiss() }
+            Gone(text: t("letters.cantReachTryAgain", ["brand": backend.home.home?.universe.name ?? "Delulutopia"])) { dismiss() }
         default:
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -232,7 +233,7 @@ private struct Gone: View {
     var body: some View {
         VStack(spacing: 16) {
             Text(text).dlText(.callout).foregroundStyle(.dlInkQuiet).multilineTextAlignment(.center)
-            Button("Back", action: onBack).buttonStyle(DLButtonStyle(.outline))
+            Button(t("letters.back"), action: onBack).buttonStyle(DLButtonStyle(.outline))
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -278,13 +279,13 @@ private struct LetterContent: View {
         }
         .fullScreenCover(isPresented: $doodleOpen) {
             if let doodle = letter.attachments.first(where: { $0.kind == "doodle" }) {
-                Lightbox(items: [doodle], index: 0, title: "Doodle") { doodleOpen = false }
+                Lightbox(items: [doodle], index: 0, title: t("letters.doodle")) { doodleOpen = false }
                     .environment(backend)
             }
         }
         .takeBackDialog(
             isPresented: $askCancel,
-            friend: backend.home.home?.friend?.nickname ?? "Friend",
+            friend: backend.home.home?.friend?.nickname ?? t("common.friend"),
             draftEmpty: backend.home.home?.me.draftEmpty != false
         ) {
             Task {
@@ -327,9 +328,9 @@ private struct LetterContent: View {
         return GeometryReader { geo in ScrollView {
             VStack(spacing: 10) {
                 if inReach {
-                    ReachBar("\(DLTime.countdown(DLTime.remaining(until: letter.windowEndsAt, now: now))) left to edit or cancel") {
-                        ReachChip("Edit") { open(.write(editId: letter.id)) }
-                        ReachChip("Cancel") { askCancel = true }
+                    ReachBar(t("letters.leftToEditOrCancel", ["countdown": DLTime.countdown(DLTime.remaining(until: letter.windowEndsAt, now: now))])) {
+                        ReachChip(t("letters.edit")) { open(.write(editId: letter.id)) }
+                        ReachChip(t("letters.cancel")) { askCancel = true }
                     }
                 }
                 ZStack(alignment: .top) {
@@ -339,13 +340,14 @@ private struct LetterContent: View {
                             HStack(spacing: 12) {
                                 if let sender { CitizenAvatar(sender, size: 40) }
                                 VStack(alignment: .leading, spacing: 2) {
-                                    (Text(sender?.nickname ?? "").font(.custom(DLFontName.manropeBold.rawValue, size: 15, relativeTo: .subheadline))
-                                        + Text(feeling.map { " · Feeling \($0)" } ?? "")
-                                        .font(.custom(DLFontName.manropeMedium.rawValue, size: 15, relativeTo: .subheadline))
+                                    (Text(sender?.nickname ?? "").font(.custom(DLFontName.manropeBold.name, size: 15, relativeTo: .subheadline))
+                                        + Text(feeling.map { " " + t("letters.feeling", ["feeling": $0]) } ?? "")
+                                        .font(.custom(DLFontName.manropeMedium.name, size: 15, relativeTo: .subheadline))
                                         .foregroundColor(.dlInkQuiet))
                                         .foregroundStyle(.dlLetterInk)
-                                    Text("Sent \(DLTime.clock(letter.sentAt, now: now)) · \(arrived ? "Arrived" : "Arrives") \(DLTime.clock(letter.arrivesAt, now: now))")
-                                        .font(.custom(DLFontName.manropeMedium.rawValue, size: 12, relativeTo: .caption).monospacedDigit())
+                                    Text(arrived ? t("letters.timesArrived", ["sent": DLTime.clock(letter.sentAt, now: now), "arrived": DLTime.clock(letter.arrivesAt, now: now)])
+                                        : t("letters.timesArrives", ["sent": DLTime.clock(letter.sentAt, now: now), "arrives": DLTime.clock(letter.arrivesAt, now: now)]))
+                                        .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption).monospacedDigit())
                                         .foregroundStyle(.dlInkQuiet)
                                 }
                                 Spacer(minLength: 0)
@@ -358,7 +360,7 @@ private struct LetterContent: View {
                                 }
                             }
                             if let reply = letter.replyTo {
-                                ReplyQuote(reply: reply, friendName: home?.friend?.nickname ?? "Friend", now: now) {
+                                ReplyQuote(reply: reply, friendName: home?.friend?.nickname ?? t("common.friend"), now: now) {
                                     open(.letter(reply.id))
                                 }
                                 .padding(.horizontal, 20)
@@ -381,20 +383,20 @@ private struct LetterContent: View {
                                                 .rotationEffect(.degrees(0.3))
                                         }
                                         .buttonStyle(.plain)
-                                        .accessibilityLabel("Doodle, open full size")
+                                        .accessibilityLabel(t("letters.doodleOpenFullSize"))
                                     }
                                     if !photos.isEmpty {
                                         HStack(spacing: 12) {
                                             ForEach(Array(photos.enumerated()), id: \.element.id) { i, p in
                                                 Print(url: p.thumbUrl ?? p.url, tilt: i % 2 == 0 ? -1.5 : 1.2) { photo = i }
-                                                    .accessibilityLabel("Photo \(i + 1) of \(photos.count), open full size")
+                                                    .accessibilityLabel(t("letters.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
                                                     .dlEnter(.popIn, delay: mediaDelay)
                                             }
                                         }
                                         .padding(.top, 4)
                                     }
                                     ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
-                                        VoicePlayer(url: a.url, durationMs: a.durationMs, label: audios.count > 1 ? "voice note \(i + 1)" : "voice note")
+                                        VoicePlayer(url: a.url, durationMs: a.durationMs, label: audios.count > 1 ? t("letters.voiceNoteN", ["n": i + 1]) : t("letters.voiceNoteLower"))
                                             .dlEnter(.popIn, delay: mediaDelay)
                                     }
                                     if sent { StatusLine(letter: letter, state: state, now: now) }
@@ -410,7 +412,7 @@ private struct LetterContent: View {
                     }
                     .frame(minHeight: max(0, geo.size.height - (inReach ? 76 : 0) - (sent ? 24 : 12)))
                     .dlEnter(.paper, delay: fresh && !swiped ? 0.62 : 0.04)
-                    .overlay(alignment: .topTrailing) {
+                    .overlay(on: .topRight) {
                         if let stamp = letter.stamp {
                             StampImage(url: stamp.imageUrl, name: stamp.name, width: 64)
                                 .rotationEffect(.degrees(2))
@@ -445,7 +447,7 @@ private struct Paper<Content: View>: View {
             }
             .background(.dlLetterSheet)
             .clipShape(RoundedRectangle(cornerRadius: 2))
-            .overlay(alignment: .bottomTrailing) { DogEar().scaleEffect(26 / 14, anchor: .bottomTrailing) }
+            .overlay(on: .bottomRight) { DogEar().scaleEffect(26 / 14, anchor: .bottomTrailing) }
             .shadow(color: .dlShade.opacity(0.14), radius: 3, y: 1)
     }
 }
@@ -511,17 +513,18 @@ private struct ReplyQuote: View {
     let onOpen: () -> Void
 
     var body: some View {
-        let whose = reply.direction == "to" ? "your letter" : "\(friendName)’s letter"
+        let mine = reply.direction == "to"
+        let at = DLTime.clock(reply.sentAt, now: now)
         let line = firstLineOf(reply.firstLine, media: reply.media)
         Button(action: onOpen) {
             VStack(alignment: .leading, spacing: 4) {
-                Label("In reply to \(whose) · \(DLTime.clock(reply.sentAt, now: now))", systemImage: "arrowshape.turn.up.left")
-                    .font(.custom(DLFontName.manropeMedium.rawValue, size: 12, relativeTo: .caption))
+                Label(mine ? t("letters.inReplyToMine", ["time": at]) : t("letters.inReplyToFriends", ["friend": friendName, "time": at]), systemImage: "arrowshape.turn.up.backward")
+                    .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption))
                     .foregroundStyle(.dlInkQuiet)
                     .padding(.leading, 12)
                 if !line.isEmpty {
                     Text(line)
-                        .font(.custom(DLFontName.literataRegular.rawValue, size: 14, relativeTo: .body))
+                        .font(.custom(DLFontName.literataRegular.name, size: 14, relativeTo: .body))
                         .foregroundStyle(.dlLetterInk)
                         .lineLimit(1)
                 }
@@ -538,7 +541,7 @@ private struct ReplyQuote: View {
         }
         .buttonStyle(.plain)
         .padding(.top, 12)
-        .accessibilityLabel("In reply to \(whose) of \(DLTime.clock(reply.sentAt, now: now)). Open it")
+        .accessibilityLabel(mine ? t("letters.inReplyToMineOpen", ["time": at]) : t("letters.inReplyToFriendsOpen", ["friend": friendName, "time": at]))
     }
 
     private struct PaperClip: Shape {
@@ -574,14 +577,14 @@ private struct StatusLine: View {
                 step("READ", read ? DLTime.clock(letter.readAt, now: now) : "", done: read, double: true)
             }
             if !delivered {
-                Text("Arrives in \(DLTime.countdown(DLTime.remaining(until: letter.arrivesAt, now: now)))")
-                    .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 13, relativeTo: .footnote).monospacedDigit())
+                Text(t("letters.arrivesIn", ["countdown": DLTime.countdown(DLTime.remaining(until: letter.arrivesAt, now: now))]))
+                    .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
                     .foregroundStyle(.dlLetterInk)
             }
         }
         .padding(.top, 12)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(read ? "Status: read" : delivered ? "Status: delivered, not read yet" : "Status: sent, not yet delivered")
+        .accessibilityLabel(read ? t("letters.status.read") : delivered ? t("letters.status.delivered") : t("letters.status.sent"))
     }
 
     private func step(_ label: String, _ time: String, done: Bool, double: Bool) -> some View {
@@ -593,10 +596,10 @@ private struct StatusLine: View {
                         .font(.system(size: 10, weight: .bold))
                         .dlEnter(.pop)
                 }
-                Text(label).font(.custom(DLFontName.manropeExtraBold.rawValue, size: 11, relativeTo: .caption2)).tracking(0.77)
+                Text(label).font(.custom(DLFontName.manropeExtraBold.name, size: 11, relativeTo: .caption2)).tracking(0.77)
             }
             if !time.isEmpty {
-                Text(time).font(.custom(DLFontName.manropeSemiBold.rawValue, size: 12, relativeTo: .caption))
+                Text(time).font(.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption))
             }
         }
         .foregroundStyle(color)

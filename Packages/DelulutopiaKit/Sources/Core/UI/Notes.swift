@@ -1,5 +1,6 @@
 import DLData
 import DLDesignSystem
+import DLI18n
 import DLNetwork
 import SwiftUI
 
@@ -106,18 +107,23 @@ private func clip(_ text: String, _ max: Int) -> String {
 
 /// "Leyla reacted to 'see you at…' with 😂 · +2 more".
 public func noticeLine(_ n: ReactionNotice, count: Int, reactorName: String) -> String {
-    let what: String = if let text = n.text { "'\(clip(text, 24))'" } else { "\(n.onMine ? "your" : "their") \(itemWord(n))" }
-    let more = count > 1 ? " · +\(count - 1) more" : ""
-    return "\(reactorName) reacted to \(what) with \(n.emoji)\(more)"
+    let more = count > 1 ? t("reactions.notice.more", ["n": count - 1]) : ""
+    let line = if let text = n.text {
+        t("reactions.notice.text", ["name": reactorName, "text": clip(text, 24), "emoji": n.emoji])
+    } else {
+        t(n.onMine ? "reactions.notice.mine" : "reactions.notice.theirs", ["name": reactorName, "item": itemWord(n), "emoji": n.emoji])
+    }
+    return line + more
 }
 
 private func itemWord(_ n: ReactionNotice) -> String {
-    if n.target != "email" { return n.target }
+    if n.target == "discussion" { return t("reactions.item.discussion") }
+    if n.target == "comment" { return t("reactions.item.comment") }
     switch n.media {
-    case "video": return "video"
-    case "photo": return "photo"
-    case "audio": return "voice note"
-    default: return "email"
+    case "video": return t("reactions.item.video")
+    case "photo": return t("reactions.item.photo")
+    case "audio": return t("reactions.item.voiceNote")
+    default: return t("reactions.item.email")
     }
 }
 
@@ -203,7 +209,7 @@ public struct ReactionRow: View {
                     .foregroundStyle(.dlInkQuiet)
                     .frame(width: 40, height: 44)
             }
-            .accessibilityLabel("Every emoji")
+            .accessibilityLabel(t("reactions.allEmojis"))
         }
         .padding(.horizontal, 6)
     }

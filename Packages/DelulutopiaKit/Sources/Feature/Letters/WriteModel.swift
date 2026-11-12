@@ -1,4 +1,5 @@
 import DLData
+import DLI18n
 import DLNetwork
 import DLUI
 import Foundation
@@ -147,14 +148,14 @@ final class WriteModel {
 
     /// S5 Send: flush, then send exactly that version (FS-S1–S3).
     func send() async -> SendResult {
-        guard let saver else { return .failed("Not sent. Try again.") }
+        guard let saver else { return .failed(t("common.notSent")) }
         let version: Int
         do {
             version = try await saver.flush()
         } catch let e as DraftSaver.FlushError where e.conflict {
             return .conflict
         } catch {
-            return .failed("Not sent. Try again.")
+            return .failed(t("common.notSent"))
         }
         do {
             _ = try await api.send(draftVersion: version)
@@ -162,9 +163,9 @@ final class WriteModel {
             backend.letters.refreshSoon()
             return .sent
         } catch let e as APIError {
-            return .failed(e.code == "EMPTY_LETTER" ? "Nothing to send yet." : "Not sent. Try again.")
+            return .failed(e.code == "EMPTY_LETTER" ? t("write.nothingToSend") : t("common.notSent"))
         } catch {
-            return .failed("Not sent. Try again.")
+            return .failed(t("common.notSent"))
         }
     }
 
@@ -181,9 +182,9 @@ final class WriteModel {
                 lateByServer = true
                 return ""
             }
-            return (400 ..< 500).contains(e.status) ? e.message : "Not sent. Try again."
+            return (400 ..< 500).contains(e.status) ? e.message : t("common.notSent")
         } catch {
-            return "Not sent. Try again."
+            return t("common.notSent")
         }
     }
 
