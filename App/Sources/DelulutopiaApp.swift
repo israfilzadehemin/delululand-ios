@@ -7,6 +7,8 @@ import SwiftUI
 struct DelulutopiaApp: App {
     @State private var settings = DeviceSettings()
     private let config = AppConfig.fromMainBundle()
+    /// The app hosts the screenshot tests (DelulutopiaScreens); they draw their own screens.
+    private let hostsTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
 
     init() {
         DLFonts.register()
@@ -15,7 +17,11 @@ struct DelulutopiaApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRoot(config: config, settings: settings)
+            if hostsTests {
+                Color.clear
+            } else {
+                AppRoot(config: config, settings: settings)
+            }
         }
     }
 }

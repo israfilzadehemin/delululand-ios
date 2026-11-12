@@ -62,16 +62,24 @@ jobs:
           xcodebuild build -project Delulutopia.xcodeproj -scheme "Delulutopia" -configuration Release-Prod \
             -destination "id=${{ steps.sim.outputs.udid }}" CODE_SIGNING_ALLOWED=NO | xcbeautify
 
-      - name: Test the package (unit tests and screenshots)
+      - name: Unit tests (package)
         if: steps.sync.outputs.regenerated != 'true'
         working-directory: Packages/DelulutopiaKit
+        run: |
+          set -o pipefail
+          xcodebuild test -scheme DelulutopiaKit-Package -destination "id=${{ steps.sim.outputs.udid }}" \
+            -resultBundlePath "$GITHUB_WORKSPACE/build/UnitTests.xcresult" | xcbeautify
+
+      - name: Screenshots (app-hosted)
+        if: steps.sync.outputs.regenerated != 'true'
         env:
           TEST_RUNNER_DL_SNAPSHOT_DIR: ${{ env.SNAPSHOT_DIR }}
         run: |
           set -o pipefail
           mkdir -p "$SNAPSHOT_DIR"
-          xcodebuild test -scheme DelulutopiaKit-Package -destination "id=${{ steps.sim.outputs.udid }}" \
-            -resultBundlePath "$GITHUB_WORKSPACE/build/Tests.xcresult" | xcbeautify
+          xcodebuild test -project Delulutopia.xcodeproj -scheme "Delulutopia Staging" -configuration Debug-Staging \
+            -destination "id=${{ steps.sim.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath "$GITHUB_WORKSPACE/build/Screenshots.xcresult" | xcbeautify
 
       - name: Upload screenshots
         if: always() && steps.sync.outputs.regenerated != 'true'
@@ -86,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: build/Tests.xcresult
+          path: build/*.xcresult
           if-no-files-found: ignore
 
       - name: Publish screenshots to ci-screenshots

@@ -61,6 +61,30 @@ targets:
       - package: DelulutopiaKit
         product: DLData
 
+  # Screenshot tests hosted by the app, so screens draw through a real key window and system glass
+  # renders as on a device (decision D5). Unit tests live in the package.
+  DelulutopiaScreens:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: App/ScreenTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.delulutopia.app.screens
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Delulutopia.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Delulutopia
+        BUNDLE_LOADER: $(TEST_HOST)
+    dependencies:
+      - target: Delulutopia
+      - package: DelulutopiaKit
+        product: DLTestSupport
+      - package: DelulutopiaKit
+        product: AppShell
+      - package: DelulutopiaKit
+        product: DLDesignSystem
+      - package: DelulutopiaKit
+        product: DLData
+
 schemes:
   Delulutopia Staging:
     build:
@@ -70,6 +94,8 @@ schemes:
       config: Debug-Staging
     test:
       config: Debug-Staging
+      targets:
+        - DelulutopiaScreens
     profile:
       config: Release-Staging
     analyze:

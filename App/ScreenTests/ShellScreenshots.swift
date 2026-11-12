@@ -1,4 +1,4 @@
-@testable import AppShell
+import AppShell
 import DLData
 import DLDesignSystem
 import DLTestSupport
@@ -6,7 +6,8 @@ import Foundation
 import SwiftUI
 import Testing
 
-/// The app shell (tab bar, You, Appearance) in light and dark, published to `ci-screenshots`.
+/// The app shell (tab bar, You, Appearance) in light and dark, rendered on screen in the host app so
+/// the system glass shows, and published to `ci-screenshots`.
 @MainActor
 @Suite("Shell screenshots", .serialized)
 struct ShellScreenshots {
@@ -17,11 +18,13 @@ struct ShellScreenshots {
         build: "1"
     )
 
-    private func makeSettings() -> DeviceSettings {
+    private func makeSettings(_ mode: ThemeMode = .match) -> DeviceSettings {
         let name = "dl.shots.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
         defaults.removePersistentDomain(forName: name)
-        return DeviceSettings(defaults: defaults)
+        let settings = DeviceSettings(defaults: defaults)
+        settings.setThemeMode(mode)
+        return settings
     }
 
     @Test func homeLight() {
@@ -49,23 +52,6 @@ struct ShellScreenshots {
     }
 
     @Test func appearanceDark() {
-        let settings = makeSettings()
-        settings.setThemeMode(.dark)
-        Shoot.screen(NavigationStack { AppearanceScreen(settings: settings) }, named: "appearance-dark", style: .dark)
-    }
-}
-
-@Suite("Shell")
-struct ShellTests {
-    @Test("Five tabs in the design's order")
-    func tabs() {
-        #expect(AppTab.allCases.map(\.title) == ["Home", "Letters", "Discussions", "Emails", "You"])
-    }
-
-    @Test("Theme modes map to the window style; Match device follows the device")
-    func themeModes() {
-        #expect(ThemeMode.light.colorScheme == .light)
-        #expect(ThemeMode.dark.colorScheme == .dark)
-        #expect(ThemeMode.match.colorScheme == nil)
+        Shoot.screen(NavigationStack { AppearanceScreen(settings: makeSettings(.dark)) }, named: "appearance-dark", style: .dark)
     }
 }

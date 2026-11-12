@@ -216,3 +216,46 @@ public struct DLComponentCatalog: View {
         }
     }
 }
+
+/// Glass pieces over paper content, sized to one screen so they can be reviewed as drawn on a device
+/// (system glass only renders on screen).
+public struct DLGlassSamples: View {
+    public init() {}
+
+    public var body: some View {
+        ZStack(alignment: .top) {
+            DLPalette.paper.color.ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(0..<9, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: DLRadius.row, style: .continuous)
+                        .fill(index.isMultiple(of: 3) ? Color.dlSealTint : Color.dlPaperLetter)
+                        .frame(height: 64)
+                        .overlay(alignment: .leading) {
+                            Text(index.isMultiple(of: 2) ? "Letter from Leyla" : "Discussion · Zakopane")
+                                .dlText(.subheadline)
+                                .foregroundStyle(.dlInk)
+                                .padding(.leading, 16)
+                        }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 70)
+
+            VStack(spacing: 18) {
+                HStack(spacing: 10) {
+                    DLGlassIconButton("chevron.left", label: "Back") {}
+                    Spacer()
+                    DLGlassIconButton("ellipsis", label: "More") {}
+                    DLGlassIconButton("xmark", label: "Close") {}
+                }
+                Spacer()
+                DLToast("Arrives at 14:50", symbol: "clock")
+                DLToast("2 photos added to your draft", symbol: "photo", actionTitle: "Undo") {}
+                DLDraftAccessory("Continue your letter", glass: true) {}
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
+        }
+    }
+}

@@ -39,7 +39,8 @@ Packages/DelulutopiaKit/     all code, as local Swift packages
   Sources/Core/DesignSystem  DLDesignSystem: colours, type, motion, glass, components, fonts
   Sources/Core/Data          DLData: device settings, build config
   Sources/App/Shell          AppShell: tab bar and the screens behind it
-  Tests/                     unit tests (Swift Testing) and screenshots
+  Tests/                     unit tests (Swift Testing) and the screenshot helper
+App/ScreenTests/             screenshots, hosted by the app (DelulutopiaScreens)
 project.yml                  XcodeGen spec (source of Delulutopia.xcodeproj)
 tools/                       icons, fonts, CI scripts
 ```
@@ -50,8 +51,11 @@ falls short; Apple frameworks only at runtime (decisions D1, D3, D4).
 ## Tests and screenshots
 
 ```sh
+# unit tests
 cd Packages/DelulutopiaKit
 xcodebuild test -scheme DelulutopiaKit-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+# screenshots (hosted by the app so system glass renders)
+xcodebuild test -project Delulutopia.xcodeproj -scheme "Delulutopia Staging" -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 ```
 
 CI (`.github/workflows/ci.yml`, `xcode-27` runner) builds Staging and Prod, runs the tests and publishes

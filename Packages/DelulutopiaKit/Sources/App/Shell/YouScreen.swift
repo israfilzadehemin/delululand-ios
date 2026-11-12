@@ -79,10 +79,14 @@ struct YouScreen: View {
 }
 
 /// Appearance (web S2): Light / Dark / Match device, saved on this device only.
-struct AppearanceScreen: View {
+public struct AppearanceScreen: View {
     let settings: DeviceSettings
 
-    var body: some View {
+    public init(settings: DeviceSettings) {
+        self.settings = settings
+    }
+
+    public var body: some View {
         List {
             Section {
                 ForEach(ThemeMode.allCases) { mode in

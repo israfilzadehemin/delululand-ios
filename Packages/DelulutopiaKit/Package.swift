@@ -11,6 +11,8 @@ let package = Package(
         .library(name: "DLDesignSystem", targets: ["DLDesignSystem"]),
         .library(name: "DLData", targets: ["DLData"]),
         .library(name: "AppShell", targets: ["AppShell"]),
+        // Linked only by the app-hosted screenshot target (DelulutopiaScreens).
+        .library(name: "DLTestSupport", targets: ["DLTestSupport"]),
     ],
     dependencies: [
         // Test-only (decision D4): screenshot rendering for the parity loop.
@@ -41,7 +43,7 @@ let package = Package(
         ),
         .testTarget(
             name: "DLDesignSystemTests",
-            dependencies: ["DLDesignSystem", "DLTestSupport"],
+            dependencies: ["DLDesignSystem"],
             path: "Tests/DesignSystem"
         ),
         .testTarget(
@@ -51,7 +53,7 @@ let package = Package(
         ),
         .testTarget(
             name: "AppShellTests",
-            dependencies: ["AppShell", "DLData", "DLDesignSystem", "DLTestSupport"],
+            dependencies: ["AppShell", "DLData", "DLDesignSystem"],
             path: "Tests/AppShell"
         ),
     ]
