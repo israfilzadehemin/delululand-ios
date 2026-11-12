@@ -23,6 +23,7 @@ struct MainTabView: View {
             ForEach(AppTab.allCases) { tab in
                 NavigationStack(path: path(tab)) {
                     root(for: tab)
+                        .overlay { if tab != .you { LeafLayer() } }
                         .navigationDestination(for: AppRoute.self) { route in
                             RouteScreen(route: route)
                         }
@@ -40,6 +41,43 @@ struct MainTabView: View {
         .environment(\.dlBrand, backend.home.home?.universe.name ?? "Delulutopia")
         .environment(\.dlFirstCitizen, backend.home.home?.firstCitizen)
         .dlToast($toast, bottom: 96)
+        .onChange(of: arrivals) { old, new in announce(old: old, new: new) }
+    }
+
+    /// What has arrived for me now: delivered letters, new discussions, new emails.
+    private var arrivals: [String] {
+        guard let h = backend.home.home else { return [] }
+        let now = DLTime.now
+        let letters = h.from.filter { LetterState.of($0, now: now) == LetterState.delivered }.map { "l\($0.id)" }
+        return letters + h.newDiscussions.map { "d\($0.id)" } + h.newEmails.map { "e\($0.id)" }
+    }
+
+    /// In-app arrival notices (web inTab fallback): one toast for the newest thing that arrived
+    /// while the app is open, with Open.
+    private func announce(old: [String], new: [String]) {
+        guard !old.isEmpty || backend.home.home != nil, let h = backend.home.home else { return }
+        let fresh = new.filter { !old.contains($0) }
+        guard !old.isEmpty, let key = fresh.first else { return }
+        let friend = h.friend?.nickname ?? "Your friend"
+        let id = Int(key.dropFirst()) ?? 0
+        switch key.first {
+        case "l":
+            toast = DLToastItem("\(friend)’s letter arrived", symbol: "envelope", actionTitle: "Open") {
+                selection = .letters
+                paths[.letters] = [.letter(id)]
+            }
+        case "d":
+            toast = DLToastItem("\(friend) started a discussion", symbol: "note.text", actionTitle: "Open") {
+                selection = .discussions
+                paths[.discussions] = [.discussion(id)]
+            }
+        default:
+            let thread = h.newEmails.first { $0.id == id }?.threadId ?? id
+            toast = DLToastItem("\(friend) sent you an email", symbol: "at", actionTitle: "Open") {
+                selection = .emails
+                paths[.emails] = [.thread(thread)]
+            }
+        }
     }
 
     /// Tapping the current tab again pops it to its root (iOS convention).
@@ -72,17 +110,58 @@ struct MainTabView: View {
         }
     }
 
+    private func hasNew(_ tab: AppTab) -> Bool {
+        guard let h = backend.home.home else { return false }
+        switch tab {
+        case .letters: return h.unreadCount > 0
+        case .discussions: return h.discussionsUnseen > 0
+        case .emails: return h.emailsUnread + h.emailsReacted > 0
+        default: return false
+        }
+    }
+
     @ViewBuilder
     private func tabLabel(_ tab: AppTab) -> some View {
+        let style: UIUserInterfaceStyle = colorScheme == .dark ? .dark : .light
         if tab == .you {
             Label {
                 Text(tab.title)
             } icon: {
-                Image(uiImage: YouTabIcon.image(selected: selection == .you, style: colorScheme == .dark ? .dark : .light))
+                Image(uiImage: YouTabIcon.image(selected: selection == .you, style: style))
             }
+        } else if hasNew(tab) {
+            Label {
+                Text(tab.title)
+            } icon: {
+                Image(uiImage: DotTabIcon.image(symbol: tab.symbol, selected: selection == tab, style: style))
+            }
+            .accessibilityLabel("\(tab.title), new")
         } else {
             Label(tab.title, systemImage: tab.symbol)
         }
+    }
+}
+
+/// A tab symbol with the navy "new" dot at its top-right (canvas tab bar: 9 pt, white halo).
+@MainActor
+enum DotTabIcon {
+    static func image(symbol: String, selected: Bool, style: UIUserInterfaceStyle) -> UIImage {
+        let config = UIImage.SymbolConfiguration(pointSize: 18, weight: selected ? .semibold : .regular)
+        let traits = UITraitCollection(userInterfaceStyle: style)
+        let ink = (selected ? DLPalette.seal : DLPalette.ink).value(for: style).uiColor
+        guard let base = UIImage(systemName: symbol, withConfiguration: config)?.withTintColor(ink, renderingMode: .alwaysOriginal) else {
+            return UIImage()
+        }
+        let size = CGSize(width: base.size.width + 8, height: base.size.height + 4)
+        let image = UIGraphicsImageRenderer(size: size).image { _ in
+            base.draw(at: CGPoint(x: 2, y: 4))
+            let dot = CGRect(x: size.width - 10, y: 0, width: 9, height: 9)
+            UIColor.white.withAlphaComponent(0.78).setFill()
+            UIBezierPath(ovalIn: dot.insetBy(dx: -2, dy: -2)).fill()
+            DLPalette.seal.value(for: style).uiColor.resolvedColor(with: traits).setFill()
+            UIBezierPath(ovalIn: dot).fill()
+        }
+        return image.withRenderingMode(.alwaysOriginal)
     }
 }
 

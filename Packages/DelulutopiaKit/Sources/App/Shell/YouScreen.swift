@@ -163,6 +163,7 @@ struct YouScreen: View {
 /// Appearance (web S2): Light / Dark / Match device, saved on this device only.
 public struct AppearanceScreen: View {
     let settings: DeviceSettings
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(settings: DeviceSettings) {
         self.settings = settings
@@ -180,6 +181,13 @@ public struct AppearanceScreen: View {
                     .buttonStyle(.plain)
                     .dlListRow()
                 }
+            }
+            Section {
+                Toggle(isOn: Binding(get: { settings.leaves }, set: { settings.setLeaves($0) })) {
+                    DLRowLabel("Seasonal effects", subtitle: reduceMotion ? "Falling leaves · off while your \(DeviceWord.current) reduces motion" : "Falling leaves")
+                }
+                .tint(.dlSeal)
+                .dlListRow()
             } footer: {
                 Text("Saved on this \(DeviceWord.current) only.")
                     .dlText(.footnote)
