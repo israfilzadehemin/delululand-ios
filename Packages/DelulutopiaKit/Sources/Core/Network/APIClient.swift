@@ -228,12 +228,22 @@ public final class APIClient: Sendable {
     let session: URLSession
     let userAgent: String
 
-    public init(baseURL: URL, cookies: CookieStore, clock: ServerClock = .shared, userAgent: String = "Delulutopia-iOS") {
+    /// `protocolClasses` lets tests serve fixtures (screenshots) without a server.
+    public init(
+        baseURL: URL,
+        cookies: CookieStore,
+        clock: ServerClock = .shared,
+        userAgent: String = "Delulutopia-iOS",
+        protocolClasses: [AnyClass] = []
+    ) {
         self.baseURL = baseURL
         self.cookies = cookies
         self.clock = clock
         self.userAgent = userAgent
         let config = URLSessionConfiguration.default
+        if !protocolClasses.isEmpty {
+            config.protocolClasses = protocolClasses + (config.protocolClasses ?? [])
+        }
         config.httpCookieStorage = nil
         config.httpShouldSetCookies = false
         config.httpCookieAcceptPolicy = .never

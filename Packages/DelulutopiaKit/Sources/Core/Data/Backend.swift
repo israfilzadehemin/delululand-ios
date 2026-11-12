@@ -20,14 +20,23 @@ public final class Backend {
     public let biometrics: BiometricVault
     /// `GET /api/config`: shortened timers on test servers (the TEST banner).
     public private(set) var server: ServerSettings?
+    /// A PIN just typed at sign-in, waiting for the signed-in app to offer Face ID once (X1).
+    public var pendingBiometricOffer: PendingBiometricOffer?
 
-    public init(config: AppConfig, settings: DeviceSettings, cookies: CookieStore? = nil, biometrics: BiometricVault? = nil) {
+    public init(
+        config: AppConfig,
+        settings: DeviceSettings,
+        cookies: CookieStore? = nil,
+        biometrics: BiometricVault? = nil,
+        protocolClasses: [AnyClass] = []
+    ) {
         self.config = config
         self.settings = settings
         let client = APIClient(
             baseURL: config.apiBaseURL,
             cookies: cookies ?? CookieStore(service: "com.delulutopia.cookies.\(config.environment.rawValue)"),
-            userAgent: "Delulutopia-iOS/\(config.version) (\(config.build))"
+            userAgent: "Delulutopia-iOS/\(config.version) (\(config.build))",
+            protocolClasses: protocolClasses
         )
         self.client = client
         let api = API(client: client)
@@ -75,6 +84,16 @@ public final class Backend {
     public func didSignOut() {
         live.stop()
         home.stop()
+    }
+}
+
+public struct PendingBiometricOffer: Equatable, Sendable {
+    public let userId: Int
+    public let pin: String
+
+    public init(userId: Int, pin: String) {
+        self.userId = userId
+        self.pin = pin
     }
 }
 

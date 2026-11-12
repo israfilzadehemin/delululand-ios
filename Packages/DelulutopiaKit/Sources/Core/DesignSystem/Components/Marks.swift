@@ -132,3 +132,28 @@ public struct DLAvatar: View {
         .accessibilityHidden(true)
     }
 }
+
+/// Wizard progress (canvas U-*): 8 pt dots 6 pt apart; the current step is a 22 pt navy pill, done
+/// steps navy, later steps the line colour.
+public struct DLStepDots: View {
+    let step: Int
+    let of: Int
+
+    public init(step: Int, of: Int) {
+        self.step = step
+        self.of = of
+    }
+
+    public var body: some View {
+        HStack(spacing: 6) {
+            ForEach(1...max(of, 1), id: \.self) { i in
+                Capsule()
+                    .fill(i <= step ? Color.dlSeal : Color.dlLine)
+                    .frame(width: i == step ? 22 : 8, height: 8)
+            }
+        }
+        .animation(DLMotion.easeOut(0.28), value: step)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Step \(step) of \(of)")
+    }
+}

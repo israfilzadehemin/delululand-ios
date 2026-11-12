@@ -27,21 +27,26 @@ public enum Shoot {
 
     /// Shoots `view` full screen in the host app's key window with the given appearance and writes
     /// `<name>.png`.
+    /// `wait` lets the screen's own loading (fixture API, images, stamps) finish before the capture.
     public static func screen<V: View>(
         _ view: V,
         named name: String,
         style: UIUserInterfaceStyle,
+        wait: TimeInterval = 0,
         file: StaticString = #filePath,
         testName: String = #function,
         line: UInt = #line
     ) {
         let traits = makeTraits(style)
+        let image: Snapshotting<UIViewController, UIImage> = .image(
+            drawHierarchyInKeyWindow: true, precision: 1, size: phone, traits: traits
+        )
         record(
             view,
             named: name,
             style: style,
             topUpSafeArea: true,
-            as: .image(drawHierarchyInKeyWindow: true, precision: 1, size: phone, traits: traits),
+            as: wait > 0 ? .wait(for: wait, on: image) : image,
             file: file,
             testName: testName,
             line: line

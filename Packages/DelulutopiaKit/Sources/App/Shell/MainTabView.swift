@@ -7,8 +7,7 @@ import UIKit
 /// keeps its own navigation stack.
 struct MainTabView: View {
     @Binding var selection: AppTab
-    let config: AppConfig
-    let settings: DeviceSettings
+    @Environment(Backend.self) var backend
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
@@ -27,7 +26,7 @@ struct MainTabView: View {
     private func root(for tab: AppTab) -> some View {
         switch tab {
         case .you:
-            YouScreen(config: config, settings: settings)
+            YouScreen(config: backend.config, settings: backend.settings)
         default:
             PlaceholderScreen(tab: tab)
         }

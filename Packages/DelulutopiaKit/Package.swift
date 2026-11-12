@@ -11,6 +11,8 @@ let package = Package(
         .library(name: "DLDesignSystem", targets: ["DLDesignSystem"]),
         .library(name: "DLNetwork", targets: ["DLNetwork"]),
         .library(name: "DLData", targets: ["DLData"]),
+        .library(name: "DLUI", targets: ["DLUI"]),
+        .library(name: "FeatureStart", targets: ["FeatureStart"]),
         .library(name: "AppShell", targets: ["AppShell"]),
         // Linked only by the app-hosted screenshot target (DelulutopiaScreens).
         .library(name: "DLTestSupport", targets: ["DLTestSupport"]),
@@ -35,17 +37,30 @@ let package = Package(
             path: "Sources/Core/Data"
         ),
         .target(
+            name: "DLUI",
+            dependencies: ["DLDesignSystem", "DLData", "DLNetwork"],
+            path: "Sources/Core/UI"
+        ),
+        .target(
+            name: "FeatureStart",
+            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
+            path: "Sources/Feature/Start"
+        ),
+        .target(
             name: "AppShell",
-            dependencies: ["DLDesignSystem", "DLData"],
+            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI", "FeatureStart"],
             path: "Sources/App/Shell"
         ),
         .target(
             name: "DLTestSupport",
             dependencies: [
                 "DLDesignSystem",
+                "DLData",
+                "DLNetwork",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ],
-            path: "Tests/Support"
+            path: "Tests/Support",
+            resources: [.copy("Media")]
         ),
         .testTarget(
             name: "DLDesignSystemTests",

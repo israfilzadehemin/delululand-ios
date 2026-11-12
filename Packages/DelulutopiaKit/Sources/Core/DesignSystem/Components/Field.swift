@@ -15,14 +15,20 @@ public struct DLField: View {
     let hint: String?
     let error: String?
     let kind: Kind
+    let counter: String?
+    let multilineMinHeight: CGFloat?
 
+    /// `counter` shows on the right of the hint line ("8/12"); `multilineMinHeight` makes a growing
+    /// multi-line field (the welcome message).
     public init(
         _ label: String,
         text: Binding<String>,
         prompt: String = "",
         hint: String? = nil,
         error: String? = nil,
-        kind: Kind = .text
+        kind: Kind = .text,
+        counter: String? = nil,
+        multilineMinHeight: CGFloat? = nil
     ) {
         self.label = label
         self._text = text
@@ -30,6 +36,8 @@ public struct DLField: View {
         self.hint = hint
         self.error = error
         self.kind = kind
+        self.counter = counter
+        self.multilineMinHeight = multilineMinHeight
     }
 
     public var body: some View {
@@ -39,32 +47,50 @@ public struct DLField: View {
                 .foregroundStyle(.dlInkQuiet)
                 .padding(.horizontal, 4)
 
-            TextField(label, text: $text, prompt: Text(prompt).foregroundStyle(.dlInkDisabled))
-                .dlText(kind == .key ? .key : .input)
-                .foregroundStyle(.dlInk)
-                .multilineTextAlignment(kind == .key ? .center : .leading)
-                .textInputAutocapitalization(kind == .key ? .characters : .sentences)
-                .autocorrectionDisabled(kind == .key)
-                .padding(.horizontal, 16)
-                .frame(minHeight: 50)
-                .background(.dlCell, in: RoundedRectangle(cornerRadius: DLRadius.field, style: .continuous))
-                .overlay {
-                    if error != nil {
-                        RoundedRectangle(cornerRadius: DLRadius.field, style: .continuous)
-                            .strokeBorder(.dlError, lineWidth: 1.5)
+            Group {
+                if let multilineMinHeight {
+                    TextField(label, text: $text, prompt: Text(prompt).foregroundStyle(.dlInkDisabled), axis: .vertical)
+                        .padding(.vertical, 13)
+                        .frame(minHeight: multilineMinHeight, alignment: .topLeading)
+                } else {
+                    TextField(label, text: $text, prompt: Text(prompt).foregroundStyle(.dlInkDisabled))
+                        .frame(minHeight: 50)
+                }
+            }
+            .dlText(kind == .key ? .key : .input)
+            .foregroundStyle(.dlInk)
+            .multilineTextAlignment(kind == .key ? .center : .leading)
+            .textInputAutocapitalization(kind == .key ? .characters : .sentences)
+            .autocorrectionDisabled(kind == .key)
+            .padding(.horizontal, 16)
+            .background(.dlCell, in: RoundedRectangle(cornerRadius: DLRadius.field, style: .continuous))
+            .overlay {
+                if error != nil {
+                    RoundedRectangle(cornerRadius: DLRadius.field, style: .continuous)
+                        .strokeBorder(.dlError, lineWidth: 1.5)
+                }
+            }
+
+            if error != nil || hint != nil || counter != nil {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    if let error {
+                        Text(error)
+                            .dlText(.footnoteStrong)
+                            .foregroundStyle(.dlError)
+                    } else if let hint {
+                        Text(hint)
+                            .dlText(.footnote)
+                            .foregroundStyle(.dlInkQuiet)
+                    }
+                    Spacer(minLength: 0)
+                    if let counter {
+                        Text(counter)
+                            .dlText(.footnote)
+                            .monospacedDigit()
+                            .foregroundStyle(.dlInkQuiet)
                     }
                 }
-
-            if let error {
-                Text(error)
-                    .dlText(.footnoteStrong)
-                    .foregroundStyle(.dlError)
-                    .padding(.horizontal, 4)
-            } else if let hint {
-                Text(hint)
-                    .dlText(.footnote)
-                    .foregroundStyle(.dlInkQuiet)
-                    .padding(.horizontal, 4)
+                .padding(.horizontal, 4)
             }
         }
     }
