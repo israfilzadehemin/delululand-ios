@@ -156,6 +156,11 @@ public struct Draft: Codable, Sendable, Hashable {
 public struct Saved: Codable, Sendable, Hashable {
     public var version: Int
     public var savedAt: String
+
+    public init(version: Int, savedAt: String) {
+        self.version = version
+        self.savedAt = savedAt
+    }
 }
 
 public struct Sent: Codable, Sendable, Hashable {
@@ -598,4 +603,11 @@ public struct Person: Codable, Sendable, Hashable {
     public var nickname: String
     public var avatarUrl: String?
     public var timezone: String?
+
+    public init(id: Int, nickname: String, avatarUrl: String? = nil, timezone: String? = nil) {
+        self.id = id
+        self.nickname = nickname
+        self.avatarUrl = avatarUrl
+        self.timezone = timezone
+    }
 }
