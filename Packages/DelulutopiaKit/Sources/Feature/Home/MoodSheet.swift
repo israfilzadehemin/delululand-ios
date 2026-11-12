@@ -101,7 +101,7 @@ struct MoodSheet: View {
 
     private var foot: String {
         if error { return t("home.notSavedTryAgain") }
-        if canAdd, full { return t("home.ofDeleteOneToAdd", ["limit": limit, "limit": limit]) }
+        if canAdd, full { return t("home.ofDeleteOneToAdd", ["limit": limit]) }
         if let friend { return t("home.oneTapFriend", ["friend": friend]) }
         return t("home.oneTap")
     }

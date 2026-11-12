@@ -1,4 +1,5 @@
 import DLData
+import DLI18n
 import FeatureHome
 import FeatureDiscussions
 import FeatureEmails
