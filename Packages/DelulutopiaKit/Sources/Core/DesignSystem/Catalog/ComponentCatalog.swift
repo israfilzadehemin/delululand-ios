@@ -249,16 +249,23 @@ public struct DLGlassSamples: View {
                     DLGlassIconButton("xmark", label: "Close") {}
                 }
                 Spacer()
-                HStack(spacing: 10) {
-                    Button("Edit") {}
-                        .buttonStyle(.dlOutline)
-                    Button("Allow") {}
-                        .buttonStyle(.dlTint)
-                    Button("Send") {}
-                        .buttonStyle(.dlFilled)
-                    Button("Keep") {}
-                        .buttonStyle(.dlGrey)
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        Button("Edit") {}
+                            .buttonStyle(.dlOutline)
+                        Button("Allow") {}
+                            .buttonStyle(.dlTint)
+                        Button("Not now") {}
+                            .buttonStyle(.dlText)
+                    }
+                    HStack(spacing: 10) {
+                        Button("Send") {}
+                            .buttonStyle(.dlFilled)
+                        Button("Keep writing") {}
+                            .buttonStyle(.dlGrey)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
                 .background(.dlPaper, in: RoundedRectangle(cornerRadius: DLRadius.groupedCard, style: .continuous))
                 DLToast("Arrives at 14:50", symbol: "clock")
