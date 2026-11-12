@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: xcode-27
+    timeout-minutes: 60
+    env:
+      SNAPSHOT_DIR: ${{ github.workspace }}/build/snapshots
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref }}
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen and xcbeautify
+        run: brew install xcodegen xcbeautify
+
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      - name: Resolve packages
+        run: |
+          xcodebuild -resolvePackageDependencies -project Delulutopia.xcodeproj -scheme "Delulutopia Staging"
+          (cd Packages/DelulutopiaKit && swift package resolve)
+
+      - name: Keep generated files in git
+        id: sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/ci/sync-generated.sh
+
+      - name: Pick a simulator
+        id: sim
+        if: steps.sync.outputs.regenerated != 'true'
+        run: echo "udid=$(tools/ci/pick-simulator.sh)" >> "$GITHUB_OUTPUT"
+
+      - name: Build Staging (Debug) and Prod (Release)
+        if: steps.sync.outputs.regenerated != 'true'
+        run: |
+          set -o pipefail
+          xcodebuild build -project Delulutopia.xcodeproj -scheme "Delulutopia Staging" -configuration Debug-Staging \
+            -destination "id=${{ steps.sim.outputs.udid }}" CODE_SIGNING_ALLOWED=NO | xcbeautify
+          xcodebuild build -project Delulutopia.xcodeproj -scheme "Delulutopia" -configuration Release-Prod \
+            -destination "id=${{ steps.sim.outputs.udid }}" CODE_SIGNING_ALLOWED=NO | xcbeautify
+
+      - name: Test the package (unit tests and screenshots)
+        if: steps.sync.outputs.regenerated != 'true'
+        working-directory: Packages/DelulutopiaKit
+        env:
+          TEST_RUNNER_DL_SNAPSHOT_DIR: ${{ env.SNAPSHOT_DIR }}
+        run: |
+          set -o pipefail
+          mkdir -p "$SNAPSHOT_DIR"
+          xcodebuild test -scheme DelulutopiaKit-Package -destination "id=${{ steps.sim.outputs.udid }}" \
+            -resultBundlePath "$GITHUB_WORKSPACE/build/Tests.xcresult" | xcbeautify
+
+      - name: Upload screenshots
+        if: always() && steps.sync.outputs.regenerated != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: build/snapshots
+          if-no-files-found: warn
+
+      - name: Upload test results
+        if: failure() && steps.sync.outputs.regenerated != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/Tests.xcresult
+          if-no-files-found: ignore
+
+      - name: Publish screenshots to ci-screenshots
+        if: always() && steps.sync.outputs.regenerated != 'true'
+        run: tools/ci/publish-screenshots.sh "$SNAPSHOT_DIR"

@@ -1,0 +1,20 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+DerivedData/
+build/
+*.xcresult
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/DelulutopiaKit/.swiftpm/
+
+# macOS
+.DS_Store
+
+# Secrets never live in the repo (decision D14: repository secrets only)
+*.p8
+*.p12
+*.mobileprovision

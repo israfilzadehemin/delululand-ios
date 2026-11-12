@@ -1,0 +1,8 @@
+#include "Base.xcconfig"
+
+// Prod → delulutopia.com (decision D6). `$()` keeps `//` from starting a comment.
+DL_ENVIRONMENT = prod
+DL_BUNDLE_ID = com.delulutopia.app
+DL_DISPLAY_NAME = Delulutopia
+DL_API_BASE_URL = https:/$()/delulutopia.com
+DL_APP_ICON = AppIcon
