@@ -4,6 +4,7 @@ import DLDesignSystem
 import DLTestSupport
 import DLUI
 import FeatureDiscussions
+import FeatureEmails
 import FeatureLetters
 import FeatureStart
 import Foundation
@@ -186,6 +187,24 @@ struct ShellScreenshots {
 
     @Test func discussionCompose() {
         Shoot.screen(pushed(ComposeDiscussionScreen()), named: "discussion-compose-light", style: .light, wait: 2.5)
+    }
+
+    // MARK: Emails (canvas E-Emails, thread, new email)
+
+    @Test func emailsLight() {
+        Shoot.screen(app(.emails), named: "emails-light", style: .light, wait: 2.5)
+    }
+
+    @Test func emailsDark() {
+        Shoot.screen(app(.emails, theme: .dark), named: "emails-dark", style: .dark, wait: 2.5)
+    }
+
+    @Test func emailThread() {
+        Shoot.screen(pushed(ThreadScreen(id: 41)), named: "email-thread-light", style: .light, wait: 2.5)
+    }
+
+    @Test func newEmail() {
+        Shoot.screen(pushed(NewEmailScreen()), named: "email-new-light", style: .light, wait: 2.5)
     }
 
     @Test func youLight() {

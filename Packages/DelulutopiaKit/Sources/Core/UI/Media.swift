@@ -1,4 +1,5 @@
 import AVFoundation
+import AVKit
 import DLData
 import DLDesignSystem
 import DLNetwork
@@ -219,5 +220,48 @@ private struct ZoomableImage: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// A video full screen (emails): downloaded with the session cookie, then played by the system player.
+public struct VideoPlayerScreen: View {
+    let path: String
+    let onClose: () -> Void
+    @Environment(Backend.self) private var backend
+    @State private var player: AVPlayer?
+    @State private var failed = false
+
+    public init(path: String, onClose: @escaping () -> Void) {
+        self.path = path
+        self.onClose = onClose
+    }
+
+    public var body: some View {
+        ZStack(alignment: .topLeading) {
+            Color.black.ignoresSafeArea()
+            if let player {
+                VideoPlayer(player: player).ignoresSafeArea().onAppear { player.play() }
+            } else if failed {
+                Text("Couldn’t load the video. Try again.").foregroundStyle(.white).frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ProgressView().tint(.white).frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            Button(action: onClose) {
+                Image(systemName: "xmark").font(.system(size: 17, weight: .semibold)).foregroundStyle(.white)
+                    .frame(width: 44, height: 44).background(.white.opacity(0.15), in: Circle())
+            }
+            .padding(16)
+            .accessibilityLabel("Close")
+        }
+        .task {
+            guard let data = try? await backend.client.data(for: backend.client.makeRequest("GET", path), timeout: 120) else {
+                failed = true
+                return
+            }
+            let file = FileManager.default.temporaryDirectory.appending(path: "play-\(abs(path.hashValue)).mp4")
+            try? data.write(to: file)
+            try? AVAudioSession.sharedInstance().setCategory(.playback)
+            player = AVPlayer(url: file)
+        }
     }
 }

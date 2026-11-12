@@ -101,7 +101,7 @@ final class DiscussionModel {
     /// D6: a newer friend comment shown here moves the seen mark, so the list chip and the tab dot follow.
     private func markSeen(_ d: DFull) {
         let me = backend.home.home?.me.id
-        guard let newest = d.comments?.items.last(where: { $0.authorId != me })?.id ?? (d.isNew || d.unseenReactions > 0 ? -1 : nil),
+        guard let newest = d.comments?.items.last(where: { $0.authorId != me })?.id ?? (d.isNew ? -1 : nil),
               seenNewest != newest else { return }
         seenNewest = newest
         Task {

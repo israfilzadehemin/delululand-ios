@@ -1,6 +1,7 @@
 import DLData
 import FeatureHome
 import FeatureDiscussions
+import FeatureEmails
 import FeatureLetters
 import DLDesignSystem
 import DLUI
@@ -62,6 +63,8 @@ struct MainTabView: View {
             LettersScreen()
         case .discussions:
             DiscussionsScreen()
+        case .emails:
+            EmailsScreen()
         case .you:
             YouScreen(config: backend.config, settings: backend.settings)
         default:
@@ -99,8 +102,20 @@ struct RouteScreen: View {
             ComposeDiscussionScreen(editId: editId)
         case .archived:
             DiscussionsScreen(archived: true)
+        case let .thread(id):
+            ThreadScreen(id: id)
+        case .newEmail:
+            NewEmailScreen()
         case .appearance:
             AppearanceScreenHost()
+        case .profile:
+            ProfileScreen()
+        case .friend:
+            FriendScreen()
+        case .universe:
+            UniverseScreen()
+        case .notifications:
+            NotificationsScreen()
         default:
             ScrollView {
                 Text("This screen arrives in the next build.")

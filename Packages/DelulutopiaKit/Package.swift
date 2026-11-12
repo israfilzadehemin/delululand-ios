@@ -16,6 +16,7 @@ let package = Package(
         .library(name: "FeatureHome", targets: ["FeatureHome"]),
         .library(name: "FeatureLetters", targets: ["FeatureLetters"]),
         .library(name: "FeatureDiscussions", targets: ["FeatureDiscussions"]),
+        .library(name: "FeatureEmails", targets: ["FeatureEmails"]),
         .library(name: "AppShell", targets: ["AppShell"]),
         // Linked only by the app-hosted screenshot target (DelulutopiaScreens).
         .library(name: "DLTestSupport", targets: ["DLTestSupport"]),
@@ -65,8 +66,13 @@ let package = Package(
             path: "Sources/Feature/Discussions"
         ),
         .target(
+            name: "FeatureEmails",
+            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI"],
+            path: "Sources/Feature/Emails"
+        ),
+        .target(
             name: "AppShell",
-            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI", "FeatureStart", "FeatureHome", "FeatureLetters", "FeatureDiscussions"],
+            dependencies: ["DLDesignSystem", "DLData", "DLNetwork", "DLUI", "FeatureStart", "FeatureHome", "FeatureLetters", "FeatureDiscussions", "FeatureEmails"],
             path: "Sources/App/Shell"
         ),
         .target(
