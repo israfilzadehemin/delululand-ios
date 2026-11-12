@@ -1,6 +1,6 @@
 # p0/scaffold-design-system
 
-Commit `bef61ad`, run 43173969549.
+Commit `1ad24ef`, run 43175528498.
 
 ## appearanceDark.appearance-dark
 
