@@ -3,6 +3,7 @@ import DLData
 import DLDesignSystem
 import DLTestSupport
 import DLUI
+import FeatureLetters
 import FeatureStart
 import Foundation
 import SwiftUI
@@ -103,8 +104,40 @@ struct ShellScreenshots {
         Shoot.screen(app(.home, state: state), named: "home-waiting-light", style: .light, wait: 2)
     }
 
+    // MARK: Letters (canvas C-Letters, C-Letters-list, C-Letter-received, C-Letter-sent)
+
     @Test func lettersLight() {
-        Shoot.screen(app(.letters), named: "letters-light", style: .light, wait: 2)
+        Shoot.screen(app(.letters), named: "letters-light", style: .light, wait: 2.5)
+    }
+
+    @Test func lettersDark() {
+        Shoot.screen(app(.letters, theme: .dark), named: "letters-dark", style: .dark, wait: 2.5)
+    }
+
+    @Test func lettersList() {
+        let backend = FixtureBackend.make()
+        backend.settings.setLettersList(true)
+        Shoot.screen(AppRoot(backend: backend, initialTab: .letters), named: "letters-list-light", style: .light, wait: 2.5)
+    }
+
+    private func letter(_ id: Int, theme: ThemeMode = .match) -> some View {
+        let backend = FixtureBackend.make(theme: theme)
+        backend.home.start()
+        return NavigationStack { LetterScreen(id: id) }
+            .environment(backend)
+            .environment(\.dlFirstCitizen, 1)
+    }
+
+    @Test func letterReceived() {
+        Shoot.screen(letter(11), named: "letter-received-light", style: .light, wait: 2.5)
+    }
+
+    @Test func letterReceivedDark() {
+        Shoot.screen(letter(11, theme: .dark), named: "letter-received-dark", style: .dark, wait: 2.5)
+    }
+
+    @Test func letterSent() {
+        Shoot.screen(letter(21), named: "letter-sent-light", style: .light, wait: 2.5)
     }
 
     @Test func youLight() {

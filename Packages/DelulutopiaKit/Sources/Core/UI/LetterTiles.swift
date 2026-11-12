@@ -322,3 +322,56 @@ public enum LetterActions {
         }
     }
 }
+
+/// The bar above a sent letter or discussion still in reach (web .dl-reach-bar): the seal tint with
+/// its line, 12 pt corners, the count 13/600 and the actions at the end. Drops in.
+public struct ReachBar<Actions: View>: View {
+    let text: String
+    let actions: Actions
+
+    public init(_ text: String, @ViewBuilder actions: () -> Actions) {
+        self.text = text
+        self.actions = actions()
+    }
+
+    public var body: some View {
+        HStack(spacing: 10) {
+            Text(text)
+                .font(.custom(DLFontName.manropeSemiBold.rawValue, size: 13, relativeTo: .footnote).monospacedDigit())
+                .foregroundStyle(.dlInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            actions
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.dlSealTint, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.dlSealTintLine))
+        .dlEnter(.drop)
+    }
+}
+
+/// A compact reach button for bars (padded, not stretched).
+public struct ReachChip: View {
+    let title: String
+    let action: () -> Void
+
+    public init(_ title: String, action: @escaping () -> Void) {
+        self.title = title
+        self.action = action
+    }
+
+    public var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.custom(DLFontName.manropeExtraBold.rawValue, size: 14, relativeTo: .subheadline))
+                .foregroundStyle(.dlSeal)
+                .padding(.horizontal, 14)
+                .frame(height: 36)
+                .background(.dlLetterEnvelope, in: Capsule())
+                .overlay(Capsule().strokeBorder(.dlSeal, lineWidth: 1.5))
+                .frame(minHeight: 44)
+                .contentShape(Capsule())
+        }
+        .buttonStyle(DLPressStyle())
+    }
+}

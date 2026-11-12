@@ -85,6 +85,8 @@ targets:
       - package: DelulutopiaKit
         product: FeatureHome
       - package: DelulutopiaKit
+        product: FeatureLetters
+      - package: DelulutopiaKit
         product: DLUI
       - package: DelulutopiaKit
         product: DLDesignSystem

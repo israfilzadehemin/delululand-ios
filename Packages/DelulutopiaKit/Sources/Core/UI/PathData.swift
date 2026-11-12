@@ -6,7 +6,8 @@ import SwiftUI
 /// Android draw from the same strings (board reactions, the react slot). All commands, absolute and
 /// relative, including arcs.
 public enum PathData {
-    private static let cache = NSCache<NSString, PathBox>()
+    // NSCache is thread-safe.
+    nonisolated(unsafe) private static let cache = NSCache<NSString, PathBox>()
 
     private final class PathBox {
         let path: Path

@@ -1,5 +1,6 @@
 import DLData
 import FeatureHome
+import FeatureLetters
 import DLDesignSystem
 import DLUI
 import SwiftUI
@@ -56,6 +57,8 @@ struct MainTabView: View {
         switch tab {
         case .home:
             HomeScreen()
+        case .letters:
+            LettersScreen()
         case .you:
             YouScreen(config: backend.config, settings: backend.settings)
         default:
@@ -83,6 +86,8 @@ struct RouteScreen: View {
 
     var body: some View {
         switch route {
+        case let .letter(id):
+            LetterScreen(id: id)
         case .appearance:
             AppearanceScreenHost()
         default:

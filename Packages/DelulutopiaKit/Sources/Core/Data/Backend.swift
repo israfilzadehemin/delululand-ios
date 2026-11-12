@@ -16,6 +16,7 @@ public final class Backend {
     public let live: LiveUpdates
     public let session: SessionStore
     public let home: HomeStore
+    public let letters: LettersStore
     public let settings: DeviceSettings
     public let biometrics: BiometricVault
     /// `GET /api/config`: shortened timers on test servers (the TEST banner).
@@ -45,6 +46,7 @@ public final class Backend {
         self.live = live
         self.session = SessionStore(api: api)
         self.home = HomeStore(api: api, live: live)
+        self.letters = LettersStore(api: api, live: live)
         self.biometrics = biometrics ?? BiometricVault(service: "com.delulutopia.pin.\(config.environment.rawValue)")
     }
 
@@ -84,6 +86,7 @@ public final class Backend {
     public func didSignOut() {
         live.stop()
         home.stop()
+        letters.clear()
     }
 }
 

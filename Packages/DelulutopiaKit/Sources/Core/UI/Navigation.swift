@@ -7,7 +7,7 @@ import SwiftUI
 /// pushes them on the current tab's stack and maps each to its screen.
 public enum AppRoute: Hashable, Sendable {
     case letter(Int)
-    case write(editId: Int?)
+    case write(editId: Int? = nil, replyTo: Int? = nil)
     case discussion(Int)
     case composeDiscussion(editId: Int?)
     case thread(Int)
