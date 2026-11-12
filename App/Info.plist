@@ -53,5 +53,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo for your picture, a letter or an email, or record a video for an email.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record voice notes for your letters and discussions, and the sound of videos in emails.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Unlock with Face ID instead of typing your PIN.</string>
 </dict>
 </plist>

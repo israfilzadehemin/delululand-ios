@@ -88,6 +88,8 @@ struct RouteScreen: View {
         switch route {
         case let .letter(id):
             LetterScreen(id: id)
+        case let .write(editId, replyTo):
+            WriteScreen(editId: editId, replyTo: replyTo)
         case .appearance:
             AppearanceScreenHost()
         default:

@@ -136,6 +136,29 @@ struct ShellScreenshots {
         Shoot.screen(letter(11, theme: .dark), named: "letter-received-dark", style: .dark, wait: 2.5)
     }
 
+    private func write(editId: Int? = nil, replyTo: Int? = nil, theme: ThemeMode = .match) -> some View {
+        let backend = FixtureBackend.make(theme: theme)
+        backend.home.start()
+        return NavigationStack { WriteScreen(editId: editId, replyTo: replyTo) }
+            .environment(backend)
+    }
+
+    @Test func writeDraft() {
+        Shoot.screen(write(), named: "write-draft-light", style: .light, wait: 2.5)
+    }
+
+    @Test func writeDraftDark() {
+        Shoot.screen(write(theme: .dark), named: "write-draft-dark", style: .dark, wait: 2.5)
+    }
+
+    @Test func writeReply() {
+        Shoot.screen(write(replyTo: 11), named: "write-reply-light", style: .light, wait: 2.5)
+    }
+
+    @Test func writeEdit() {
+        Shoot.screen(write(editId: 21), named: "write-edit-light", style: .light, wait: 2.5)
+    }
+
     @Test func letterSent() {
         Shoot.screen(letter(21), named: "letter-sent-light", style: .light, wait: 2.5)
     }
