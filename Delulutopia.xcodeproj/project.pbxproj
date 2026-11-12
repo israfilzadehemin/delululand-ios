@@ -9,21 +9,22 @@
 /* Begin PBXBuildFile section */
 		047EABB824A2E8198C63025C /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 8D5936CB8CEAEC1DB85F9454 /* AppShell */; };
 		3DADBA06934DBF429730AA2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B8765B756B9F7FB135D0D61 /* Assets.xcassets */; };
-		49091DAB09DE66285B70F113 /* FeatureEmails in Frameworks */ = {isa = PBXBuildFile; productRef = 85C2684739F7051B1DFFF91E /* FeatureEmails */; };
-		6BE1DD9B4681D1048055D04B /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = 527B3BDEDC35254A318BDF5A /* DLData */; };
+		49091DAB09DE66285B70F113 /* FeatureDiscussions in Frameworks */ = {isa = PBXBuildFile; productRef = DFFAF39DC6E35C38D242D9BA /* FeatureDiscussions */; };
+		6BE1DD9B4681D1048055D04B /* DLDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = E5B24DBBD4E0BCAB57515633 /* DLDesignSystem */; };
 		762D164795CAC955CD72B0CF /* CatalogScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */; };
 		767321464292EDEAF16C8A38 /* DLTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 674862BA9685E9B46B221D97 /* DLTestSupport */; };
 		7C55D6EE564C113CA23AB48F /* DelulutopiaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AB35B69274C41DA740EE63 /* DelulutopiaApp.swift */; };
-		882FD8EC7AF1944DFCC82911 /* DLDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = E5B24DBBD4E0BCAB57515633 /* DLDesignSystem */; };
+		882FD8EC7AF1944DFCC82911 /* DLUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8BAB82FDD6823DD21B2B360C /* DLUI */; };
 		8A410E5A1BC5B0BD7B63F367 /* ShellScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6B2C0663981BD15ABB39F2 /* ShellScreenshots.swift */; };
 		8CB0441CA2C97C6AC70D3548 /* DLDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = BC5CA5F7736869F5C1E61E6D /* DLDesignSystem */; };
-		B63676DF42DACA1815C4D711 /* FeatureHome in Frameworks */ = {isa = PBXBuildFile; productRef = 43032E393299D077EE8970E4 /* FeatureHome */; };
-		C2F8AD62F462D5C74ED79109 /* DLUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8BAB82FDD6823DD21B2B360C /* DLUI */; };
-		D1FA9754A0C737A05A41AD4A /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 61E820D413B1D49EE9B6D6C3 /* AppShell */; };
-		D80CA666683EEFA7DE22531B /* FeatureLetters in Frameworks */ = {isa = PBXBuildFile; productRef = 941987CC3761B9121501B044 /* FeatureLetters */; };
-		D854EF0AF3C87E168BBC4BB5 /* FeatureStart in Frameworks */ = {isa = PBXBuildFile; productRef = A36F5CC59C946F9020F7D093 /* FeatureStart */; };
+		8F288843F44E1021EAEA20DF /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = 527B3BDEDC35254A318BDF5A /* DLData */; };
+		B63676DF42DACA1815C4D711 /* FeatureStart in Frameworks */ = {isa = PBXBuildFile; productRef = A36F5CC59C946F9020F7D093 /* FeatureStart */; };
+		C2F8AD62F462D5C74ED79109 /* FeatureEmails in Frameworks */ = {isa = PBXBuildFile; productRef = 85C2684739F7051B1DFFF91E /* FeatureEmails */; };
+		D1FA9754A0C737A05A41AD4A /* DLI18n in Frameworks */ = {isa = PBXBuildFile; productRef = F82D76EB375ADC093145AEE4 /* DLI18n */; };
+		D80CA666683EEFA7DE22531B /* FeatureHome in Frameworks */ = {isa = PBXBuildFile; productRef = 43032E393299D077EE8970E4 /* FeatureHome */; };
+		D854EF0AF3C87E168BBC4BB5 /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 61E820D413B1D49EE9B6D6C3 /* AppShell */; };
 		F48CD9C7A5BBF42692A94073 /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = BDD68A0A08CA5287AE6058AC /* DLData */; };
-		F6C854F7DC5F84B4F3D8D77A /* FeatureDiscussions in Frameworks */ = {isa = PBXBuildFile; productRef = DFFAF39DC6E35C38D242D9BA /* FeatureDiscussions */; };
+		F6C854F7DC5F84B4F3D8D77A /* FeatureLetters in Frameworks */ = {isa = PBXBuildFile; productRef = 941987CC3761B9121501B044 /* FeatureLetters */; };
 		FD37B14D762D2CFFBA67B76E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
@@ -56,15 +57,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				767321464292EDEAF16C8A38 /* DLTestSupport in Frameworks */,
-				D1FA9754A0C737A05A41AD4A /* AppShell in Frameworks */,
-				D854EF0AF3C87E168BBC4BB5 /* FeatureStart in Frameworks */,
-				B63676DF42DACA1815C4D711 /* FeatureHome in Frameworks */,
-				D80CA666683EEFA7DE22531B /* FeatureLetters in Frameworks */,
-				F6C854F7DC5F84B4F3D8D77A /* FeatureDiscussions in Frameworks */,
-				49091DAB09DE66285B70F113 /* FeatureEmails in Frameworks */,
-				C2F8AD62F462D5C74ED79109 /* DLUI in Frameworks */,
-				882FD8EC7AF1944DFCC82911 /* DLDesignSystem in Frameworks */,
-				6BE1DD9B4681D1048055D04B /* DLData in Frameworks */,
+				D1FA9754A0C737A05A41AD4A /* DLI18n in Frameworks */,
+				D854EF0AF3C87E168BBC4BB5 /* AppShell in Frameworks */,
+				B63676DF42DACA1815C4D711 /* FeatureStart in Frameworks */,
+				D80CA666683EEFA7DE22531B /* FeatureHome in Frameworks */,
+				F6C854F7DC5F84B4F3D8D77A /* FeatureLetters in Frameworks */,
+				49091DAB09DE66285B70F113 /* FeatureDiscussions in Frameworks */,
+				C2F8AD62F462D5C74ED79109 /* FeatureEmails in Frameworks */,
+				882FD8EC7AF1944DFCC82911 /* DLUI in Frameworks */,
+				6BE1DD9B4681D1048055D04B /* DLDesignSystem in Frameworks */,
+				8F288843F44E1021EAEA20DF /* DLData in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -193,6 +195,7 @@
 			name = DelulutopiaScreens;
 			packageProductDependencies = (
 				674862BA9685E9B46B221D97 /* DLTestSupport */,
+				F82D76EB375ADC093145AEE4 /* DLI18n */,
 				61E820D413B1D49EE9B6D6C3 /* AppShell */,
 				A36F5CC59C946F9020F7D093 /* FeatureStart */,
 				43032E393299D077EE8970E4 /* FeatureHome */,
@@ -793,6 +796,10 @@
 		E5B24DBBD4E0BCAB57515633 /* DLDesignSystem */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DLDesignSystem;
+		};
+		F82D76EB375ADC093145AEE4 /* DLI18n */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLI18n;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
