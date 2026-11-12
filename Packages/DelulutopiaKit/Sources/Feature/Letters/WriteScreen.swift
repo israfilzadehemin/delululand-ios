@@ -150,7 +150,7 @@ private struct WriteForm: View {
                         .frame(minHeight: 300, alignment: .top)
                         .background(alignment: .top) { WriteRules().padding(.top, 16) }
                         .contentShape(Rectangle())
-                        .onTapGesture { editor.textView?.becomeFirstResponder() }
+                        .onTapGesture { editor.focus() }
                     }
                 }
                 .scrollDismissesKeyboard(.interactively)

@@ -140,6 +140,11 @@ public final class RichEditorState {
 
     public init() {}
 
+    /// Puts the caret in the editor (a tap on the empty sheet).
+    public func focus() {
+        textView?.becomeFirstResponder()
+    }
+
     /// Replace the content (Load, a newer draft).
     public func set(_ doc: Doc) {
         guard let textView else {

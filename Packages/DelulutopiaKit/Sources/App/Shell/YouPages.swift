@@ -340,6 +340,7 @@ struct NotificationsScreen: View {
     }
 }
 
+@MainActor
 enum UNAuthorizationStatusWord {
     case unknown, on, off, blocked
 
