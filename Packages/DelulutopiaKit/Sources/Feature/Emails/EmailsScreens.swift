@@ -143,7 +143,7 @@ private struct ThreadCard: View {
                         .foregroundStyle(.dlMailInk)
                         .lineLimit(1)
                     Spacer()
-                    if unread + reacted > 0 {
+                    if row.unread + reacted > 0 {
                         Text("\(row.unread + reacted) new")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(.dlOnMailBlue)
