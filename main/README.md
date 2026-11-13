@@ -1,6 +1,6 @@
 # main
 
-Commit `d96923b`, run 43373142780.
+Commit `1924b89`, run 43418483772.
 
 ## appearanceDark.appearance-dark
 
@@ -41,6 +41,10 @@ Commit `d96923b`, run 43373142780.
 ## emailsLight.emails-light
 
 ![emailsLight.emails-light.png](emailsLight.emails-light.png)
+
+## emailsRu.emails-ru-light
+
+![emailsRu.emails-ru-light.png](emailsRu.emails-ru-light.png)
 
 ## emailThread.email-thread-light
 
@@ -86,6 +90,14 @@ Commit `d96923b`, run 43373142780.
 
 ![homeLight.home-light.png](homeLight.home-light.png)
 
+## homeRu.home-ru-light
+
+![homeRu.home-ru-light.png](homeRu.home-ru-light.png)
+
+## homeTr.home-tr-light
+
+![homeTr.home-tr-light.png](homeTr.home-tr-light.png)
+
 ## homeWaiting.home-waiting-light
 
 ![homeWaiting.home-waiting-light.png](homeWaiting.home-waiting-light.png)
@@ -97,6 +109,10 @@ Commit `d96923b`, run 43373142780.
 ## languageLight.language-light
 
 ![languageLight.language-light.png](languageLight.language-light.png)
+
+## languageRuLight.language-ru-light
+
+![languageRuLight.language-ru-light.png](languageRuLight.language-ru-light.png)
 
 ## letterReceived.letter-received-light
 
@@ -150,6 +166,14 @@ Commit `d96923b`, run 43373142780.
 
 ![startCardsFa.start-cards-fa-light.png](startCardsFa.start-cards-fa-light.png)
 
+## startCardsRuDark.start-cards-ru-dark
+
+![startCardsRuDark.start-cards-ru-dark.png](startCardsRuDark.start-cards-ru-dark.png)
+
+## startCardsTr.start-cards-tr-light
+
+![startCardsTr.start-cards-tr-light.png](startCardsTr.start-cards-tr-light.png)
+
 ## startCreate.start-create-light
 
 ![startCreate.start-create-light.png](startCreate.start-create-light.png)
@@ -201,6 +225,10 @@ Commit `d96923b`, run 43373142780.
 ## youLight.you-light
 
 ![youLight.you-light.png](youLight.you-light.png)
+
+## youTr.you-tr-light
+
+![youTr.you-tr-light.png](youTr.you-tr-light.png)
 
 ## zz.home-screen
 
