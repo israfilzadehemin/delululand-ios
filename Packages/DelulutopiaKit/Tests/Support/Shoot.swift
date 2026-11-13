@@ -36,12 +36,13 @@ public enum Shoot {
         line: UInt = #line
     ) {
         let traits = makeTraits(style)
+        let image: Snapshotting<UIViewController, UIImage> = .image(
+            drawHierarchyInKeyWindow: true, precision: 1, size: phone, traits: traits
+        )
         record(
-            view,
+            host(view, style: style, topUpSafeArea: true),
             named: name,
-            style: style,
-            topUpSafeArea: true,
-            as: .image(drawHierarchyInKeyWindow: true, precision: 1, size: phone, traits: traits),
+            as: image,
             file: file,
             testName: testName,
             line: line
@@ -61,10 +62,8 @@ public enum Shoot {
         let traits = makeTraits(style)
         let config = ViewImageConfig(safeArea: .zero, size: CGSize(width: phone.width, height: height), traits: traits)
         record(
-            view,
+            host(view, style: style, topUpSafeArea: false),
             named: name,
-            style: style,
-            topUpSafeArea: false,
             as: .image(on: config, precision: 1, traits: traits),
             file: file,
             testName: testName,
@@ -79,16 +78,36 @@ public enum Shoot {
         }
     }
 
-    private static func record<V: View>(
+    /// Shoots `view` full screen after it has run in the key window for `wait` seconds, so its own
+    /// loading (fixture API, images, stamps) lands first. The wait suspends the test, so the main
+    /// actor keeps running the screen's tasks.
+    public static func screen<V: View>(
         _ view: V,
         named name: String,
         style: UIUserInterfaceStyle,
-        topUpSafeArea: Bool,
-        as strategy: Snapshotting<UIViewController, UIImage>,
-        file: StaticString,
-        testName: String,
-        line: UInt
-    ) {
+        wait: TimeInterval,
+        file: StaticString = #filePath,
+        testName: String = #function,
+        line: UInt = #line
+    ) async {
+        let controller = host(view, style: style, topUpSafeArea: true)
+        if let window = keyWindow {
+            window.rootViewController = controller
+            controller.view.frame = window.bounds
+            window.layoutIfNeeded()
+        }
+        try? await Task.sleep(for: .seconds(wait))
+        record(
+            controller,
+            named: name,
+            as: .image(drawHierarchyInKeyWindow: true, precision: 1, size: phone, traits: makeTraits(style)),
+            file: file,
+            testName: testName,
+            line: line
+        )
+    }
+
+    private static func host<V: View>(_ view: V, style: UIUserInterfaceStyle, topUpSafeArea: Bool) -> UIViewController {
         DLFonts.register()
         DLAppearance.apply()
         let host = UIHostingController(rootView: view.environment(\.dlMotionEnabled, false))
@@ -104,6 +123,17 @@ public enum Shoot {
                 right: 0
             )
         }
+        return host
+    }
+
+    private static func record(
+        _ host: UIViewController,
+        named name: String,
+        as strategy: Snapshotting<UIViewController, UIImage>,
+        file: StaticString,
+        testName: String,
+        line: UInt
+    ) {
         let directory = outputDirectory
         try? FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
         withSnapshotTesting(record: .all) {

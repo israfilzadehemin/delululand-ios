@@ -1,3 +1,4 @@
+import DLI18n
 import SwiftUI
 
 /// Every design-system piece on one page, for review in staging builds (You › Design system) and
@@ -34,10 +35,10 @@ public struct DLComponentCatalog: View {
 
     private var typeRamp: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Discussions").dlText(.largeTitle)
+            Text(t("discussions.discussions")).dlText(.largeTitle)
             Text("Delulutopia").dlText(.title1)
-            Text("Enter your PIN").dlText(.title2)
-            Text("Waiting for someone to join").dlText(.title3)
+            Text(t("pin.enterYourPin")).dlText(.title2)
+            Text(t("home.waitingForSomeoneToJoin")).dlText(.title3)
             Text("To Leyla").dlText(.headline)
             Text("One tap sets it. Leyla sees it right away.").dlText(.body)
             Text("Only if we take the slow train").dlText(.callout)
@@ -93,24 +94,24 @@ public struct DLComponentCatalog: View {
     private var buttons: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
-                Button {} label: { Label("Write a letter", systemImage: "square.and.pencil") }
+                Button {} label: { Label(t("letters.writeALetter"), systemImage: "square.and.pencil") }
                     .buttonStyle(.dlFilled)
-                Button("Keep writing") {}
+                Button(t("discussions.keepWriting")) {}
                     .buttonStyle(.dlGrey)
             }
             HStack(spacing: 10) {
-                Button("Edit") {}
+                Button(t("board.edit")) {}
                     .buttonStyle(.dlOutline)
-                Button("Allow") {}
+                Button(t("media.allow")) {}
                     .buttonStyle(.dlTint)
-                Button("Not now") {}
+                Button(t("media.notNow")) {}
                     .buttonStyle(.dlText)
             }
             HStack(spacing: 10) {
-                Button("Send") {}
+                Button(t("common.send")) {}
                     .buttonStyle(.dlFilled)
                     .disabled(true)
-                Button("Log out") {}
+                Button(t("app.logOut")) {}
                     .buttonStyle(.dlDanger)
             }
         }
@@ -120,8 +121,8 @@ public struct DLComponentCatalog: View {
 
     private var fields: some View {
         VStack(alignment: .leading, spacing: 12) {
-            DLField("Username", text: .constant("Emin"), hint: "3–16 letters or digits, no spaces")
-            DLField("Key", text: .constant("Q7MK-2PXA-9"), error: "That key doesn’t fit.", kind: .key)
+            DLField(t("profile.username"), text: .constant("Emin"), hint: t("profile.316LettersOrDigits"))
+            DLField(t("entry.key"), text: .constant("Q7MK-2PXA-9"), error: t("entry.wrongKey"), kind: .key)
         }
     }
 
@@ -132,11 +133,11 @@ public struct DLComponentCatalog: View {
             DLGroupedCardRow(divider: false) {
                 HStack {
                     DLRowLabel(
-                        "Notifications",
+                        t("settings.notifications"),
                         subtitle: "9 of 12 on",
                         icon: DLRowIcon("bell.fill", tint: .dlSystemRed)
                     )
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.dlInkQuiet)
                 }
@@ -148,11 +149,11 @@ public struct DLComponentCatalog: View {
                 .tint(.dlSeal)
             }
             DLGroupedCardRow {
-                DLCheckRow("Light", subtitle: "Paper and navy", checked: true)
+                DLCheckRow(t("settings.theme.light"), subtitle: t("settings.theme.lightSub"), checked: true)
             }
             DLGroupedCardRow {
                 HStack {
-                    DLRowLabel("Install app")
+                    DLRowLabel(t("settings.installApp"))
                     DLSoonChip()
                 }
             }
@@ -189,12 +190,12 @@ public struct DLComponentCatalog: View {
     private var glass: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                DLGlassIconButton("chevron.left", label: "Back") {}
+                DLGlassIconButton("chevron.backward", label: t("common.back")) {}
                 DLGlassIconButton("ellipsis", label: "More") {}
-                DLGlassIconButton("xmark", label: "Close") {}
+                DLGlassIconButton("xmark", label: t("common.close")) {}
             }
             DLToast("Arrives at 14:50", symbol: "clock")
-            DLToast("2 photos added to your draft", symbol: "photo", actionTitle: "Undo") {}
+            DLToast("2 photos added to your draft", symbol: "photo", actionTitle: t("doodle.undo")) {}
             DLDraftAccessory("Continue your letter", glass: true) {}
         }
     }
@@ -243,25 +244,25 @@ public struct DLGlassSamples: View {
 
             VStack(spacing: 18) {
                 HStack(spacing: 10) {
-                    DLGlassIconButton("chevron.left", label: "Back") {}
+                    DLGlassIconButton("chevron.backward", label: t("common.back")) {}
                     Spacer()
                     DLGlassIconButton("ellipsis", label: "More") {}
-                    DLGlassIconButton("xmark", label: "Close") {}
+                    DLGlassIconButton("xmark", label: t("common.close")) {}
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 10) {
-                        Button("Edit") {}
+                        Button(t("board.edit")) {}
                             .buttonStyle(.dlOutline)
-                        Button("Allow") {}
+                        Button(t("media.allow")) {}
                             .buttonStyle(.dlTint)
-                        Button("Not now") {}
+                        Button(t("media.notNow")) {}
                             .buttonStyle(.dlText)
                     }
                     HStack(spacing: 10) {
-                        Button("Send") {}
+                        Button(t("common.send")) {}
                             .buttonStyle(.dlFilled)
-                        Button("Keep writing") {}
+                        Button(t("discussions.keepWriting")) {}
                             .buttonStyle(.dlGrey)
                     }
                 }
@@ -269,7 +270,7 @@ public struct DLGlassSamples: View {
                 .padding(12)
                 .background(.dlPaper, in: RoundedRectangle(cornerRadius: DLRadius.groupedCard, style: .continuous))
                 DLToast("Arrives at 14:50", symbol: "clock")
-                DLToast("2 photos added to your draft", symbol: "photo", actionTitle: "Undo") {}
+                DLToast("2 photos added to your draft", symbol: "photo", actionTitle: t("doodle.undo")) {}
                 DLDraftAccessory("Continue your letter", glass: true) {}
             }
             .padding(.horizontal, 16)

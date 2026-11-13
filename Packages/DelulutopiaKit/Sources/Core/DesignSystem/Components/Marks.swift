@@ -1,10 +1,11 @@
+import DLI18n
 import SwiftUI
 
 /// The terracotta NEW pill (letters, board ribbon, "2 new").
 public struct DLNewBadge: View {
     let text: String
 
-    public init(_ text: String = "New") {
+    public init(_ text: String = t("tabs.new")) {
         self.text = text
     }
 
@@ -23,7 +24,7 @@ public struct DLSoonChip: View {
     public init() {}
 
     public var body: some View {
-        Text("Soon")
+        Text(t("settings.soon"))
             .dlText(.pill)
             .foregroundStyle(.dlSeal)
             .padding(.horizontal, 8)
@@ -120,7 +121,7 @@ public struct DLAvatar: View {
                     .scaledToFill()
             } else {
                 Text(initials.uppercased())
-                    .font(.custom(DLFontName.manropeExtraBold.rawValue, fixedSize: size * 0.38))
+                    .font(.custom(DLFontName.manropeExtraBold.name, fixedSize: size * 0.38))
                     .foregroundStyle(.dlInk)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -130,5 +131,30 @@ public struct DLAvatar: View {
         .clipShape(Circle())
         .overlay(Circle().strokeBorder(ringColor, lineWidth: ring ? 2 : 1))
         .accessibilityHidden(true)
+    }
+}
+
+/// Wizard progress (canvas U-*): 8 pt dots 6 pt apart; the current step is a 22 pt navy pill, done
+/// steps navy, later steps the line colour.
+public struct DLStepDots: View {
+    let step: Int
+    let of: Int
+
+    public init(step: Int, of: Int) {
+        self.step = step
+        self.of = of
+    }
+
+    public var body: some View {
+        HStack(spacing: 6) {
+            ForEach(1...max(of, 1), id: \.self) { i in
+                Capsule()
+                    .fill(i <= step ? Color.dlSeal : Color.dlLine)
+                    .frame(width: i == step ? 22 : 8, height: 8)
+            }
+        }
+        .animation(DLMotion.easeOut(0.28), value: step)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(t("common.stepOf", ["step": step, "total": of]))
     }
 }

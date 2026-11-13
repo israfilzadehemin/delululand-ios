@@ -71,7 +71,7 @@ public struct DLTextSpec: Sendable {
     /// The face at an exact size (already scaled).
     public func font(fixedSize size: CGFloat) -> Font {
         let font: Font = if let face {
-            .custom(face.rawValue, fixedSize: size)
+            .custom(face.name, fixedSize: size)
         } else {
             .system(size: size, weight: .regular, design: .monospaced)
         }
@@ -81,7 +81,7 @@ public struct DLTextSpec: Sendable {
     /// The face scaling with Dynamic Type, for places that only take a `Font`.
     public var dynamicFont: Font {
         let font: Font = if let face {
-            .custom(face.rawValue, size: size, relativeTo: base.swiftUI)
+            .custom(face.name, size: size, relativeTo: base.swiftUI)
         } else {
             .system(base.swiftUI, design: .monospaced)
         }
@@ -95,7 +95,7 @@ public struct DLTextSpec: Sendable {
     }
 
     func uiFontUnscaled(size: CGFloat) -> UIFont {
-        if let face, let font = UIFont(name: face.rawValue, size: size) {
+        if let face, let font = UIFont(name: face.name, size: size) {
             return font
         }
         return face == nil ? .monospacedSystemFont(ofSize: size, weight: .regular) : .systemFont(ofSize: size)

@@ -1,3 +1,4 @@
+import DLI18n
 import SwiftUI
 
 /// The PIN progress dots: 14 pt, 16 pt apart; entered = seal, empty = 1.5 pt quiet ring.
@@ -27,7 +28,7 @@ public struct DLPinDots: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("PIN, \(entered) of \(length) digits entered")
+        .accessibilityLabel(t("pin.dots.enter", ["n": entered, "total": length]))
     }
 }
 
@@ -101,7 +102,7 @@ public struct DLDraftAccessory: View {
                 Circle()
                     .fill(.dlSeal)
                     .frame(width: 7, height: 7)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.dlInkQuiet)
             }

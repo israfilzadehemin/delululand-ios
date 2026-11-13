@@ -79,7 +79,21 @@ targets:
       - package: DelulutopiaKit
         product: DLTestSupport
       - package: DelulutopiaKit
+        product: DLI18n
+      - package: DelulutopiaKit
         product: AppShell
+      - package: DelulutopiaKit
+        product: FeatureStart
+      - package: DelulutopiaKit
+        product: FeatureHome
+      - package: DelulutopiaKit
+        product: FeatureLetters
+      - package: DelulutopiaKit
+        product: FeatureDiscussions
+      - package: DelulutopiaKit
+        product: FeatureEmails
+      - package: DelulutopiaKit
+        product: DLUI
       - package: DelulutopiaKit
         product: DLDesignSystem
       - package: DelulutopiaKit
