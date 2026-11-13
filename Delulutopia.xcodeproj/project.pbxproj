@@ -1,0 +1,807 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		047EABB824A2E8198C63025C /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 8D5936CB8CEAEC1DB85F9454 /* AppShell */; };
+		3DADBA06934DBF429730AA2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B8765B756B9F7FB135D0D61 /* Assets.xcassets */; };
+		49091DAB09DE66285B70F113 /* FeatureDiscussions in Frameworks */ = {isa = PBXBuildFile; productRef = DFFAF39DC6E35C38D242D9BA /* FeatureDiscussions */; };
+		6BE1DD9B4681D1048055D04B /* DLDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = E5B24DBBD4E0BCAB57515633 /* DLDesignSystem */; };
+		762D164795CAC955CD72B0CF /* CatalogScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */; };
+		767321464292EDEAF16C8A38 /* DLTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 674862BA9685E9B46B221D97 /* DLTestSupport */; };
+		7C55D6EE564C113CA23AB48F /* DelulutopiaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AB35B69274C41DA740EE63 /* DelulutopiaApp.swift */; };
+		882FD8EC7AF1944DFCC82911 /* DLUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8BAB82FDD6823DD21B2B360C /* DLUI */; };
+		8A410E5A1BC5B0BD7B63F367 /* ShellScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6B2C0663981BD15ABB39F2 /* ShellScreenshots.swift */; };
+		8CB0441CA2C97C6AC70D3548 /* DLDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = BC5CA5F7736869F5C1E61E6D /* DLDesignSystem */; };
+		8F288843F44E1021EAEA20DF /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = 527B3BDEDC35254A318BDF5A /* DLData */; };
+		B63676DF42DACA1815C4D711 /* FeatureStart in Frameworks */ = {isa = PBXBuildFile; productRef = A36F5CC59C946F9020F7D093 /* FeatureStart */; };
+		C2F8AD62F462D5C74ED79109 /* FeatureEmails in Frameworks */ = {isa = PBXBuildFile; productRef = 85C2684739F7051B1DFFF91E /* FeatureEmails */; };
+		D1FA9754A0C737A05A41AD4A /* DLI18n in Frameworks */ = {isa = PBXBuildFile; productRef = F82D76EB375ADC093145AEE4 /* DLI18n */; };
+		D80CA666683EEFA7DE22531B /* FeatureHome in Frameworks */ = {isa = PBXBuildFile; productRef = 43032E393299D077EE8970E4 /* FeatureHome */; };
+		D854EF0AF3C87E168BBC4BB5 /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 61E820D413B1D49EE9B6D6C3 /* AppShell */; };
+		F48CD9C7A5BBF42692A94073 /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = BDD68A0A08CA5287AE6058AC /* DLData */; };
+		F6C854F7DC5F84B4F3D8D77A /* FeatureLetters in Frameworks */ = {isa = PBXBuildFile; productRef = 941987CC3761B9121501B044 /* FeatureLetters */; };
+		FD37B14D762D2CFFBA67B76E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		BC8C379048D59524972EEB97 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 50CC5B60FE3CC44F276251C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8CDCF64B84AD4F43F97AF008;
+			remoteInfo = Delulutopia;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogScreenshots.swift; sourceTree = "<group>"; };
+		24C08093F003F94991B707A0 /* Prod.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Prod.xcconfig; sourceTree = "<group>"; };
+		2AB8A901C788027C29970DBF /* DelulutopiaKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DelulutopiaKit; path = Packages/DelulutopiaKit; sourceTree = SOURCE_ROOT; };
+		66B52D7A5E0A4489A76F05B0 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
+		8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DelulutopiaScreens.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B8765B756B9F7FB135D0D61 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A08AB8F3AD1BD33012593C32 /* Delulutopia.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Delulutopia.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5AB35B69274C41DA740EE63 /* DelulutopiaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelulutopiaApp.swift; sourceTree = "<group>"; };
+		B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		FD6B2C0663981BD15ABB39F2 /* ShellScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellScreenshots.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		417E24F5F4D0F17DD76FCCFF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				767321464292EDEAF16C8A38 /* DLTestSupport in Frameworks */,
+				D1FA9754A0C737A05A41AD4A /* DLI18n in Frameworks */,
+				D854EF0AF3C87E168BBC4BB5 /* AppShell in Frameworks */,
+				B63676DF42DACA1815C4D711 /* FeatureStart in Frameworks */,
+				D80CA666683EEFA7DE22531B /* FeatureHome in Frameworks */,
+				F6C854F7DC5F84B4F3D8D77A /* FeatureLetters in Frameworks */,
+				49091DAB09DE66285B70F113 /* FeatureDiscussions in Frameworks */,
+				C2F8AD62F462D5C74ED79109 /* FeatureEmails in Frameworks */,
+				882FD8EC7AF1944DFCC82911 /* DLUI in Frameworks */,
+				6BE1DD9B4681D1048055D04B /* DLDesignSystem in Frameworks */,
+				8F288843F44E1021EAEA20DF /* DLData in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD1CF0A832241C85EB027FFC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				047EABB824A2E8198C63025C /* AppShell in Frameworks */,
+				8CB0441CA2C97C6AC70D3548 /* DLDesignSystem in Frameworks */,
+				F48CD9C7A5BBF42692A94073 /* DLData in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		147182A4D19412CB79B1158C /* App */ = {
+			isa = PBXGroup;
+			children = (
+				3D6357E290025CD8B9241C51 /* Resources */,
+				3D10BAE802DC19CA7DDF4F55 /* ScreenTests */,
+				D071C853BA965DB005C5E1BA /* Sources */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		3D10BAE802DC19CA7DDF4F55 /* ScreenTests */ = {
+			isa = PBXGroup;
+			children = (
+				12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */,
+				FD6B2C0663981BD15ABB39F2 /* ShellScreenshots.swift */,
+			);
+			path = ScreenTests;
+			sourceTree = "<group>";
+		};
+		3D6357E290025CD8B9241C51 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8B8765B756B9F7FB135D0D61 /* Assets.xcassets */,
+				B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		42489E8DAAF5C7FEADA20A23 /* Configs */ = {
+			isa = PBXGroup;
+			children = (
+				24C08093F003F94991B707A0 /* Prod.xcconfig */,
+				66B52D7A5E0A4489A76F05B0 /* Staging.xcconfig */,
+			);
+			path = Configs;
+			sourceTree = "<group>";
+		};
+		801A941F36B57160F526BBE4 = {
+			isa = PBXGroup;
+			children = (
+				147182A4D19412CB79B1158C /* App */,
+				42489E8DAAF5C7FEADA20A23 /* Configs */,
+				BC82C56281C39C4CC6469DA2 /* Packages */,
+				AAFA56F9507BF5D63485DF63 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AAFA56F9507BF5D63485DF63 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A08AB8F3AD1BD33012593C32 /* Delulutopia.app */,
+				8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BC82C56281C39C4CC6469DA2 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				2AB8A901C788027C29970DBF /* DelulutopiaKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		D071C853BA965DB005C5E1BA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				B5AB35B69274C41DA740EE63 /* DelulutopiaApp.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8CDCF64B84AD4F43F97AF008 /* Delulutopia */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DE106E01D78852031333C94B /* Build configuration list for PBXNativeTarget "Delulutopia" */;
+			buildPhases = (
+				3F1D0AD5FFFB4D829C8A63D9 /* Sources */,
+				4C1768B1048F307B9C75D6A5 /* Resources */,
+				DD1CF0A832241C85EB027FFC /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Delulutopia;
+			packageProductDependencies = (
+				8D5936CB8CEAEC1DB85F9454 /* AppShell */,
+				BC5CA5F7736869F5C1E61E6D /* DLDesignSystem */,
+				BDD68A0A08CA5287AE6058AC /* DLData */,
+			);
+			productName = Delulutopia;
+			productReference = A08AB8F3AD1BD33012593C32 /* Delulutopia.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AD9E276FFE2E24EB440F9E98 /* DelulutopiaScreens */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E3121B228E9B369F8E2445E3 /* Build configuration list for PBXNativeTarget "DelulutopiaScreens" */;
+			buildPhases = (
+				EA2895515B5B23DF1E0DD473 /* Sources */,
+				417E24F5F4D0F17DD76FCCFF /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D823C87CA1E839DDC80E53D4 /* PBXTargetDependency */,
+			);
+			name = DelulutopiaScreens;
+			packageProductDependencies = (
+				674862BA9685E9B46B221D97 /* DLTestSupport */,
+				F82D76EB375ADC093145AEE4 /* DLI18n */,
+				61E820D413B1D49EE9B6D6C3 /* AppShell */,
+				A36F5CC59C946F9020F7D093 /* FeatureStart */,
+				43032E393299D077EE8970E4 /* FeatureHome */,
+				941987CC3761B9121501B044 /* FeatureLetters */,
+				DFFAF39DC6E35C38D242D9BA /* FeatureDiscussions */,
+				85C2684739F7051B1DFFF91E /* FeatureEmails */,
+				8BAB82FDD6823DD21B2B360C /* DLUI */,
+				E5B24DBBD4E0BCAB57515633 /* DLDesignSystem */,
+				527B3BDEDC35254A318BDF5A /* DLData */,
+			);
+			productName = DelulutopiaScreens;
+			productReference = 8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		50CC5B60FE3CC44F276251C7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					8CDCF64B84AD4F43F97AF008 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					AD9E276FFE2E24EB440F9E98 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 25EA4DECA02CF4F7539B7007 /* Build configuration list for PBXProject "Delulutopia" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 801A941F36B57160F526BBE4;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C4819357EDF1F832DD2E0F4B /* XCLocalSwiftPackageReference "Packages/DelulutopiaKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AAFA56F9507BF5D63485DF63 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8CDCF64B84AD4F43F97AF008 /* Delulutopia */,
+				AD9E276FFE2E24EB440F9E98 /* DelulutopiaScreens */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4C1768B1048F307B9C75D6A5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3DADBA06934DBF429730AA2F /* Assets.xcassets in Resources */,
+				FD37B14D762D2CFFBA67B76E /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3F1D0AD5FFFB4D829C8A63D9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7C55D6EE564C113CA23AB48F /* DelulutopiaApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EA2895515B5B23DF1E0DD473 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				762D164795CAC955CD72B0CF /* CatalogScreenshots.swift in Sources */,
+				8A410E5A1BC5B0BD7B63F367 /* ShellScreenshots.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D823C87CA1E839DDC80E53D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8CDCF64B84AD4F43F97AF008 /* Delulutopia */;
+			targetProxy = BC8C379048D59524972EEB97 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		00DA2D8D4E0024FAEB611740 /* Debug-Prod */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 24C08093F003F94991B707A0 /* Prod.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug-Prod";
+		};
+		04931CA37433ACD7E6C4FE23 /* Release-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "$(DL_APP_ICON)";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID)";
+				PRODUCT_NAME = Delulutopia;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-Prod";
+		};
+		12613C9D6BD8E435170F7BAC /* Release-Staging */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 66B52D7A5E0A4489A76F05B0 /* Staging.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-Staging";
+		};
+		2685575E2876E614BA77CDEB /* Debug-Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.delulutopia.app.screens;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Delulutopia.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Delulutopia";
+			};
+			name = "Debug-Staging";
+		};
+		2AC3C61A96B72E4E36721176 /* Release-Prod */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 24C08093F003F94991B707A0 /* Prod.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-Prod";
+		};
+		3CE982F5A43A448A02A7AA6C /* Release-Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.delulutopia.app.screens;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Delulutopia.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Delulutopia";
+			};
+			name = "Release-Staging";
+		};
+		46BC97BC03267E8F6D1D8415 /* Debug-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.delulutopia.app.screens;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Delulutopia.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Delulutopia";
+			};
+			name = "Debug-Prod";
+		};
+		948D04A468B6D548C368BB8F /* Release-Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "$(DL_APP_ICON)";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID)";
+				PRODUCT_NAME = Delulutopia;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-Staging";
+		};
+		9D1A55DADE68205A0B110C94 /* Debug-Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "$(DL_APP_ICON)";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID)";
+				PRODUCT_NAME = Delulutopia;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug-Staging";
+		};
+		9EFC1427F13FC5F786499D96 /* Debug-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "$(DL_APP_ICON)";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID)";
+				PRODUCT_NAME = Delulutopia;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug-Prod";
+		};
+		A4D85CBBD246976F2FA9AB77 /* Release-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.delulutopia.app.screens;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Delulutopia.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Delulutopia";
+			};
+			name = "Release-Prod";
+		};
+		FCFE4FC323D6C4AE9107F215 /* Debug-Staging */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 66B52D7A5E0A4489A76F05B0 /* Staging.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug-Staging";
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		25EA4DECA02CF4F7539B7007 /* Build configuration list for PBXProject "Delulutopia" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00DA2D8D4E0024FAEB611740 /* Debug-Prod */,
+				FCFE4FC323D6C4AE9107F215 /* Debug-Staging */,
+				2AC3C61A96B72E4E36721176 /* Release-Prod */,
+				12613C9D6BD8E435170F7BAC /* Release-Staging */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug-Prod";
+		};
+		DE106E01D78852031333C94B /* Build configuration list for PBXNativeTarget "Delulutopia" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9EFC1427F13FC5F786499D96 /* Debug-Prod */,
+				9D1A55DADE68205A0B110C94 /* Debug-Staging */,
+				04931CA37433ACD7E6C4FE23 /* Release-Prod */,
+				948D04A468B6D548C368BB8F /* Release-Staging */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug-Prod";
+		};
+		E3121B228E9B369F8E2445E3 /* Build configuration list for PBXNativeTarget "DelulutopiaScreens" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				46BC97BC03267E8F6D1D8415 /* Debug-Prod */,
+				2685575E2876E614BA77CDEB /* Debug-Staging */,
+				A4D85CBBD246976F2FA9AB77 /* Release-Prod */,
+				3CE982F5A43A448A02A7AA6C /* Release-Staging */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug-Prod";
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		C4819357EDF1F832DD2E0F4B /* XCLocalSwiftPackageReference "Packages/DelulutopiaKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/DelulutopiaKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		43032E393299D077EE8970E4 /* FeatureHome */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FeatureHome;
+		};
+		527B3BDEDC35254A318BDF5A /* DLData */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLData;
+		};
+		61E820D413B1D49EE9B6D6C3 /* AppShell */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppShell;
+		};
+		674862BA9685E9B46B221D97 /* DLTestSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLTestSupport;
+		};
+		85C2684739F7051B1DFFF91E /* FeatureEmails */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FeatureEmails;
+		};
+		8BAB82FDD6823DD21B2B360C /* DLUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLUI;
+		};
+		8D5936CB8CEAEC1DB85F9454 /* AppShell */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppShell;
+		};
+		941987CC3761B9121501B044 /* FeatureLetters */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FeatureLetters;
+		};
+		A36F5CC59C946F9020F7D093 /* FeatureStart */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FeatureStart;
+		};
+		BC5CA5F7736869F5C1E61E6D /* DLDesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLDesignSystem;
+		};
+		BDD68A0A08CA5287AE6058AC /* DLData */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLData;
+		};
+		DFFAF39DC6E35C38D242D9BA /* FeatureDiscussions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FeatureDiscussions;
+		};
+		E5B24DBBD4E0BCAB57515633 /* DLDesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLDesignSystem;
+		};
+		F82D76EB375ADC093145AEE4 /* DLI18n */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLI18n;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 50CC5B60FE3CC44F276251C7 /* Project object */;
+}

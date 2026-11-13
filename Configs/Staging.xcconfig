@@ -1,0 +1,8 @@
+#include "Base.xcconfig"
+
+// Staging → test.delulutopia.com (decisions D6, Q9). `$()` keeps `//` from starting a comment.
+DL_ENVIRONMENT = staging
+DL_BUNDLE_ID = com.delulutopia.app.test
+DL_DISPLAY_NAME = Delulutopia TST
+DL_API_BASE_URL = https:/$()/test.delulutopia.com
+DL_APP_ICON = AppIcon-Staging

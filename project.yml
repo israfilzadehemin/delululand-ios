@@ -1,0 +1,132 @@
+# XcodeGen spec — the source of truth for Delulutopia.xcodeproj (decision D2).
+# Edit this file, then run `xcodegen generate`. CI regenerates the project on every PR and commits it
+# back when it drifted; on main a drift fails the build.
+
+name: Delulutopia
+
+options:
+  bundleIdPrefix: com.delulutopia
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+configs:
+  Debug-Staging: debug
+  Release-Staging: release
+  Debug-Prod: debug
+  Release-Prod: release
+
+configFiles:
+  Debug-Staging: Configs/Staging.xcconfig
+  Release-Staging: Configs/Staging.xcconfig
+  Debug-Prod: Configs/Prod.xcconfig
+  Release-Prod: Configs/Prod.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+
+packages:
+  DelulutopiaKit:
+    path: Packages/DelulutopiaKit
+
+targets:
+  Delulutopia:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/Sources
+      - path: App/Resources
+    settings:
+      base:
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_NAME: Delulutopia
+        PRODUCT_BUNDLE_IDENTIFIER: $(DL_BUNDLE_ID)
+        ASSETCATALOG_COMPILER_APPICON_NAME: $(DL_APP_ICON)
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+    dependencies:
+      - package: DelulutopiaKit
+        product: AppShell
+      - package: DelulutopiaKit
+        product: DLDesignSystem
+      - package: DelulutopiaKit
+        product: DLData
+
+  # Screenshot tests hosted by the app, so screens draw through a real key window and system glass
+  # renders as on a device (decision D5). Unit tests live in the package.
+  DelulutopiaScreens:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: App/ScreenTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.delulutopia.app.screens
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Delulutopia.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Delulutopia
+        BUNDLE_LOADER: $(TEST_HOST)
+    dependencies:
+      - target: Delulutopia
+      - package: DelulutopiaKit
+        product: DLTestSupport
+      - package: DelulutopiaKit
+        product: DLI18n
+      - package: DelulutopiaKit
+        product: AppShell
+      - package: DelulutopiaKit
+        product: FeatureStart
+      - package: DelulutopiaKit
+        product: FeatureHome
+      - package: DelulutopiaKit
+        product: FeatureLetters
+      - package: DelulutopiaKit
+        product: FeatureDiscussions
+      - package: DelulutopiaKit
+        product: FeatureEmails
+      - package: DelulutopiaKit
+        product: DLUI
+      - package: DelulutopiaKit
+        product: DLDesignSystem
+      - package: DelulutopiaKit
+        product: DLData
+
+schemes:
+  Delulutopia Staging:
+    build:
+      targets:
+        Delulutopia: all
+    run:
+      config: Debug-Staging
+    test:
+      config: Debug-Staging
+      targets:
+        - DelulutopiaScreens
+    profile:
+      config: Release-Staging
+    analyze:
+      config: Debug-Staging
+    archive:
+      config: Release-Staging
+  Delulutopia:
+    build:
+      targets:
+        Delulutopia: all
+    run:
+      config: Debug-Prod
+    test:
+      config: Debug-Prod
+    profile:
+      config: Release-Prod
+    analyze:
+      config: Debug-Prod
+    archive:
+      config: Release-Prod

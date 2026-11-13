@@ -1,0 +1,9 @@
+// Shared by every configuration. Per-environment values live in Staging.xcconfig and Prod.xcconfig
+// (decision D6, project doc "Delululand — iOS Build").
+
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+// Q1 is deferred: signing settings arrive with the first TestFlight build.
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM =
