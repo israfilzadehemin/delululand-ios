@@ -167,7 +167,7 @@ public struct LetterScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle(shown.map { "\($0.isMine ? "To" : "From") \(friend)" } ?? "")
+        .navigationTitle(shown.map { t($0.isMine ? "letters.to" : "letters.from", ["friend": friend]) } ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
@@ -241,6 +241,8 @@ private struct Gone: View {
 }
 
 private struct LetterContent: View {
+    @Environment(\.layoutDirection) private var layoutDirection
+    private var rtl: Bool { layoutDirection == .rightToLeft }
     let letter: LetterFull
     let swiped: Bool
     let reader: LetterReader
@@ -352,7 +354,8 @@ private struct LetterContent: View {
                                 }
                                 Spacer(minLength: 0)
                             }
-                            .padding(EdgeInsets(top: 16, leading: 16, bottom: 15, trailing: letter.stamp != nil ? 84 : 16))
+                            // The stamp stays top right in every language (L3), so the head keeps clear of that side.
+                            .padding(EdgeInsets(top: 16, leading: rtl && letter.stamp != nil ? 84 : 16, bottom: 15, trailing: !rtl && letter.stamp != nil ? 84 : 16))
                             .overlay(alignment: .bottom) {
                                 VStack(spacing: 2) {
                                     Rectangle().fill(.dlLetterRule).frame(height: 1)

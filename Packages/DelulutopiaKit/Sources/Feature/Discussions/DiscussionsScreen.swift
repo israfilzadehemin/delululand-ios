@@ -253,6 +253,7 @@ private struct NoteRow: View {
                                 .font(.custom(DLFontName.literataSemiBold.name, size: 17, relativeTo: .body))
                                 .foregroundStyle(.dlNoteInk)
                                 .lineLimit(2)
+                                .ownText(r.title ?? r.firstLine ?? "")
                             Text(meta)
                                 .font(.custom(DLFontName.manropeMedium.name, size: 13, relativeTo: .footnote))
                                 .foregroundStyle(.dlNoteInkQuiet)

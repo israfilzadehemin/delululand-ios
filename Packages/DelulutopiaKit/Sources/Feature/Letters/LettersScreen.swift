@@ -212,6 +212,7 @@ private struct ListRow: View {
                                 .font(.custom(isNew ? DLFontName.manropeBold.name : DLFontName.manropeMedium.name, size: 15, relativeTo: .subheadline))
                                 .foregroundStyle(incoming ? Color.dlInkQuiet : Color.dlLetterInk)
                                 .lineLimit(1)
+                                .ownText(incoming ? "" : row.firstLine ?? "")
                         }
                         Text(arrived ? t("letters.timesArrived", ["sent": DLTime.clock(row.sentAt, now: now), "arrived": arrives]) : t("letters.timesArrives", ["sent": DLTime.clock(row.sentAt, now: now), "arrives": arrives]))
                             .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption))
@@ -262,6 +263,7 @@ private struct Thumb: View {
                     .lineSpacing(envelope ? 1 : 0)
                     .foregroundStyle(incoming ? Color.dlInkQuiet : Color.dlLetterInk)
                     .lineLimit(envelope ? 2 : 3)
+                    .ownText(incoming ? "" : row.firstLine ?? "")
                     .padding(.trailing, envelope ? 0 : 22)
                     .background(alignment: .top) { if !envelope { Rules() } }
                 if let media, media.photos + media.audios + media.doodles > 0 {

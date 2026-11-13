@@ -40,6 +40,7 @@ public struct LetterBody: View {
             let shown = animating ? elapsed / step : Double(words) + 1
             content(shown: shown)
         }
+        .ownText(doc.plainText)
         .onAppear { if animating, started == nil { started = Date() } }
         .onChange(of: reveal) { _, on in started = on ? Date() : nil }
         .accessibilityElement(children: .ignore)

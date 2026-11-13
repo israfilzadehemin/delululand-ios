@@ -355,6 +355,7 @@ private struct RowLine: View {
             .foregroundStyle(.dlLetterInk)
             .lineLimit(1)
             .truncationMode(.tail)
+            .ownText(text)
     }
 }
 

@@ -153,7 +153,13 @@ private struct ThreadCard: View {
                             .background(.dlMailBlue, in: Capsule())
                     }
                 }
-                Text("\(fromMe ? me?.nickname ?? "You" : friend?.nickname ?? "Friend") → \(fromMe ? friend?.nickname ?? "Friend" : me?.nickname ?? "You") · \(DLTime.clock(row.lastEmailAt)) · \(emailCountWords(row.emailCount))")
+                Text(fill("{from} {arrow} {to} · {time} · {count}", I18n.shared.lang, [
+                    "from": fromMe ? me?.nickname ?? t("board.you") : friend?.nickname ?? t("common.friend"),
+                    "arrow": I18n.shared.lang.rtl ? "←" : "→",
+                    "to": fromMe ? friend?.nickname ?? t("common.friend") : me?.nickname ?? t("board.you"),
+                    "time": DLTime.clock(row.lastEmailAt),
+                    "count": emailCountWords(row.emailCount),
+                ]))
                     .font(.system(size: 13))
                     .foregroundStyle(.dlInkQuiet)
                 Text(snippet).font(.system(size: 14)).foregroundStyle(.dlMailInk).lineLimit(2)
@@ -369,7 +375,7 @@ private struct EmailCard: View {
             .accessibilityHint(open ? t("emails.fold") : t("emails.unfold"))
             if open {
                 if !email.text.isEmpty {
-                    Text(email.text).font(.system(size: 16)).foregroundStyle(.dlMailInk).textSelection(.enabled)
+                    Text(email.text).font(.system(size: 16)).foregroundStyle(.dlMailInk).textSelection(.enabled).ownText(email.text)
                 }
                 if !photos.isEmpty {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 6)], spacing: 6) {
