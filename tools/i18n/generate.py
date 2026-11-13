@@ -13,7 +13,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 HERE = os.path.join(ROOT, 'tools', 'i18n')
 OUT = os.path.join(ROOT, 'Packages', 'DelulutopiaKit', 'Sources', 'Core', 'I18n', 'Catalog.swift')
-LANGS = ('en', 'az', 'fa')
+LANGS = ('en', 'az', 'fa', 'tr', 'ru')
 
 
 def load():
@@ -26,7 +26,7 @@ def load():
             cat[lang][key] = texts[lang]
     ph = lambda s: set(re.findall(r'\{([A-Za-z]+)\}', s))
     for key, en in cat['en'].items():
-        for lang in ('az', 'fa'):
+        for lang in LANGS[1:]:
             if key not in cat[lang]:
                 sys.exit(f'{lang} misses {key}')
             if not ph(cat[lang][key]) <= ph(en):
@@ -50,6 +50,8 @@ def main():
         '        case .en: en',
         '        case .az: az',
         '        case .fa: fa',
+        '        case .tr: tr',
+        '        case .ru: ru',
         '        }',
         '    }',
     ]

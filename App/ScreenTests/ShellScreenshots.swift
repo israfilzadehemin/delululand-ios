@@ -297,4 +297,49 @@ struct ShellScreenshots {
             await Shoot.screen(app(.you), named: "you-fa-light", style: .light, wait: 2)
         }
     }
+
+    // L15–L23: Turkish and Russian — the 5-language list, the landing button, the tab bar's longest labels.
+
+    @Test func languageRuLight() async {
+        await shoot(in: .ru) {
+            let backend = FixtureBackend.make()
+            Shoot.screen(NavigationStack { LanguageScreen() }.environment(backend), named: "language-ru-light", style: .light)
+        }
+    }
+
+    @Test func startCardsTr() async {
+        await shoot(in: .tr) {
+            await Shoot.screen(start(state: signedOut), named: "start-cards-tr-light", style: .light, wait: 1.5)
+        }
+    }
+
+    @Test func startCardsRuDark() async {
+        await shoot(in: .ru) {
+            await Shoot.screen(start(state: signedOut), named: "start-cards-ru-dark", style: .dark, wait: 1.5)
+        }
+    }
+
+    @Test func homeTr() async {
+        await shoot(in: .tr) {
+            await Shoot.screen(app(.home), named: "home-tr-light", style: .light, wait: 2.5)
+        }
+    }
+
+    @Test func homeRu() async {
+        await shoot(in: .ru) {
+            await Shoot.screen(app(.home), named: "home-ru-light", style: .light, wait: 2.5)
+        }
+    }
+
+    @Test func emailsRu() async {
+        await shoot(in: .ru) {
+            await Shoot.screen(app(.emails), named: "emails-ru-light", style: .light, wait: 2.5)
+        }
+    }
+
+    @Test func youTr() async {
+        await shoot(in: .tr) {
+            await Shoot.screen(app(.you), named: "you-tr-light", style: .light, wait: 2)
+        }
+    }
 }

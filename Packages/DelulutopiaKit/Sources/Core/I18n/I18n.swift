@@ -37,11 +37,26 @@ public func t(_ key: String, _ args: [String: Any] = [:]) -> String {
     translate(I18n.shared.lang, key, args)
 }
 
-/// Plural: `<base>_one` or `<base>_other` by `n` (CLDR rules of the three languages); `{n}` is filled too.
+/// Plural: `<base>_<category>` by `n` and each language's CLDR rules, else `<base>_other`; `{n}` is filled
+/// too. Russian has `_one`, `_few` and `_many` ("1 письмо", "2 письма", "5 писем", L17); the others say a
+/// noun once after a number, so `_other` mostly does.
 public func tn(_ base: String, _ n: Int, _ args: [String: Any] = [:], _ lang: Lang = I18n.shared.lang) -> String {
-    let one = lang == .fa ? (n == 0 || n == 1) : n == 1
-    let key = one && has(lang, base + "_one") ? base + "_one" : base + "_other"
+    let own = base + "_" + pluralCategory(n, lang)
+    let key = has(lang, own) ? own : base + "_other"
     return translate(lang, key, args.merging(["n": n]) { a, _ in a })
+}
+
+/// CLDR plural category of a whole number in `lang`.
+public func pluralCategory(_ n: Int, _ lang: Lang) -> String {
+    let abs = Swift.abs(n)
+    switch lang {
+    case .fa: return abs == 0 || abs == 1 ? "one" : "other"
+    case .ru:
+        if abs % 10 == 1, abs % 100 != 11 { return "one" }
+        if (2...4).contains(abs % 10), !(12...14).contains(abs % 100) { return "few" }
+        return "many"
+    case .en, .az, .tr: return abs == 1 ? "one" : "other"
+    }
 }
 
 public func translate(_ lang: Lang, _ key: String, _ args: [String: Any] = [:]) -> String {
@@ -100,7 +115,7 @@ func hasForeignLetter(_ s: String) -> Bool {
     }
 }
 
-/// 1,500 / 1 500 / ۱٬۵۰۰.
+/// 1,500 / 1 500 / ۱٬۵۰۰ / 1.500 (Turkish).
 public func formatNumber(_ n: Int, _ lang: Lang = I18n.shared.lang) -> String {
     let f = NumberFormatter()
     f.locale = Locale(identifier: "en_GB")
@@ -108,7 +123,8 @@ public func formatNumber(_ n: Int, _ lang: Lang = I18n.shared.lang) -> String {
     let s = f.string(from: NSNumber(value: n)) ?? "\(n)"
     switch lang {
     case .en: return s
-    case .az: return s.replacingOccurrences(of: ",", with: " ")
+    case .az, .ru: return s.replacingOccurrences(of: ",", with: " ")
+    case .tr: return s.replacingOccurrences(of: ",", with: ".")
     case .fa: return localDigits(s.replacingOccurrences(of: ",", with: "٬"), .fa)
     }
 }
