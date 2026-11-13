@@ -530,6 +530,7 @@ private struct ReplyQuote: View {
                         .font(.custom(DLFontName.literataRegular.name, size: 14, relativeTo: .body))
                         .foregroundStyle(.dlLetterInk)
                         .lineLimit(1)
+                        .ownText(reply.firstLine ?? "")
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
