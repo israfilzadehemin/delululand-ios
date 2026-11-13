@@ -1,6 +1,6 @@
 # p1/full-parity
 
-Commit `f4f0b62`, run 43366409766.
+Commit `aa1769f`, run 43369097660.
 
 ## appearanceDark.appearance-dark
 
