@@ -1,8 +1,8 @@
 import Foundation
 
-/// Day and time text in the language in force (L4): 24-hour everywhere; English `27 Oct`, Azerbaijani
-/// `27 oktyabr`, Persian the solar (Jalali) calendar `۵ آبان` with Persian digits. "This year" is counted in
-/// the calendar shown.
+/// Day and time text in the language in force (L4, L18): 24-hour everywhere; English `27 Oct`, Azerbaijani
+/// `27 oktyabr`, Turkish `27 Ekim`, Russian `27 октября` (the genitive month, no "г."), Persian the solar
+/// (Jalali) calendar `۵ آبان` with Persian digits. "This year" is counted in the calendar shown.
 public enum Dates {
     /// Written here so every phone says the same as the web and Android.
     static let azMonths = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr"]
@@ -28,6 +28,14 @@ public enum Dates {
             c.timeZone = zone
             let p = c.dateComponents([.day, .month, .year], from: date)
             return "\(p.day ?? 1) \(azMonths[(p.month ?? 1) - 1])" + (year ? " \(p.year ?? 0)" : "")
+        case .tr, .ru:
+            // "MMMM" after a day is the form a date takes: "Kasım", "ноября".
+            let f = DateFormatter()
+            f.calendar = Calendar(identifier: .gregorian)
+            f.locale = lang.locale
+            f.timeZone = zone
+            f.dateFormat = year ? "d MMMM yyyy" : "d MMMM"
+            return f.string(from: date)
         case .fa:
             let f = DateFormatter()
             f.calendar = Calendar(identifier: .persian)

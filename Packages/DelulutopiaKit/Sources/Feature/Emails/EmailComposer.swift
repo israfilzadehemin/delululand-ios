@@ -26,7 +26,7 @@ func clamp(_ text: String, max: Int = emailMax) -> (String, Bool) {
 func creditsLine(_ c: EmailCredits?) -> String? {
     guard let c else { return nil }
     let renews = DLTime.time(c.renewsAt)
-    return c.left > 0 ? t("emails.creditsLeft", ["n": c.left, "time": renews]) : t("emails.noCredits", ["time": renews])
+    return c.left > 0 ? tn("emails.creditsLeft", c.left, ["time": renews]) : t("emails.noCredits", ["time": renews])
 }
 
 /// Words for an email without text (FS-E3, Q3).
