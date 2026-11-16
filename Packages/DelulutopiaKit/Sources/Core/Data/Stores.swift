@@ -158,6 +158,7 @@ public final class HomeStore {
     @ObservationIgnored private var refresher: Refresher?
     @ObservationIgnored private var moodTask: Task<Void, Never>?
     @ObservationIgnored private var languageObserver: (any NSObjectProtocol)?
+    @ObservationIgnored private var tierObserver: (any NSObjectProtocol)?
     @ObservationIgnored private var loading = false
     @ObservationIgnored private var again = false
 
@@ -187,6 +188,9 @@ public final class HomeStore {
         languageObserver = NotificationCenter.default.addObserver(forName: .dlLanguageChanged, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.reloadWords() }
         }
+        tierObserver = NotificationCenter.default.addObserver(forName: .dlTierLimit, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshSoon() }
+        }
         Task {
             await load()
             await loadMoods()
@@ -207,6 +211,8 @@ public final class HomeStore {
         moodTask = nil
         if let languageObserver { NotificationCenter.default.removeObserver(languageObserver) }
         languageObserver = nil
+        if let tierObserver { NotificationCenter.default.removeObserver(tierObserver) }
+        tierObserver = nil
         home = nil
         offline = false
         moodsLoaded = false
@@ -224,6 +230,7 @@ public final class HomeStore {
             again = false
             do {
                 home = try await api.home()
+                if let limits = home?.plan?.limits { VideoLimits.set(seconds: limits.videoSeconds, mb: limits.videoMb) }
                 offline = false
                 // L8: the account's language wins on every device; another device's pick arrives here.
                 if let lang = Lang.parse(home?.me.language), lang != I18n.shared.lang { I18n.shared.set(lang) }

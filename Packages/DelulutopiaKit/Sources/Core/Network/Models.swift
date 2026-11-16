@@ -245,6 +245,8 @@ public struct Home: Codable, Sendable, Hashable {
     @Default<False> public var boardNew: Bool
     public var notifyPrefs: NotifyPrefs?
     public var universe: UniverseInfo
+    /// Subscription Tiers: nil from an API before V24; nothing is limited on screen then.
+    public var plan: Plan?
 
     /// The other citizen's name for sentences, or "your friend" while the creator is alone (Universe U8).
     public var friendName: String { friend?.nickname ?? t("settings.yourFriend") }
@@ -545,6 +547,61 @@ public struct UniverseView: Codable, Sendable, Hashable {
     public var creator: UniverseCreator?
     @Default<False> public var isCreator: Bool
     public var codeRotatedAt: String?
+    public var tier: String?
+    public var limits: PlanLimits?
+}
+
+// MARK: - Subscription tiers (doc "Delululand — Subscription Tiers" §5)
+
+public struct PlanLimits: Codable, Sendable, Hashable {
+    public var emailsDaily: Int
+    public var photosPerMessage: Int
+    public var photosDaily: Int
+    public var videoSeconds: Int
+    public var videoMb: Int
+    public var videosDaily: Int
+    /// nil is unlimited (Premium, ST1).
+    public var boardDoodlesDaily: Int?
+
+    public init(emailsDaily: Int, photosPerMessage: Int, photosDaily: Int, videoSeconds: Int, videoMb: Int, videosDaily: Int, boardDoodlesDaily: Int?) {
+        self.emailsDaily = emailsDaily
+        self.photosPerMessage = photosPerMessage
+        self.photosDaily = photosDaily
+        self.videoSeconds = videoSeconds
+        self.videoMb = videoMb
+        self.videosDaily = videosDaily
+        self.boardDoodlesDaily = boardDoodlesDaily
+    }
+}
+
+public struct PlanLeft: Codable, Sendable, Hashable {
+    public var emails: Int
+    public var photos: Int
+    public var videos: Int
+    public var boardDoodles: Int?
+
+    public init(emails: Int, photos: Int, videos: Int, boardDoodles: Int?) {
+        self.emails = emails
+        self.photos = photos
+        self.videos = videos
+        self.boardDoodles = boardDoodles
+    }
+}
+
+public struct Plan: Codable, Sendable, Hashable {
+    public var tier: String
+    public var limits: PlanLimits
+    public var left: PlanLeft
+    public var renewsAt: String
+
+    public init(tier: String, limits: PlanLimits, left: PlanLeft, renewsAt: String) {
+        self.tier = tier
+        self.limits = limits
+        self.left = left
+        self.renewsAt = renewsAt
+    }
+
+    public var premium: Bool { tier == "premium" }
 }
 
 public struct KeyCode: Codable, Sendable, Hashable {

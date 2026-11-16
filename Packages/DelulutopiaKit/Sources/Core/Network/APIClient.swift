@@ -19,6 +19,7 @@ public struct APIError: Error, Sendable, Equatable, LocalizedError {
     }
 
     public static let offlineCode = "OFFLINE"
+    static let tierLimits: Set<String> = ["PHOTO_LIMIT", "PHOTO_DAILY_LIMIT", "VIDEO_DAILY_LIMIT", "DOODLE_DAILY_LIMIT", "NO_CREDITS"]
 
     /// No answer, or a 5xx: the screen says "Can't reach <universe>. Try again."
     public var isOffline: Bool { status == 0 || status >= 500 }
@@ -38,6 +39,8 @@ public struct APIError: Error, Sendable, Equatable, LocalizedError {
 }
 
 public extension Notification.Name {
+    /// A send or Board post was refused by a tier limit; HomeStore refetches the plan.
+    static let dlTierLimit = Notification.Name("dlTierLimit")
     /// FS-A13: a 401 `NO_SESSION` anywhere means the session is gone; the app returns to the start.
     static let dlSessionEnded = Notification.Name("dl.sessionEnded")
 }
@@ -324,6 +327,10 @@ public final class APIClient: Sendable {
         let error = APIError(status: status, code: code, message: message, extra: extra)
         if status == 401, code == "NO_SESSION" {
             NotificationCenter.default.post(name: .dlSessionEnded, object: nil)
+        }
+        // Subscription Tiers CM-8, BD-2: a limit refusal means the plan on screen is stale.
+        if APIError.tierLimits.contains(code) {
+            NotificationCenter.default.post(name: .dlTierLimit, object: nil)
         }
         return error
     }

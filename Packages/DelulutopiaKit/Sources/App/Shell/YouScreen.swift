@@ -57,7 +57,13 @@ struct YouScreen: View {
                 }
             }
             Section {
-                row(t("settings.universe"), subtitle: t("settings.nameWelcomeKey", ["brand": brand]), symbol: "globe.europe.africa.fill", tint: .dlPostmarkHue) { open(.universe) }
+                row(
+                    t("settings.universe"),
+                    subtitle: t("settings.nameWelcomeKey", ["brand": brand]),
+                    symbol: "globe.europe.africa.fill",
+                    tint: .dlPostmarkHue,
+                    tier: backend.home.home?.plan?.tier // Subscription Tiers YU-1
+                ) { open(.universe) }
                 row(t("settings.appearance"), subtitle: settings.themeMode.title, symbol: "paintpalette.fill", tint: .dlSeal) { open(.appearance) }
                 row(t("settings.language"), subtitle: I18n.shared.lang.native, symbol: "character.bubble.fill", tint: .dlUserB) { open(.language) }
                 row(t("settings.notifications"), subtitle: nil, symbol: "bell.badge.fill", tint: .dlSystemRed) { open(.notifications) }
@@ -140,11 +146,12 @@ struct YouScreen: View {
 
     @State private var biometricAsk: Int?
 
-    private func row(_ title: String, subtitle: String?, symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
+    private func row(_ title: String, subtitle: String?, symbol: String, tint: Color, tier: String? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack {
                 DLRowLabel(title, subtitle: subtitle, icon: DLRowIcon(symbol, tint: tint))
                 Spacer()
+                if let tier { TierChip(tier) }
                 Image(systemName: "chevron.forward").font(.footnote.weight(.semibold)).foregroundStyle(.dlInkDisabled)
             }
         }

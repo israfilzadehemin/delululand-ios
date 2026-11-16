@@ -112,7 +112,9 @@ private struct WriteForm: View {
         let atts = model.attachments!
         let late = late(now: now)
         let recording = recorder?.recording ?? false
-        let canSend = !late && !busy && (!model.empty || !atts.done.isEmpty) && !atts.uploading && !recording
+        // Subscription Tiers CM-1–CM-7, ST6, ST13: an edit spends only the photos it adds; over the limit, Send is off.
+        let limits = stripLimits(backend.home.home?.plan, mediaOf(atts.items, original: Set(model.letter?.attachments.map(\.id) ?? [])))
+        let canSend = !late && !busy && (!model.empty || !atts.done.isEmpty) && !atts.uploading && !recording && limits?.block == nil
         let saver = model.saver
         let savedLine: String = {
             guard let saver else { return "" }
@@ -164,7 +166,7 @@ private struct WriteForm: View {
             }
             if !late {
                 VStack(alignment: .leading, spacing: 4) {
-                    AttachmentStrip(atts) { item in
+                    AttachmentStrip(atts, limits: limits) { item in
                         let index = atts.items.firstIndex(of: item) ?? 0
                         atts.remove(item.key)
                         if !editing, let att = item.att {
@@ -173,7 +175,7 @@ private struct WriteForm: View {
                     }
                     .padding(.horizontal, 16)
                     if let recorder {
-                        AddBar(attachments: atts, recorder: recorder, enabled: !late, doodleFull: atts.has("doodle")) { doodleOpen = true }
+                        AddBar(attachments: atts, recorder: recorder, enabled: !late, doodleFull: atts.has("doodle"), limits: limits) { doodleOpen = true }
                     }
                 }
                 .padding(.top, 6)

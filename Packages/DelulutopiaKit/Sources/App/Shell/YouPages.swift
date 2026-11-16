@@ -192,6 +192,7 @@ struct UniverseScreen: View {
                         }
                         .buttonStyle(DLButtonStyle(.filled, fullWidth: true))
                         .disabled(busy || name.trimmingCharacters(in: .whitespaces).isEmpty || (name == v.name && welcome == v.welcome))
+                        plan(v)
                         DLSectionLabel(t("settings.entryKey"))
                         if let key = newKey {
                             Text(groupKey(key)).font(.system(.title2, design: .monospaced).weight(.semibold)).foregroundStyle(.dlInk).textSelection(.enabled)
@@ -213,6 +214,7 @@ struct UniverseScreen: View {
                             DLSectionLabel(t("settings.createdBy"))
                             Text(c.username).dlText(.body).foregroundStyle(.dlInk)
                         }
+                        plan(v)
                     }
                 }
                 .padding(20)
@@ -243,6 +245,15 @@ struct UniverseScreen: View {
             view = v
             name = v.name
             welcome = v.welcome
+        }
+    }
+
+    /// Subscription Tiers PL-1: the same section for both citizens; Home's plan carries today's numbers.
+    @ViewBuilder
+    private func plan(_ v: UniverseView) -> some View {
+        let p = backend.home.home?.plan
+        if let tier = p?.tier ?? v.tier, let limits = p?.limits ?? v.limits {
+            PlanSection(tier: tier, limits: limits, plan: p)
         }
     }
 }
