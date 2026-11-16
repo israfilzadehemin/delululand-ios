@@ -44,6 +44,7 @@ struct BoardTile: View {
     @State private var picking = false
     @State private var drawn: String?
     @State private var ribbon: Int?
+    @State private var capped: String?
 
     private var board: Board? { home.board }
     private var friend: String { home.friendName }
@@ -52,6 +53,12 @@ struct BoardTile: View {
     private var mark: BoardReaction? { BoardReaction.of(board?.reaction) }
     /// Whether the doodle on the board is mine; nil when the board is empty.
     private var boardMine: Bool? { board.map { $0.authorId == home.me.id } }
+    /// Subscription Tiers BD-1: Free at the day's cap; viewing, reacting and commenting stay (ST9).
+    private var noDoodles: Bool { home.plan?.left.boardDoodles == 0 }
+    private var capLine: String? {
+        guard noDoodles, let plan = home.plan else { return nil }
+        return t("limits.noDoodles") + " · " + t("limits.renews", ["time": DLTime.time(plan.renewsAt)])
+    }
 
     private func nameOf(_ authorId: Int) -> String { authorId == home.me.id ? t("board.you") : friend }
 
@@ -90,7 +97,7 @@ struct BoardTile: View {
         .onChange(of: mini) { _, _ in markRibbon() }
         .fullScreenCover(isPresented: $viewing) {
             if let board {
-                BoardViewer(board: board, home: home, actions: actions, canReact: canReact, onReact: {
+                BoardViewer(board: board, home: home, actions: actions, canReact: canReact, canDraw: !noDoodles, onReact: {
                     picking = true
                 }, onClose: { viewing = false }, onDraw: { mode in
                     viewing = false
@@ -139,6 +146,16 @@ struct BoardTile: View {
             } message: {
                 Text(t("board.youWereDrawingOverAn"))
             }
+            // BD-2: glass alert; the drawing stays unless Discard.
+            .alert(t("board.limitTitle"), isPresented: Binding(get: { capped != nil }, set: { if !$0 { capped = nil } })) {
+                Button(t("doodle.keepDrawing"), role: .cancel) { capped = nil }
+                Button(t("doodle.discard"), role: .destructive) {
+                    capped = nil
+                    pad = nil
+                }
+            } message: {
+                Text(t("board.limitBody", ["time": DLTime.time(capped ?? "")]))
+            }
         }
         .sheet(isPresented: Binding(get: { picking && !viewing }, set: { picking = $0 })) {
             if let board { reactSheet(board) }
@@ -165,6 +182,9 @@ struct BoardTile: View {
                 conflict = Pending(png: png, current: current, edit: edit)
             case let .failed(text):
                 notice(.text(text))
+            case let .capped(renewsAt):
+                conflict = nil
+                capped = renewsAt
             }
             busy = false
         }
@@ -220,9 +240,14 @@ struct BoardTile: View {
             HStack(spacing: 8) {
                 Spacer(minLength: 0)
                 DrawButton(symbol: "pencil", title: t("home.edit"), label: boardMine.map { $0 ? t("board.editMine") : t("board.editFriends", ["friend": friend]) }) { pad = .edit }
+                    .disabled(noDoodles)
                 DrawButton(symbol: "scribble", title: t("board.draw"), label: nil) { pad = .new }
+                    .disabled(noDoodles)
                 FoldButton(up: true) { backend.settings.setBoardMini(true) }
                     .padding(.trailing, -8)
+            }
+            if let capLine {
+                Text(capLine).dlText(.footnoteStrong).foregroundStyle(.dlInkQuiet).padding(.leading, 2)
             }
         }
     }
@@ -261,6 +286,7 @@ struct BoardTile: View {
                         Label(t("board.drawTheFirstDoodle"), systemImage: "scribble")
                     }
                     .buttonStyle(DLButtonStyle(.filled))
+                    .disabled(noDoodles)
                     .fixedSize()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -386,17 +412,19 @@ private struct DrawButton: View {
     let title: String
     let label: String?
     let action: () -> Void
+    @Environment(\.isEnabled) private var enabled
 
     var body: some View {
+        let ink = enabled ? Color.dlSeal : Color.dlInkDisabled
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: symbol).font(.system(size: 16, weight: .semibold))
                 Text(title).font(.custom(DLFontName.manropeExtraBold.name, size: 14, relativeTo: .subheadline))
             }
-            .foregroundStyle(.dlSeal)
+            .foregroundStyle(ink)
             .padding(.horizontal, 22)
             .frame(height: 40)
-            .overlay(Capsule().strokeBorder(.dlSeal, lineWidth: 1.5))
+            .overlay(Capsule().strokeBorder(ink, lineWidth: 1.5))
             .contentShape(Capsule())
             .frame(minHeight: 44)
         }
@@ -569,6 +597,8 @@ struct BoardViewer: View {
     let home: Home
     let actions: HomeActions
     let canReact: Bool
+    /// BD-1: false while today's doodles are spent; Edit and Draw new go quiet.
+    var canDraw = true
     let onReact: () -> Void
     let onClose: () -> Void
     let onDraw: (String) -> Void
@@ -629,7 +659,11 @@ struct BoardViewer: View {
                         .accessibilityLabel(mark.map { t("board.yourReactionChangeIt", ["name": $0.name]) } ?? t("board.react"))
                     }
                     viewerButton("pencil", t("home.edit"), outlined: true) { onDraw("edit") }
+                        .disabled(!canDraw)
+                        .opacity(canDraw ? 1 : 0.4)
                     viewerButton("scribble", t("board.drawNew"), outlined: false) { onDraw("new") }
+                        .disabled(!canDraw)
+                        .opacity(canDraw ? 1 : 0.4)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)

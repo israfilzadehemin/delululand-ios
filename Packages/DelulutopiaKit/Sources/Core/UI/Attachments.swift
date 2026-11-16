@@ -178,9 +178,17 @@ public struct AttachmentStrip: View {
     let attachments: Attachments
     let onRemove: (Attachments.Item) -> Void
     let onOpen: (Attachments.Item) -> Void
+    /// Subscription Tiers CM-1–CM-7: the footer line and the over-limit banner; nil limits nothing.
+    let limits: StripLimits?
 
-    public init(_ attachments: Attachments, onRemove: @escaping (Attachments.Item) -> Void, onOpen: @escaping (Attachments.Item) -> Void = { _ in }) {
+    public init(
+        _ attachments: Attachments,
+        limits: StripLimits? = nil,
+        onRemove: @escaping (Attachments.Item) -> Void,
+        onOpen: @escaping (Attachments.Item) -> Void = { _ in }
+    ) {
         self.attachments = attachments
+        self.limits = limits
         self.onRemove = onRemove
         self.onOpen = onOpen
     }
@@ -197,6 +205,26 @@ public struct AttachmentStrip: View {
                     .padding(.vertical, 6)
                     .padding(.horizontal, 2)
                 }
+            }
+            if let text = limits?.blockText {
+                // CM-7: the error banner above Send.
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                    Text(text).dlText(.subheadlineBold)
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(.dlError)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(.dlErrorTint, in: RoundedRectangle(cornerRadius: 8))
+            }
+            if let limits, let line = limits.line {
+                // CM-1–CM-5: one footer line; error ink at none.
+                HStack(spacing: 6) {
+                    Image(systemName: "clock").font(.system(size: 12, weight: .semibold))
+                    Text(line).dlText(.footnoteStrong)
+                }
+                .foregroundStyle(limits.lineIsZero ? Color.dlError : Color.dlInkQuiet)
             }
             ForEach(attachments.errors) { problem in
                 HStack(spacing: 8) {

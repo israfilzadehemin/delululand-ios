@@ -186,7 +186,9 @@ public struct ComposeDiscussionScreen: View {
     private func form(_ model: ComposeModel, _ atts: Attachments) -> some View {
         let editing = model.original != nil
         let recording = recorder?.recording ?? false
-        let canAct = !busy && !model.title.trimmingCharacters(in: .whitespaces).isEmpty && !atts.uploading && !recording
+        // Subscription Tiers CM-1–CM-7, ST6: an edit spends only the photos it adds; over the limit, Post/Save is off.
+        let limits = stripLimits(backend.home.home?.plan, mediaOf(atts.items, original: Set(model.original?.attachments.map(\.id) ?? [])))
+        let canAct = !busy && !model.title.trimmingCharacters(in: .whitespaces).isEmpty && !atts.uploading && !recording && limits?.block == nil
         return VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
@@ -223,14 +225,14 @@ public struct ComposeDiscussionScreen: View {
             }
             .scrollDismissesKeyboard(.interactively)
             VStack(alignment: .leading, spacing: 4) {
-                AttachmentStrip(atts) { item in
+                AttachmentStrip(atts, limits: limits) { item in
                     let index = atts.items.firstIndex(of: item) ?? 0
                     atts.remove(item.key)
                     if !editing, let a = item.att { model.deleteDraftAttachment(a.id) { atts.restore(item, at: index) } }
                 }
                 .padding(.horizontal, 16)
                 if let recorder {
-                    AddBar(attachments: atts, recorder: recorder, enabled: true, doodleFull: true) {}
+                    AddBar(attachments: atts, recorder: recorder, enabled: true, doodleFull: true, limits: limits) {}
                 }
             }
             .padding(.top, 6)

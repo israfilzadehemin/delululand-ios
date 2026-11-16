@@ -108,6 +108,8 @@ final class HomeActions {
         case posted
         case conflict(Board)
         case failed(String)
+        /// Subscription Tiers BD-2: today's doodles went elsewhere while the pad was open.
+        case capped(renewsAt: String)
     }
 
     func postBoard(png: Data, baseVersion: Int, edit: Bool) async -> PostResult {
@@ -124,6 +126,9 @@ final class HomeActions {
             if let current = Self.changed(error) {
                 store.patch { $0.board = current }
                 return .conflict(current)
+            }
+            if error.code == "DOODLE_DAILY_LIMIT", let renews = error.extra["renewsAt"]?.string ?? store.home?.plan?.renewsAt {
+                return .capped(renewsAt: renews)
             }
             return .failed(error.isOffline ? t("board.postingFailed") : error.message)
         } catch {

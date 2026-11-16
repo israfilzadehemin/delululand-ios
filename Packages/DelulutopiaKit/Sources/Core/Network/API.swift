@@ -199,7 +199,8 @@ public struct API: Sendable {
             switch self {
             case .photo: 120
             case .audio: 180
-            case .video: 360
+            // ST4: up to 400 MB and a minute of encode on the server, so the wait grows with the limit.
+            case .video: TimeInterval(max(360, VideoLimits.mb * 2))
             case .doodle: 60
             }
         }
@@ -208,7 +209,7 @@ public struct API: Sendable {
             switch self {
             case .photo: 10 * 1024 * 1024
             case .audio: 60 * 1024 * 1024
-            case .video: 100 * 1024 * 1024
+            case .video: VideoLimits.maxBytes
             case .doodle: 2 * 1024 * 1024
             }
         }
@@ -217,7 +218,7 @@ public struct API: Sendable {
             switch self {
             case .photo: t("media.photoTooLarge")
             case .audio: t("media.audioTooLarge")
-            case .video: t("media.videoTooLarge")
+            case .video: t("media.videoTooLarge", ["mb": VideoLimits.mb])
             case .doodle: t("media.doodleTooLarge")
             }
         }

@@ -89,6 +89,7 @@ public struct AddBar: View {
     let enabled: Bool
     let doodleFull: Bool
     let onDoodle: () -> Void
+    let limits: StripLimits?
 
     @Environment(\.dlNotice) private var notice
     @Environment(\.dlBrand) private var brand
@@ -96,21 +97,31 @@ public struct AddBar: View {
     @State private var photos: [PhotosPickerItem] = []
     @State private var importing = false
 
-    public init(attachments: Attachments, recorder: VoiceRecorder, enabled: Bool, doodleFull: Bool, onDoodle: @escaping () -> Void) {
+    public init(
+        attachments: Attachments,
+        recorder: VoiceRecorder,
+        enabled: Bool,
+        doodleFull: Bool,
+        limits: StripLimits? = nil,
+        onDoodle: @escaping () -> Void
+    ) {
         self.attachments = attachments
         self.recorder = recorder
         self.enabled = enabled
         self.doodleFull = doodleFull
+        self.limits = limits
         self.onDoodle = onDoodle
     }
 
     public var body: some View {
         let on = enabled
         HStack(spacing: 4) {
-            PhotosPicker(selection: $photos, maxSelectionCount: 10, matching: .images) {
-                AddIcon(symbol: "photo.on.rectangle", enabled: on)
+            // CM-1, ST8: the picker asks for no more than fit; at none the button goes quiet.
+            let room = limits?.photoRoom ?? 10
+            PhotosPicker(selection: $photos, maxSelectionCount: max(1, room), matching: .images) {
+                AddIcon(symbol: "photo.on.rectangle", enabled: on && room > 0)
             }
-            .disabled(!enabled)
+            .disabled(!enabled || room == 0)
             .accessibilityLabel(t("media.addPhoto"))
             if recorder.recording {
                 Button { recorder.stop() } label: {
@@ -148,7 +159,14 @@ public struct AddBar: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 8)
-        .onChange(of: photos) { _, picked in
+        .onChange(of: photos) { _, all in
+            guard !all.isEmpty else { return }
+            // CM-2: the first ones that fit are added; a glass toast says how many.
+            let room = limits?.photoRoom ?? all.count
+            let picked = Array(all.prefix(room))
+            if let limits, picked.count < all.count {
+                notice(DLToastItem(limits.addedNotice(added: picked.count, picked: all.count, inMessage: attachments.items.filter { $0.kind == "photo" }.count)))
+            }
             for item in picked {
                 attachments.add(.photo, name: "photo.jpg", mime: "image/jpeg") {
                     guard let data = try await item.loadTransferable(type: Data.self) else { throw Attachments.ReadError() }

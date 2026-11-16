@@ -167,7 +167,10 @@ struct ComposerView: View {
         let noCredits = (credits?.left ?? 1) <= 0
         let recording = recorder?.recording ?? false
         let hasVideo = atts?.has("video") ?? false
-        let canSend = !sending && !noCredits && !(atts?.uploading ?? false) && !recording
+        // Subscription Tiers CM-1–CM-7: over the limit, Send is off; no videos left, the video button is.
+        let limits = atts.flatMap { stripLimits(backend.home.home?.plan, mediaOf($0.items)) }
+        let videoOff = limits.map { !$0.videoRoom } ?? false
+        let canSend = !sending && !noCredits && !(atts?.uploading ?? false) && !recording && limits?.block == nil
             && (!composer.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !(atts?.done.isEmpty ?? true))
             && (!composer.withSubject || !composer.subject.trimmingCharacters(in: .whitespaces).isEmpty)
         VStack(alignment: .leading, spacing: 10) {
@@ -189,14 +192,14 @@ struct ComposerView: View {
             }
             .font(.caption)
             if let atts {
-                AttachmentStrip(atts) { item in
+                AttachmentStrip(atts, limits: limits) { item in
                     let index = atts.items.firstIndex(of: item) ?? 0
                     atts.remove(item.key)
                     if let a = item.att { composer.deleteAttachment(a.id) { atts.restore(item, at: index) } }
                 }
                 HStack(spacing: 0) {
                     if let recorder {
-                        AddBar(attachments: atts, recorder: recorder, enabled: !sending, doodleFull: true) {}
+                        AddBar(attachments: atts, recorder: recorder, enabled: !sending, doodleFull: true, limits: limits) {}
                             .fixedSize()
                     }
                     Menu {
@@ -205,10 +208,10 @@ struct ComposerView: View {
                     } label: {
                         Image(systemName: "video")
                             .font(.system(size: 19, weight: .medium))
-                            .foregroundStyle(hasVideo ? Color.dlInkDisabled : Color.dlInk)
+                            .foregroundStyle(hasVideo || videoOff ? Color.dlInkDisabled : Color.dlInk)
                             .frame(width: 44, height: 44)
                     }
-                    .disabled(hasVideo || recording)
+                    .disabled(hasVideo || recording || videoOff)
                     .accessibilityLabel(hasVideo ? t("media.videoAttachedOnePerEmail") : t("media.addAVideo"))
                     Spacer()
                     Button(sending ? t("common.sending") : t("common.send")) { send() }
@@ -299,7 +302,7 @@ struct Movie: Transferable {
     }
 }
 
-/// The system camera in video mode, 15 s at most (Emails Q12).
+/// The system camera in video mode, at most the tier's length (Emails Q12, Subscription Tiers ST4).
 struct VideoCamera: UIViewControllerRepresentable {
     let onDone: (URL?) -> Void
 
@@ -309,7 +312,7 @@ struct VideoCamera: UIViewControllerRepresentable {
         picker.mediaTypes = [UTType.movie.identifier]
         if picker.sourceType == .camera {
             picker.cameraCaptureMode = .video
-            picker.videoMaximumDuration = 15
+            picker.videoMaximumDuration = TimeInterval(VideoLimits.seconds)
             picker.videoQuality = .typeHigh
         }
         picker.delegate = context.coordinator
