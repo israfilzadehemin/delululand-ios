@@ -50,12 +50,12 @@ private struct HomeContent: View {
     @Environment(\.dlOpen) private var open
     @Environment(\.dlNotice) private var notice
     @State private var moodOpen = false
-    @State private var cancelId: Int?
+    @State private var cancelId: PublicID?
     @State private var cancelling = false
     @State private var played = false
 
     private var friend: Citizen? { home.friend }
-    private var first: Int { home.firstCitizen }
+    private var first: PublicID { home.firstCitizen }
 
     var body: some View {
         let rows = home.from + home.to

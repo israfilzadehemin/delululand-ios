@@ -118,7 +118,7 @@ final class EmailComposer {
         }
         do {
             let sent = key == "new" ? try await backend.api.sendNewEmail(draftVersion: version)
-                : try await backend.api.reply(threadId: Int(key) ?? 0, draftVersion: version)
+                : try await backend.api.reply(threadId: key, draftVersion: version)
             if let next = try? await backend.api.emailDraft(key: key) { apply(next) } else {
                 text = ""
                 subject = ""

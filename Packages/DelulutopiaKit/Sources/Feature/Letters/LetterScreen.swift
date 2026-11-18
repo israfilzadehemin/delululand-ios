@@ -20,9 +20,9 @@ enum LetterUI {
 @MainActor
 @Observable
 final class LetterReader {
-    private(set) var letters: [Int: LetterUI] = [:]
+    private(set) var letters: [PublicID: LetterUI] = [:]
     @ObservationIgnored let backend: Backend
-    @ObservationIgnored private var polls: [Int: Task<Void, Never>] = [:]
+    @ObservationIgnored private var polls: [PublicID: Task<Void, Never>] = [:]
     @ObservationIgnored private var signals: Task<Void, Never>?
 
     init(backend: Backend) {
@@ -41,13 +41,13 @@ final class LetterReader {
         polls.values.forEach { $0.cancel() }
     }
 
-    func open(_ id: Int) {
+    func open(_ id: PublicID) {
         if case .shown = letters[id] { return }
         if letters[id] == nil { letters[id] = .loading }
         Task { await reload(id) }
     }
 
-    func reload(_ id: Int) async {
+    func reload(_ id: PublicID) async {
         let ui: LetterUI
         do {
             let letter = try await backend.api.letter(id: id)
@@ -77,7 +77,7 @@ final class LetterReader {
     }
 
     /// §3.3: a tap a moment before arrival is retried once at arrivesAt + 300 ms.
-    private func retry(_ id: Int, at iso: String) {
+    private func retry(_ id: PublicID, at iso: String) {
         let wait = DLTime.remaining(until: iso) + 0.3
         guard wait < 300 else { return }
         Task {
@@ -107,7 +107,7 @@ final class LetterReader {
         }
     }
 
-    func cancel(_ id: Int) async -> LetterActions.CancelResult {
+    func cancel(_ id: PublicID) async -> LetterActions.CancelResult {
         let result = await LetterActions.cancel(id, backend: backend)
         if result == .done {
             letters[id] = nil
@@ -131,20 +131,20 @@ private func openable(_ r: LetterRow, now: Date) -> Bool {
 /// Read. Swipe sideways for the next older or newer letter (I-6); letters still on their way to me
 /// are skipped.
 public struct LetterScreen: View {
-    let id: Int
+    let id: PublicID
 
     @Environment(Backend.self) private var backend
     @Environment(\.dlOpen) private var open
     @Environment(\.dismiss) private var dismiss
     @State private var reader: LetterReader?
-    @State private var current: Int
+    @State private var current: PublicID
 
-    public init(id: Int) {
+    public init(id: PublicID) {
         self.id = id
         _current = State(initialValue: id)
     }
 
-    private var ids: [Int] {
+    private var ids: [PublicID] {
         let now = DLTime.now
         let list = backend.letters.rows.filter { $0.id == id || openable($0, now: now) }.map(\.id)
         return list.contains(id) ? list : [id]
@@ -210,7 +210,7 @@ public struct LetterScreen: View {
     }
 
     @ViewBuilder
-    private func page(_ letterId: Int, reader: LetterReader) -> some View {
+    private func page(_ letterId: PublicID, reader: LetterReader) -> some View {
         switch reader.letters[letterId] {
         case let .shown(letter):
             LetterContent(letter: letter, swiped: letterId != id, reader: reader)

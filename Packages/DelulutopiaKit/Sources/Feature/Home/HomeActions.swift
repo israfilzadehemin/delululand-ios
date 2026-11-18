@@ -197,7 +197,7 @@ final class HomeActions {
 
     // MARK: Letters
 
-    func cancel(_ id: Int) async -> LetterActions.CancelResult {
+    func cancel(_ id: PublicID) async -> LetterActions.CancelResult {
         await LetterActions.cancel(id, backend: backend)
     }
 }

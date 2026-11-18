@@ -463,7 +463,7 @@ struct ChangePinSheet: View {
 
 /// X1: "Enter your PIN" before Face ID unlock is turned on; the PIN is checked by signing in again.
 struct BiometricPinSheet: View {
-    let userId: Int
+    let userId: PublicID
     let onDone: (Bool) -> Void
     @Environment(Backend.self) private var backend
     @State private var digits = ""

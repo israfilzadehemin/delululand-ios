@@ -183,7 +183,7 @@ private struct ThreadCard: View {
 final class ThreadModel {
     enum UI { case loading, shown, gone, unreachable }
 
-    let id: Int
+    let id: PublicID
     private(set) var ui: UI = .loading
     private(set) var thread: ThreadRow?
     private(set) var emails: [Email] = []
@@ -194,7 +194,7 @@ final class ThreadModel {
     @ObservationIgnored private var seen = false
     @ObservationIgnored let backend: Backend
 
-    init(backend: Backend, id: Int) {
+    init(backend: Backend, id: PublicID) {
         self.backend = backend
         self.id = id
     }
@@ -216,9 +216,12 @@ final class ThreadModel {
         do {
             let got = try await backend.api.thread(id: id)
             thread = got.thread
-            let ids = Set(got.emails.items.map(\.id))
-            let kept = emails.filter { !ids.contains($0.id) && $0.id < (got.emails.items.map(\.id).min() ?? .max) }
-            emails = (got.emails.items + kept).sorted { $0.id > $1.id }
+            // Public ids carry no order (doc "Delululand — Public IDs"): older pages are kept by time.
+            let fresh = got.emails.items
+            let ids = Set(fresh.map(\.id))
+            let oldest = fresh.map(\.sentAt).min()
+            let kept = emails.filter { e in !ids.contains(e.id) && (oldest.map { e.sentAt < $0 } ?? true) }
+            emails = (fresh + kept).sorted { $0.sentAt == $1.sentAt ? $0.id > $1.id : $0.sentAt > $1.sentAt }
             if olderCursor == nil || kept.isEmpty { olderCursor = got.emails.olderCursor }
             ui = .shown
             if got.thread.unread > 0 || got.thread.unseenReactions > 0 || !seen {
@@ -241,7 +244,7 @@ final class ThreadModel {
             do {
                 let page = try await backend.api.olderEmails(threadId: id, cursor: c)
                 let ids = Set(emails.map(\.id))
-                emails += page.items.filter { !ids.contains($0.id) }.sorted { $0.id > $1.id }
+                emails += page.items.filter { !ids.contains($0.id) }.sorted { $0.sentAt == $1.sentAt ? $0.id > $1.id : $0.sentAt > $1.sentAt }
                 olderCursor = page.olderCursor
             } catch {
                 olderFailed = true
@@ -254,7 +257,7 @@ final class ThreadModel {
         if !emails.contains(where: { $0.id == e.id }) { emails.insert(e, at: 0) }
     }
 
-    func react(emailId: Int, emoji: String, mine: Bool) async {
+    func react(emailId: PublicID, emoji: String, mine: Bool) async {
         _ = mine ? try? await backend.api.unreact(target: "email", id: emailId, emoji: emoji)
             : try? await backend.api.react(target: "email", id: emailId, emoji: emoji)
         await load()
@@ -262,20 +265,20 @@ final class ThreadModel {
 }
 
 public struct ThreadScreen: View {
-    let id: Int
+    let id: PublicID
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
     @State private var model: ThreadModel?
     @State private var composer: EmailComposer?
-    @State private var unfolded: Set<Int> = []
+    @State private var unfolded: Set<PublicID> = []
 
-    public init(id: Int) {
+    public init(id: PublicID) {
         self.id = id
     }
 
     public var body: some View {
         let home = backend.home.home
-        let meId = home?.me.id ?? 0
+        let meId = home?.me.id ?? ""
         Group {
             switch model?.ui ?? .loading {
             case .shown:
@@ -343,7 +346,7 @@ public struct ThreadScreen: View {
 private struct EmailCard: View {
     let email: Email
     let open: Bool
-    let meId: Int
+    let meId: PublicID
     let home: Home?
     let onToggle: () -> Void
     let onReact: (String, Bool) -> Void
@@ -375,7 +378,7 @@ private struct EmailCard: View {
             .accessibilityHint(open ? t("emails.fold") : t("emails.unfold"))
             if open {
                 if !email.text.isEmpty {
-                    Text(email.text).font(.system(size: 16)).foregroundStyle(.dlMailInk).textSelection(.enabled).ownText(email.text)
+                    Text(linking: email.text).font(.system(size: 16)).foregroundStyle(.dlMailInk).tint(.dlMailInk).textSelection(.enabled).ownText(email.text)
                 }
                 if !photos.isEmpty {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 6)], spacing: 6) {

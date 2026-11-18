@@ -12,7 +12,7 @@ import SwiftUI
 final class ComposeModel {
     enum Load { case loading, failed, ready }
 
-    let editId: Int?
+    let editId: PublicID?
     private(set) var load: Load = .loading
     private(set) var initial: Doc = .empty
     private(set) var body: Doc = .empty
@@ -23,7 +23,7 @@ final class ComposeModel {
     private(set) var original: DFull?
     @ObservationIgnored let backend: Backend
 
-    init(backend: Backend, editId: Int?) {
+    init(backend: Backend, editId: PublicID?) {
         self.backend = backend
         self.editId = editId
     }
@@ -137,7 +137,7 @@ final class ComposeModel {
 }
 
 public struct ComposeDiscussionScreen: View {
-    let editId: Int?
+    let editId: PublicID?
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dlNotice) private var notice
@@ -149,7 +149,7 @@ public struct ComposeDiscussionScreen: View {
     @State private var error: String?
     @State private var confirmDiscard = false
 
-    public init(editId: Int? = nil) {
+    public init(editId: PublicID? = nil) {
         self.editId = editId
     }
 

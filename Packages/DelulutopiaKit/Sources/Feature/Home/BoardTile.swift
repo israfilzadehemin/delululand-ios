@@ -60,7 +60,7 @@ struct BoardTile: View {
         return t("limits.noDoodles") + " · " + t("limits.renews", ["time": DLTime.time(plan.renewsAt)])
     }
 
-    private func nameOf(_ authorId: Int) -> String { authorId == home.me.id ? t("board.you") : friend }
+    private func nameOf(_ authorId: PublicID) -> String { authorId == home.me.id ? t("board.you") : friend }
 
     /// "Leyla drew this · 2 h ago" with the name in bold (web board byline keys).
     private func byline(_ b: Board) -> Text {
@@ -490,7 +490,7 @@ struct BoardNote: View {
         ZStack(alignment: .top) {
             if let comment = board.comment {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(comment.text).font(caveat(23)).foregroundStyle(ink).fixedSize(horizontal: false, vertical: true)
+                    Text(linking: comment.text).font(caveat(23)).foregroundStyle(ink).tint(ink).fixedSize(horizontal: false, vertical: true)
                     Text("— \(mine ? t("board.you") : friend)")
                         .font(caveat(18))
                         .foregroundStyle(ink.opacity(0.72))

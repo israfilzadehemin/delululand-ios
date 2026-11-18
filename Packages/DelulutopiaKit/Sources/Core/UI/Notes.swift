@@ -138,7 +138,7 @@ public func reactionWins(_ n: ReactionNotice?, count: Int, otherActivityAt: Stri
 /// opens the picker: the eight recent emojis and "every emoji".
 public struct ReactionRow: View {
     let reactions: [Reaction]
-    let me: Int
+    let me: PublicID
     let compact: Bool
     let enabled: Bool
     let onToggle: (String) -> Void
@@ -148,7 +148,7 @@ public struct ReactionRow: View {
     @State private var every = false
     @State private var picked = ""
 
-    public init(_ reactions: [Reaction], me: Int, compact: Bool = false, enabled: Bool = true, onToggle: @escaping (String) -> Void) {
+    public init(_ reactions: [Reaction], me: PublicID, compact: Bool = false, enabled: Bool = true, onToggle: @escaping (String) -> Void) {
         self.reactions = reactions
         self.me = me
         self.compact = compact

@@ -7,7 +7,7 @@ import SwiftUI
 import UIKit
 
 public enum StartRoute: Hashable, Sendable {
-    case pin(userId: Int)
+    case pin(userId: PublicID)
     case create
     case join
 }
@@ -257,7 +257,7 @@ struct WelcomeSheet: View {
 // MARK: - PIN
 
 struct PinScreen: View {
-    let userId: Int
+    let userId: PublicID
     let onLeave: () -> Void
     @Environment(Backend.self) private var backend
     @State private var model: PinModel?

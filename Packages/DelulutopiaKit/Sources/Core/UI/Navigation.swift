@@ -7,12 +7,12 @@ import SwiftUI
 /// Places a screen can open, whichever tab it lives in (the Android `AppNav` routes). The shell
 /// pushes them on the current tab's stack and maps each to its screen.
 public enum AppRoute: Hashable, Sendable {
-    case letter(Int)
-    case write(editId: Int? = nil, replyTo: Int? = nil)
-    case discussion(Int)
-    case composeDiscussion(editId: Int?)
+    case letter(PublicID)
+    case write(editId: PublicID? = nil, replyTo: PublicID? = nil)
+    case discussion(PublicID)
+    case composeDiscussion(editId: PublicID?)
     case archived
-    case thread(Int)
+    case thread(PublicID)
     case newEmail
     case friend
     case profile
@@ -57,7 +57,7 @@ public extension EnvironmentValues {
     /// Shows a toast above the tab bar.
     @Entry var dlNotice: @MainActor (DLToastItem) -> Void = { _ in }
     /// The universe's first citizen (lowest id): their colour is terracotta, the other's sage.
-    @Entry var dlFirstCitizen: Int? = nil
+    @Entry var dlFirstCitizen: PublicID? = nil
     /// The universe's name, wherever the web says "Delulutopia" (Universe C48).
     @Entry var dlBrand: String = "Delulutopia"
 }

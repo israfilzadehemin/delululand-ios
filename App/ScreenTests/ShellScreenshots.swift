@@ -55,11 +55,11 @@ struct ShellScreenshots {
     }
 
     @Test func startPin() async {
-        await Shoot.screen(start([.pin(userId: 1)], state: signedOut), named: "start-pin-light", style: .light, wait: 1.5)
+        await Shoot.screen(start([.pin(userId: "1")], state: signedOut), named: "start-pin-light", style: .light, wait: 1.5)
     }
 
     @Test func startPinDark() async {
-        await Shoot.screen(start([.pin(userId: 1)], state: signedOut), named: "start-pin-dark", style: .dark, wait: 1.5)
+        await Shoot.screen(start([.pin(userId: "1")], state: signedOut), named: "start-pin-dark", style: .dark, wait: 1.5)
     }
 
     @Test func startCreate() async {
@@ -123,23 +123,23 @@ struct ShellScreenshots {
         await Shoot.screen(AppRoot(backend: backend, initialTab: .letters), named: "letters-list-light", style: .light, wait: 2.5)
     }
 
-    private func letter(_ id: Int, theme: ThemeMode = .match) -> some View {
+    private func letter(_ id: String, theme: ThemeMode = .match) -> some View {
         let backend = FixtureBackend.make(theme: theme)
         backend.home.start()
         return NavigationStack { LetterScreen(id: id) }
             .environment(backend)
-            .environment(\.dlFirstCitizen, 1)
+            .environment(\.dlFirstCitizen, "1")
     }
 
     @Test func letterReceived() async {
-        await Shoot.screen(letter(11), named: "letter-received-light", style: .light, wait: 2.5)
+        await Shoot.screen(letter("11"), named: "letter-received-light", style: .light, wait: 2.5)
     }
 
     @Test func letterReceivedDark() async {
-        await Shoot.screen(letter(11, theme: .dark), named: "letter-received-dark", style: .dark, wait: 2.5)
+        await Shoot.screen(letter("11", theme: .dark), named: "letter-received-dark", style: .dark, wait: 2.5)
     }
 
-    private func write(editId: Int? = nil, replyTo: Int? = nil, theme: ThemeMode = .match) -> some View {
+    private func write(editId: String? = nil, replyTo: String? = nil, theme: ThemeMode = .match) -> some View {
         let backend = FixtureBackend.make(theme: theme)
         backend.home.start()
         return NavigationStack { WriteScreen(editId: editId, replyTo: replyTo) }
@@ -155,15 +155,15 @@ struct ShellScreenshots {
     }
 
     @Test func writeReply() async {
-        await Shoot.screen(write(replyTo: 11), named: "write-reply-light", style: .light, wait: 2.5)
+        await Shoot.screen(write(replyTo: "11"), named: "write-reply-light", style: .light, wait: 2.5)
     }
 
     @Test func writeEdit() async {
-        await Shoot.screen(write(editId: 21), named: "write-edit-light", style: .light, wait: 2.5)
+        await Shoot.screen(write(editId: "21"), named: "write-edit-light", style: .light, wait: 2.5)
     }
 
     @Test func letterSent() async {
-        await Shoot.screen(letter(21), named: "letter-sent-light", style: .light, wait: 2.5)
+        await Shoot.screen(letter("21"), named: "letter-sent-light", style: .light, wait: 2.5)
     }
 
     // MARK: Discussions (canvas D-Discussions, D-Thread, D-Compose)
@@ -183,7 +183,7 @@ struct ShellScreenshots {
     }
 
     @Test func discussionThread() async {
-        await Shoot.screen(pushed(DiscussionScreen(id: 31)), named: "discussion-thread-light", style: .light, wait: 2.5)
+        await Shoot.screen(pushed(DiscussionScreen(id: "31")), named: "discussion-thread-light", style: .light, wait: 2.5)
     }
 
     @Test func discussionCompose() async {
@@ -201,7 +201,7 @@ struct ShellScreenshots {
     }
 
     @Test func emailThread() async {
-        await Shoot.screen(pushed(ThreadScreen(id: 41)), named: "email-thread-light", style: .light, wait: 2.5)
+        await Shoot.screen(pushed(ThreadScreen(id: "41")), named: "email-thread-light", style: .light, wait: 2.5)
     }
 
     @Test func newEmail() async {
@@ -288,7 +288,7 @@ struct ShellScreenshots {
 
     @Test func letterReceivedFa() async {
         await shoot(in: .fa) {
-            await Shoot.screen(letter(11).environment(\.layoutDirection, .rightToLeft), named: "letter-received-fa-light", style: .light, wait: 2.5)
+            await Shoot.screen(letter("11").environment(\.layoutDirection, .rightToLeft), named: "letter-received-fa-light", style: .light, wait: 2.5)
         }
     }
 

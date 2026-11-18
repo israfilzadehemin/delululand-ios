@@ -91,10 +91,10 @@ public final class Backend {
 }
 
 public struct PendingBiometricOffer: Equatable, Sendable {
-    public let userId: Int
+    public let userId: PublicID
     public let pin: String
 
-    public init(userId: Int, pin: String) {
+    public init(userId: PublicID, pin: String) {
         self.userId = userId
         self.pin = pin
     }
@@ -129,9 +129,9 @@ public final class BiometricVault: Sendable {
 
     public var isAvailable: Bool { kind != .none }
 
-    private func account(userId: Int) -> String { "user-\(userId)" }
+    private func account(userId: PublicID) -> String { "user-\(userId)" }
 
-    public func hasPin(userId: Int) -> Bool {
+    public func hasPin(userId: PublicID) -> Bool {
         let context = LAContext()
         context.interactionNotAllowed = true
         let query: [String: Any] = [
@@ -146,10 +146,10 @@ public final class BiometricVault: Sendable {
     }
 
     /// Any citizen enrolled on this device (the You › Account switch).
-    public func isEnabled(userId: Int) -> Bool { hasPin(userId: userId) }
+    public func isEnabled(userId: PublicID) -> Bool { hasPin(userId: userId) }
 
     @discardableResult
-    public func store(pin: String, userId: Int) -> Bool {
+    public func store(pin: String, userId: PublicID) -> Bool {
         remove(userId: userId)
         guard let access = SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly, .biometryCurrentSet, nil) else {
             return false
@@ -165,7 +165,7 @@ public final class BiometricVault: Sendable {
     }
 
     /// Shows the system biometry prompt and returns the PIN, or nil (cancelled, failed, invalidated).
-    public func pin(userId: Int, reason: String) async -> String? {
+    public func pin(userId: PublicID, reason: String) async -> String? {
         let service = self.service
         let account = account(userId: userId)
         return await Task.detached {
@@ -186,7 +186,7 @@ public final class BiometricVault: Sendable {
         }.value
     }
 
-    public func remove(userId: Int) {
+    public func remove(userId: PublicID) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

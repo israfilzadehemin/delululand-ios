@@ -33,8 +33,10 @@ public func tileShapeOf(_ row: LetterRow, state: String) -> TileShape {
 }
 
 /// Each stamp sits a little askew, the same way every time for the same letter.
-public func stampTilt(_ id: Int) -> Double {
-    [4, -3, 3, -2, 2, -4][abs(id) % 6]
+public func stampTilt(_ id: PublicID) -> Double {
+    // A stable pick per letter from its public id (Swift's hashValue changes per launch).
+    let n = id.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0x7FFF_FFFF }
+    return [4, -3, 3, -2, 2, -4][n % 6]
 }
 
 /// A letter row on Home or in the list. `reach` is the in-reach tint (it can still be edited or
@@ -267,10 +269,10 @@ public struct NewChip: View {
 /// A stamp on a row's trailing edge, askew with a soft shadow.
 public struct RowStamp: View {
     let stamp: StampMark
-    let id: Int
+    let id: PublicID
     let width: CGFloat
 
-    public init(_ stamp: StampMark, id: Int, width: CGFloat = 26) {
+    public init(_ stamp: StampMark, id: PublicID, width: CGFloat = 26) {
         self.stamp = stamp
         self.id = id
         self.width = width
@@ -309,7 +311,7 @@ public enum LetterActions {
     public enum CancelResult: Sendable { case done, tooLate, failed }
 
     @MainActor
-    public static func cancel(_ id: Int, backend: Backend) async -> CancelResult {
+    public static func cancel(_ id: PublicID, backend: Backend) async -> CancelResult {
         do {
             _ = try await backend.api.cancelLetter(id: id)
             await backend.home.load()

@@ -74,14 +74,15 @@ final class DiscussionsModel {
         }
     }
 
-    private func sortKey(_ r: DRow) -> (Double, Int) {
+    private func sortKey(_ r: DRow) -> (Double, PublicID) {
         if archived { return (DLTime.date(r.archivedAt)?.timeIntervalSince1970 ?? 0, r.id) }
         let a = DLTime.date(r.arrivesAt)?.timeIntervalSince1970 ?? 0
         let b = DLTime.date(r.activityAt)?.timeIntervalSince1970 ?? 0
         return (max(a, b), r.id)
     }
 
-    private func below(_ a: (Double, Int), _ b: (Double, Int)) -> Bool { a.0 < b.0 || (a.0 == b.0 && a.1 < b.1) }
+    /// Public ids carry no order (doc "Delululand — Public IDs"); comparing them only settles same-millisecond ties.
+    private func below(_ a: (Double, PublicID), _ b: (Double, PublicID)) -> Bool { a.0 < b.0 || (a.0 == b.0 && a.1 < b.1) }
 }
 
 /// S10 Discussions and the Archived list (web discussions/DiscussionsScreen.tsx; canvas

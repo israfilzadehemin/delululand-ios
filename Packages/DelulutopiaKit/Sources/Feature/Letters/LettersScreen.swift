@@ -72,7 +72,7 @@ private struct LettersContent: View {
         let home = backend.home.home
         let friendName = home?.friend?.nickname ?? t("common.friend")
         let first = home?.firstCitizen
-        let senderOf = { (row: LetterRow) -> Int in row.isMine ? (home?.me.id ?? 1) : (home?.friend?.id ?? 2) }
+        let senderOf = { (row: LetterRow) -> PublicID? in row.isMine ? home?.me.id : home?.friend?.id }
         ScrollView {
             LazyVStack(spacing: list ? 8 : 14) {
                 if list {

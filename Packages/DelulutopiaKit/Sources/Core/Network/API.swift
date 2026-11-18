@@ -26,8 +26,8 @@ public struct API: Sendable {
 
     // MARK: Auth
 
-    public func login(userId: Int, pin: String) async throws { try await client.run("POST", "api/auth/login", body: LoginBody(userId: userId, pin: pin)) }
-    public func createPin(userId: Int, pin: String) async throws { try await client.run("POST", "api/auth/pin", body: LoginBody(userId: userId, pin: pin)) }
+    public func login(userId: PublicID, pin: String) async throws { try await client.run("POST", "api/auth/login", body: LoginBody(userId: userId, pin: pin)) }
+    public func createPin(userId: PublicID, pin: String) async throws { try await client.run("POST", "api/auth/pin", body: LoginBody(userId: userId, pin: pin)) }
     public func logout() async throws { try await client.run("POST", "api/auth/logout") }
     public func changePin(current: String, new: String) async throws {
         try await client.run("POST", "api/me/pin", body: ChangePinBody(currentPin: current, newPin: new))
@@ -88,21 +88,21 @@ public struct API: Sendable {
     // MARK: Letters and the draft
 
     public func draft() async throws -> Draft { try await client.call("GET", "api/draft") }
-    public func saveDraft(body: Doc, pinnedLetterId: Int?, stampSlug: String?, version: Int) async throws -> Saved {
+    public func saveDraft(body: Doc, pinnedLetterId: PublicID?, stampSlug: String?, version: Int) async throws -> Saved {
         try await client.call("PUT", "api/draft", body: SaveDraftBody(body: body, pinnedLetterId: pinnedLetterId, stampSlug: stampSlug, version: version))
     }
     public func deleteDraftAttachment(id: String) async throws { try await client.run("DELETE", "api/draft/attachments/\(id)") }
     public func send(draftVersion: Int) async throws -> Sent { try await client.call("POST", "api/letters", body: DraftVersionBody(draftVersion: draftVersion)) }
-    public func letter(id: Int) async throws -> LetterFull { try await client.call("GET", "api/letters/\(id)") }
+    public func letter(id: PublicID) async throws -> LetterFull { try await client.call("GET", "api/letters/\(id)") }
     public func letters(cursor: String? = nil, limit: Int? = nil, direction: String? = nil) async throws -> LetterPage {
         try await client.call("GET", "api/letters", query: q(["cursor": cursor, "limit": limit.map(String.init), "direction": direction]))
     }
-    public func cancelLetter(id: Int) async throws -> DraftVersion { try await client.call("DELETE", "api/letters/\(id)") }
-    public func sendAgain(id: Int, body: Doc, attachmentIds: [String], stampSlug: String?) async throws -> LetterFull {
+    public func cancelLetter(id: PublicID) async throws -> DraftVersion { try await client.call("DELETE", "api/letters/\(id)") }
+    public func sendAgain(id: PublicID, body: Doc, attachmentIds: [String], stampSlug: String?) async throws -> LetterFull {
         try await client.call("PUT", "api/letters/\(id)", body: SendAgainBody(body: body, attachmentIds: attachmentIds, stampSlug: stampSlug))
     }
-    public func discardEdit(id: Int) async throws { try await client.run("DELETE", "api/letters/\(id)/edit") }
-    public func keepInDraft(id: Int, body: Doc) async throws -> DraftVersion {
+    public func discardEdit(id: PublicID) async throws { try await client.run("DELETE", "api/letters/\(id)/edit") }
+    public func keepInDraft(id: PublicID, body: Doc) async throws -> DraftVersion {
         try await client.call("POST", "api/letters/\(id)/edit/keep-in-draft", body: BodyOnly(body: body))
     }
     public func stamps() async throws -> StampCatalogue { try await client.call("GET", "api/stamps") }
@@ -112,28 +112,28 @@ public struct API: Sendable {
     public func discussions(cursor: String? = nil, limit: Int? = nil, archived: Bool? = nil) async throws -> DPage {
         try await client.call("GET", "api/discussions", query: q(["cursor": cursor, "limit": limit.map(String.init), "archived": archived.map { $0 ? "true" : "false" }]))
     }
-    public func discussion(id: Int) async throws -> DFull { try await client.call("GET", "api/discussions/\(id)") }
-    public func comments(discussionId: Int, cursor: String? = nil, limit: Int? = nil, from: String? = nil) async throws -> DComments {
+    public func discussion(id: PublicID) async throws -> DFull { try await client.call("GET", "api/discussions/\(id)") }
+    public func comments(discussionId: PublicID, cursor: String? = nil, limit: Int? = nil, from: String? = nil) async throws -> DComments {
         try await client.call("GET", "api/discussions/\(discussionId)/comments", query: q(["cursor": cursor, "limit": limit.map(String.init), "from": from]))
     }
-    public func comment(discussionId: Int, text: String) async throws -> DComment {
+    public func comment(discussionId: PublicID, text: String) async throws -> DComment {
         try await client.call("POST", "api/discussions/\(discussionId)/comments", body: TextBody(text: text))
     }
-    public func editComment(discussionId: Int, commentId: Int, text: String) async throws -> DComment {
+    public func editComment(discussionId: PublicID, commentId: PublicID, text: String) async throws -> DComment {
         try await client.call("PATCH", "api/discussions/\(discussionId)/comments/\(commentId)", body: TextBody(text: text))
     }
-    public func deleteComment(discussionId: Int, commentId: Int) async throws {
+    public func deleteComment(discussionId: PublicID, commentId: PublicID) async throws {
         try await client.run("DELETE", "api/discussions/\(discussionId)/comments/\(commentId)")
     }
-    public func discussionSeen(id: Int) async throws { try await client.run("POST", "api/discussions/\(id)/seen") }
+    public func discussionSeen(id: PublicID) async throws { try await client.run("POST", "api/discussions/\(id)/seen") }
     /// Cancel inside the window and Delete at any time: the same call.
-    public func deleteDiscussion(id: Int) async throws { try await client.run("DELETE", "api/discussions/\(id)") }
-    public func editDiscussion(id: Int, title: String, body: Doc, color: String, attachmentIds: [String]) async throws -> DFull {
+    public func deleteDiscussion(id: PublicID) async throws { try await client.run("DELETE", "api/discussions/\(id)") }
+    public func editDiscussion(id: PublicID, title: String, body: Doc, color: String, attachmentIds: [String]) async throws -> DFull {
         try await client.call("PUT", "api/discussions/\(id)", body: EditDiscussionBody(title: title, body: body, color: color, attachmentIds: attachmentIds))
     }
-    public func discardDiscussionEdit(id: Int) async throws { try await client.run("DELETE", "api/discussions/\(id)/edit") }
-    public func archive(id: Int) async throws -> DFull { try await client.call("POST", "api/discussions/\(id)/archive") }
-    public func unarchive(id: Int) async throws -> DFull { try await client.call("DELETE", "api/discussions/\(id)/archive") }
+    public func discardDiscussionEdit(id: PublicID) async throws { try await client.run("DELETE", "api/discussions/\(id)/edit") }
+    public func archive(id: PublicID) async throws -> DFull { try await client.call("POST", "api/discussions/\(id)/archive") }
+    public func unarchive(id: PublicID) async throws -> DFull { try await client.call("DELETE", "api/discussions/\(id)/archive") }
     public func discussionDraft() async throws -> DDraft { try await client.call("GET", "api/discussions/draft") }
     public func saveDiscussionDraft(title: String, body: Doc, version: Int, color: String) async throws -> Saved {
         try await client.call("PUT", "api/discussions/draft", body: SaveDiscussionDraftBody(title: title, body: body, version: version, color: color))
@@ -146,11 +146,11 @@ public struct API: Sendable {
     public func threads(cursor: String? = nil, limit: Int? = nil) async throws -> ThreadPage {
         try await client.call("GET", "api/emails/threads", query: q(["cursor": cursor, "limit": limit.map(String.init)]))
     }
-    public func thread(id: Int) async throws -> ThreadFull { try await client.call("GET", "api/emails/threads/\(id)") }
-    public func olderEmails(threadId: Int, cursor: String, limit: Int = 20) async throws -> EmailList {
+    public func thread(id: PublicID) async throws -> ThreadFull { try await client.call("GET", "api/emails/threads/\(id)") }
+    public func olderEmails(threadId: PublicID, cursor: String, limit: Int = 20) async throws -> EmailList {
         try await client.call("GET", "api/emails/threads/\(threadId)/emails", query: ["cursor": cursor, "limit": String(limit)])
     }
-    public func threadSeen(id: Int) async throws { try await client.run("POST", "api/emails/threads/\(id)/seen") }
+    public func threadSeen(id: PublicID) async throws { try await client.run("POST", "api/emails/threads/\(id)/seen") }
     public func credits() async throws -> EmailCredits { try await client.call("GET", "api/emails/credits") }
     public func emailDraft(key: String) async throws -> EmailDraft { try await client.call("GET", "api/emails/drafts/\(key)") }
     public func saveEmailDraft(key: String, subject: String, text: String, version: Int) async throws -> Saved {
@@ -162,16 +162,16 @@ public struct API: Sendable {
     public func sendNewEmail(draftVersion: Int) async throws -> EmailSent {
         try await client.call("POST", "api/emails/threads", body: DraftVersionBody(draftVersion: draftVersion))
     }
-    public func reply(threadId: Int, draftVersion: Int) async throws -> EmailSent {
+    public func reply(threadId: PublicID, draftVersion: Int) async throws -> EmailSent {
         try await client.call("POST", "api/emails/threads/\(threadId)/emails", body: DraftVersionBody(draftVersion: draftVersion))
     }
 
     // MARK: Reactions (target = discussions | comments | emails)
 
-    public func react(target: String, id: Int, emoji: String) async throws -> Reactions {
+    public func react(target: String, id: PublicID, emoji: String) async throws -> Reactions {
         try await client.call("PUT", "api/reactions/\(target)/\(id)", body: EmojiBody(emoji: emoji))
     }
-    public func unreact(target: String, id: Int, emoji: String) async throws -> Reactions {
+    public func unreact(target: String, id: PublicID, emoji: String) async throws -> Reactions {
         try await client.call("DELETE", "api/reactions/\(target)/\(id)", body: EmojiBody(emoji: emoji))
     }
 

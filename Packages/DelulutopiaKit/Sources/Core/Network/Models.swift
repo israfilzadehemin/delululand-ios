@@ -4,6 +4,10 @@ import Foundation
 // Response shapes of Technical Design §5.2, one-to-one with delululand-web `src/api/types.ts` and the
 // Android `Models.kt`. Instants are ISO-8601 UTC strings (`DLTime` parses them).
 
+/// A public id (doc "Delululand — Public IDs"): a random UUID the server gives every letter,
+/// discussion, comment, email thread, email, user and universe. Opaque: compared, never parsed or ordered.
+public typealias PublicID = String
+
 // MARK: - Attachments and stamps
 
 public struct Att: Codable, Sendable, Hashable, Identifiable {
@@ -77,7 +81,7 @@ public struct LetterMedia: Codable, Sendable, Hashable {
 
 /// A letter list row; `state` is IN_REACH | IN_TRANSIT | DELIVERED | READ.
 public struct LetterRow: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
+    public var id: PublicID
     /// to | from
     public var direction: String
     public var state: String
@@ -91,13 +95,13 @@ public struct LetterRow: Codable, Sendable, Hashable, Identifiable {
     public var moodEmoji: String?
     public var moodLabel: String?
     public var stamp: StampMark?
-    public var replyToId: Int?
+    public var replyToId: PublicID?
 
     public var isMine: Bool { direction == "to" }
 }
 
 public struct ReplyRef: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var direction: String
     public var sentAt: String
     public var firstLine: String?
@@ -105,7 +109,7 @@ public struct ReplyRef: Codable, Sendable, Hashable {
 }
 
 public struct LetterFull: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
+    public var id: PublicID
     public var direction: String
     public var state: String
     public var sentAt: String
@@ -118,7 +122,7 @@ public struct LetterFull: Codable, Sendable, Hashable, Identifiable {
     public var moodEmoji: String?
     public var moodLabel: String?
     public var stamp: StampMark?
-    public var replyToId: Int?
+    public var replyToId: PublicID?
     public var body: Doc?
     @Default<EmptyList<Att>> public var attachments: [Att]
     @Default<False> public var canEdit: Bool
@@ -146,7 +150,7 @@ public struct LetterPage: Codable, Sendable, Hashable {
 public struct Draft: Codable, Sendable, Hashable {
     public var body: Doc?
     @Default<EmptyList<Att>> public var attachments: [Att]
-    public var pinnedLetterId: Int?
+    public var pinnedLetterId: PublicID?
     public var stamp: StampMark?
     @Default<Zero> public var version: Int
     public var savedAt: String?
@@ -165,7 +169,7 @@ public struct Saved: Codable, Sendable, Hashable {
 }
 
 public struct Sent: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var sentAt: String
     public var windowEndsAt: String
     public var arrivesAt: String
@@ -179,7 +183,7 @@ public struct DraftVersion: Codable, Sendable, Hashable {
 
 /// A citizen as Home sees them.
 public struct Citizen: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
+    public var id: PublicID
     public var nickname: String
     public var avatarUrl: String?
     public var mood: String?
@@ -222,7 +226,7 @@ public struct NotifyPrefs: Codable, Sendable, Hashable {
 }
 
 public struct UniverseInfo: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var name: String
     @Default<False> public var isCreator: Bool
     @Default<False> public var waiting: Bool
@@ -269,11 +273,11 @@ public struct MoodChange: Codable, Sendable, Hashable {
 
 public struct Board: Codable, Sendable, Hashable {
     public var version: Int
-    public var authorId: Int
+    public var authorId: PublicID
     public var createdAt: String
     public var url: String
     public var reaction: String?
-    public var editedFrom: Int?
+    public var editedFrom: PublicID?
     public var comment: BoardComment?
 }
 
@@ -286,11 +290,11 @@ public struct BoardComment: Codable, Sendable, Hashable {
 
 public struct Reaction: Codable, Sendable, Hashable, Identifiable {
     public var emoji: String
-    public var userIds: [Int]
+    public var userIds: [PublicID]
 
     public var id: String { emoji }
 
-    public init(emoji: String, userIds: [Int]) {
+    public init(emoji: String, userIds: [PublicID]) {
         self.emoji = emoji
         self.userIds = userIds
     }
@@ -301,7 +305,7 @@ public struct Reactions: Codable, Sendable, Hashable {
 }
 
 public struct ReactionNotice: Codable, Sendable, Hashable {
-    public var userId: Int
+    public var userId: PublicID
     public var emoji: String
     /// discussion | comment | email
     public var target: String
@@ -315,7 +319,7 @@ public struct ReactionNotice: Codable, Sendable, Hashable {
 // MARK: - Discussions (doc "Delululand — Discussions" §5)
 
 public struct DiscussionArrival: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var title: String
     public var arrivesAt: String
 }
@@ -326,8 +330,8 @@ public struct DMedia: Codable, Sendable, Hashable {
 }
 
 public struct DRow: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
-    public var authorId: Int
+    public var id: PublicID
+    public var authorId: PublicID
     public var mine: Bool
     public var color: String?
     /// IN_REACH | IN_TRANSIT | ARRIVED
@@ -347,12 +351,12 @@ public struct DRow: Codable, Sendable, Hashable, Identifiable {
     public var editedAt: String?
     public var activityAt: String?
     public var archivedAt: String?
-    public var archivedBy: Int?
+    public var archivedBy: PublicID?
 }
 
 public struct DComment: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
-    public var authorId: Int
+    public var id: PublicID
+    public var authorId: PublicID
     public var text: String
     public var createdAt: String
     public var editedAt: String?
@@ -370,8 +374,8 @@ public struct DComments: Codable, Sendable, Hashable {
 }
 
 public struct DFull: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
-    public var authorId: Int
+    public var id: PublicID
+    public var authorId: PublicID
     public var mine: Bool
     public var color: String?
     public var state: String
@@ -388,7 +392,7 @@ public struct DFull: Codable, Sendable, Hashable, Identifiable {
     public var editedAt: String?
     public var activityAt: String?
     public var archivedAt: String?
-    public var archivedBy: Int?
+    public var archivedBy: PublicID?
     public var body: Doc?
     @Default<EmptyList<Att>> public var attachments: [Att]
     @Default<False> public var canCancel: Bool
@@ -420,7 +424,7 @@ public struct DDraft: Codable, Sendable, Hashable {
 }
 
 public struct DPosted: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var postedAt: String
     public var windowEndsAt: String
     public var arrivesAt: String
@@ -429,8 +433,8 @@ public struct DPosted: Codable, Sendable, Hashable {
 // MARK: - Emails (doc "Delululand — Emails" §4)
 
 public struct EmailArrival: Codable, Sendable, Hashable {
-    public var id: Int
-    public var threadId: Int
+    public var id: PublicID
+    public var threadId: PublicID
     public var subject: String
     public var sentAt: String
 }
@@ -449,12 +453,12 @@ public struct ThreadMedia: Codable, Sendable, Hashable {
 }
 
 public struct ThreadRow: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
+    public var id: PublicID
     public var subject: String
-    public var startedBy: Int
+    public var startedBy: PublicID
     public var createdAt: String
     public var lastEmailAt: String
-    public var lastSenderId: Int?
+    public var lastSenderId: PublicID?
     public var lastText: String?
     public var lastMedia: ThreadMedia?
     @Default<Zero> public var emailCount: Int
@@ -464,9 +468,9 @@ public struct ThreadRow: Codable, Sendable, Hashable, Identifiable {
 }
 
 public struct Email: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
-    public var threadId: Int
-    public var senderId: Int
+    public var id: PublicID
+    public var threadId: PublicID
+    public var senderId: PublicID
     @Default<EmptyString> public var text: String
     public var sentAt: String
     public var readAt: String?
@@ -506,7 +510,7 @@ public struct EmailDraft: Codable, Sendable, Hashable {
 // MARK: - Profile and settings (doc "Delululand — Menu, Profile & Settings" §6)
 
 public struct Profile: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var username: String
     public var firstName: String?
     public var lastName: String?
@@ -536,12 +540,12 @@ public struct NotifySettings: Codable, Sendable, Hashable {
 }
 
 public struct UniverseCreator: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var username: String
 }
 
 public struct UniverseView: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var name: String
     public var welcome: String
     public var creator: UniverseCreator?
@@ -627,7 +631,7 @@ public struct Entered: Codable, Sendable, Hashable {
 }
 
 public struct UserCard: Codable, Sendable, Hashable, Identifiable {
-    public var id: Int
+    public var id: PublicID
     public var nickname: String
     public var avatarUrl: String?
     public var hasPin: Bool
@@ -643,7 +647,7 @@ public struct EntryView: Codable, Sendable, Hashable {
 
 public struct CreatedUniverse: Codable, Sendable, Hashable {
     public struct Ref: Codable, Sendable, Hashable {
-        public var id: Int
+        public var id: PublicID
         public var name: String
     }
 
@@ -659,12 +663,12 @@ public struct HomeSession: Codable, Sendable, Hashable {
 }
 
 public struct Person: Codable, Sendable, Hashable {
-    public var id: Int
+    public var id: PublicID
     public var nickname: String
     public var avatarUrl: String?
     public var timezone: String?
 
-    public init(id: Int, nickname: String, avatarUrl: String? = nil, timezone: String? = nil) {
+    public init(id: PublicID, nickname: String, avatarUrl: String? = nil, timezone: String? = nil) {
         self.id = id
         self.nickname = nickname
         self.avatarUrl = avatarUrl
