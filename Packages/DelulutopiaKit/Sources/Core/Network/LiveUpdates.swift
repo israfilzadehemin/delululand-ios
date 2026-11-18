@@ -5,9 +5,9 @@ import Observation
 /// content. `ready` means the stream (re)opened: anything fetched while it was down may be stale.
 public struct LiveSignal: Sendable, Hashable {
     public let name: String
-    public let id: Int?
+    public let id: PublicID?
 
-    public init(name: String, id: Int? = nil) {
+    public init(name: String, id: PublicID? = nil) {
         self.name = name
         self.id = id
     }
@@ -122,7 +122,8 @@ public final class LiveUpdates {
             retry = 30
             emit(LiveSignal(name: LiveSignal.ready))
         } else {
-            let id = (try? JSONDecoder().decode([String: JSONValue].self, from: Data(data.utf8)))?["id"]?.int
+            // A public id (doc "Delululand — Public IDs"): a string.
+            let id = (try? JSONDecoder().decode([String: JSONValue].self, from: Data(data.utf8)))?["id"]?.string
             emit(LiveSignal(name: event, id: id))
         }
     }

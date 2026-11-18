@@ -1,6 +1,7 @@
 import DLData
 import DLDesignSystem
 import DLI18n
+import DLNetwork
 import DLUI
 import SwiftUI
 import UIKit
@@ -139,12 +140,12 @@ struct YouScreen: View {
         }
     }
 
-    private func turnOnBiometrics(_ userId: Int) {
+    private func turnOnBiometrics(_ userId: PublicID) {
         backend.pendingBiometricOffer = nil
         biometricAsk = userId
     }
 
-    @State private var biometricAsk: Int?
+    @State private var biometricAsk: PublicID?
 
     private func row(_ title: String, subtitle: String?, symbol: String, tint: Color, tier: String? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {

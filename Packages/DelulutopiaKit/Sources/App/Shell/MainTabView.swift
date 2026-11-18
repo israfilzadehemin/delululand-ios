@@ -60,7 +60,7 @@ struct MainTabView: View {
         let fresh = new.filter { !old.contains($0) }
         guard !old.isEmpty, let key = fresh.first else { return }
         let friend = h.friend?.nickname ?? t("common.friend")
-        let id = Int(key.dropFirst()) ?? 0
+        let id = String(key.dropFirst())
         switch key.first {
         case "l":
             toast = DLToastItem(t("notify.inTab.letter", ["name": friend]), symbol: "envelope", actionTitle: t("common.open")) {

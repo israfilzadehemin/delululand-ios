@@ -4,7 +4,7 @@ import Foundation
 // Request bodies (Android `Requests.kt`, `Account.kt`). Field names are the API's.
 
 struct CodeBody: Encodable { let code: String }
-struct LoginBody: Encodable { let userId: Int; let pin: String }
+struct LoginBody: Encodable { let userId: PublicID; let pin: String }
 struct InviteBody: Encodable { let invite: String }
 struct VersionBody: Encodable { let version: Int }
 struct ReactionVersionBody: Encodable { let version: Int; let reaction: String }
@@ -45,7 +45,7 @@ struct LanguageBody: Encodable { let language: String }
 /// `pinnedLetterId` and `stampSlug` are sent as null to clear them.
 struct SaveDraftBody: Encodable {
     let body: Doc
-    let pinnedLetterId: Int?
+    let pinnedLetterId: PublicID?
     let stampSlug: String?
     let version: Int
 

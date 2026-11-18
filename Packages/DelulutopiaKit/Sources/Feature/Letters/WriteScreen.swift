@@ -9,14 +9,14 @@ import SwiftUI
 /// The ruled sheet with its stamp slot, the editor with the format bar on the keyboard, the
 /// attachment strip and add row. Send opens S5; a sent letter folds into its envelope and is sealed.
 public struct WriteScreen: View {
-    let editId: Int?
-    let replyTo: Int?
+    let editId: PublicID?
+    let replyTo: PublicID?
 
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
     @State private var model: WriteModel?
 
-    public init(editId: Int? = nil, replyTo: Int? = nil) {
+    public init(editId: PublicID? = nil, replyTo: PublicID? = nil) {
         self.editId = editId
         self.replyTo = replyTo
     }

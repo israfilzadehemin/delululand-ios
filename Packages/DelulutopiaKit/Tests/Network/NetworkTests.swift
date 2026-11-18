@@ -38,14 +38,14 @@ struct ModelTests {
     func defaults() throws {
         let json = """
         {"serverNow":"2026-11-12T10:00:00Z",
-         "me":{"id":1,"nickname":"Emin"},
-         "universe":{"id":3,"name":"Delulutopia"},
-         "from":[{"id":7,"direction":"from","state":"DELIVERED","sentAt":"2026-11-12T08:00:00Z","windowEndsAt":"2026-11-12T08:05:00Z","arrivesAt":"2026-11-12T09:00:00Z"}]}
+         "me":{"id":"1","nickname":"Emin"},
+         "universe":{"id":"3","name":"Delulutopia"},
+         "from":[{"id":"7","direction":"from","state":"DELIVERED","sentAt":"2026-11-12T08:00:00Z","windowEndsAt":"2026-11-12T08:05:00Z","arrivesAt":"2026-11-12T09:00:00Z"}]}
         """
         let home = try JSONDecoder().decode(Home.self, from: Data(json.utf8))
         #expect(home.me.draftEmpty)
         #expect(home.to.isEmpty)
-        #expect(home.from.first?.id == 7)
+        #expect(home.from.first?.id == "7")
         #expect(home.unreadCount == 0)
         #expect(!home.universe.isCreator)
         #expect(home.friendName == "your friend")
@@ -53,7 +53,7 @@ struct ModelTests {
 
     @Test("Null lists decode as empty")
     func nulls() throws {
-        let json = #"{"id":1,"threadId":2,"senderId":3,"sentAt":"2026-11-12T10:00:00Z","attachments":null}"#
+        let json = #"{"id":"1","threadId":"2","senderId":"3","sentAt":"2026-11-12T10:00:00Z","attachments":null}"#
         let email = try JSONDecoder().decode(Email.self, from: Data(json.utf8))
         #expect(email.attachments.isEmpty)
         #expect(email.text == "")

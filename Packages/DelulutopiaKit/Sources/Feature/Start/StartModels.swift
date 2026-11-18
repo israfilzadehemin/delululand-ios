@@ -123,7 +123,7 @@ final class PinModel {
         case text(String)
     }
 
-    let userId: Int
+    let userId: PublicID
     var user: UserCard?
     var index = 0
     var universe = ""
@@ -137,7 +137,7 @@ final class PinModel {
     private var first = ""
     private let backend: Backend
 
-    init(userId: Int, backend: Backend) {
+    init(userId: PublicID, backend: Backend) {
         self.userId = userId
         self.backend = backend
     }

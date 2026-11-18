@@ -183,7 +183,7 @@ private struct ThreadCard: View {
 final class ThreadModel {
     enum UI { case loading, shown, gone, unreachable }
 
-    let id: Int
+    let id: PublicID
     private(set) var ui: UI = .loading
     private(set) var thread: ThreadRow?
     private(set) var emails: [Email] = []
@@ -194,7 +194,7 @@ final class ThreadModel {
     @ObservationIgnored private var seen = false
     @ObservationIgnored let backend: Backend
 
-    init(backend: Backend, id: Int) {
+    init(backend: Backend, id: PublicID) {
         self.backend = backend
         self.id = id
     }
@@ -254,7 +254,7 @@ final class ThreadModel {
         if !emails.contains(where: { $0.id == e.id }) { emails.insert(e, at: 0) }
     }
 
-    func react(emailId: Int, emoji: String, mine: Bool) async {
+    func react(emailId: PublicID, emoji: String, mine: Bool) async {
         _ = mine ? try? await backend.api.unreact(target: "email", id: emailId, emoji: emoji)
             : try? await backend.api.react(target: "email", id: emailId, emoji: emoji)
         await load()
@@ -262,14 +262,14 @@ final class ThreadModel {
 }
 
 public struct ThreadScreen: View {
-    let id: Int
+    let id: PublicID
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
     @State private var model: ThreadModel?
     @State private var composer: EmailComposer?
-    @State private var unfolded: Set<Int> = []
+    @State private var unfolded: Set<PublicID> = []
 
-    public init(id: Int) {
+    public init(id: PublicID) {
         self.id = id
     }
 
@@ -343,7 +343,7 @@ public struct ThreadScreen: View {
 private struct EmailCard: View {
     let email: Email
     let open: Bool
-    let meId: Int
+    let meId: PublicID
     let home: Home?
     let onToggle: () -> Void
     let onReact: (String, Bool) -> Void
@@ -409,7 +409,7 @@ private struct EmailCard: View {
 
     private struct LightboxIndex: Identifiable {
         let i: Int
-        var id: Int { i }
+        var id: PublicID { i }
     }
 }
 

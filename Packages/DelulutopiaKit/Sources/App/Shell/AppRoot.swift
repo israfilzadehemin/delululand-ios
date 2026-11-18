@@ -143,11 +143,11 @@ struct SignedInShell: View {
         return !backend.biometrics.hasPin(userId: offer.userId) && !offered(offer.userId)
     }
 
-    private func offered(_ userId: Int) -> Bool {
+    private func offered(_ userId: PublicID) -> Bool {
         UserDefaults.standard.bool(forKey: "dl.faceIDOffered.\(userId)")
     }
 
-    private func markOffered(_ userId: Int) {
+    private func markOffered(_ userId: PublicID) {
         UserDefaults.standard.set(true, forKey: "dl.faceIDOffered.\(userId)")
     }
 }

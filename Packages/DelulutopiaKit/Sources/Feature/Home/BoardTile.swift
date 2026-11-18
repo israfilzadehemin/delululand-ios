@@ -60,7 +60,7 @@ struct BoardTile: View {
         return t("limits.noDoodles") + " · " + t("limits.renews", ["time": DLTime.time(plan.renewsAt)])
     }
 
-    private func nameOf(_ authorId: Int) -> String { authorId == home.me.id ? t("board.you") : friend }
+    private func nameOf(_ authorId: PublicID) -> String { authorId == home.me.id ? t("board.you") : friend }
 
     /// "Leyla drew this · 2 h ago" with the name in bold (web board byline keys).
     private func byline(_ b: Board) -> Text {

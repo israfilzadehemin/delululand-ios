@@ -11,15 +11,15 @@ import Observation
 @MainActor
 @Observable
 final class WriteModel {
-    enum Load { case loading, failed, ready, notEditable(Int) }
+    enum Load { case loading, failed, ready, notEditable(PublicID) }
 
-    let editId: Int?
-    let replyTo: Int?
+    let editId: PublicID?
+    let replyTo: PublicID?
     private(set) var load: Load = .loading
     private(set) var initial: Doc = .empty
     private(set) var body: Doc = .empty
     private(set) var stamp: StampMark?
-    private(set) var pinned: Int?
+    private(set) var pinned: PublicID?
     private(set) var attachments: Attachments?
     private(set) var empty = true
     private(set) var saver: DraftSaver?
@@ -34,7 +34,7 @@ final class WriteModel {
     @ObservationIgnored private var receivedCursor: String?
     @ObservationIgnored private var receivedMore = true
 
-    init(backend: Backend, editId: Int?, replyTo: Int?) {
+    init(backend: Backend, editId: PublicID?, replyTo: PublicID?) {
         self.backend = backend
         self.editId = editId
         self.replyTo = replyTo
@@ -70,7 +70,7 @@ final class WriteModel {
         if let pinned { loadReferenced(pinned) }
     }
 
-    private func loadEdit(_ id: Int) async {
+    private func loadEdit(_ id: PublicID) async {
         guard let l = try? await api.letter(id: id) else {
             load = .failed
             return
@@ -101,7 +101,7 @@ final class WriteModel {
         saver?.touch()
     }
 
-    func pin(_ id: Int?) {
+    func pin(_ id: PublicID?) {
         guard id != pinned else { return }
         pinned = id
         saver?.touch()
@@ -230,7 +230,7 @@ final class WriteModel {
     }
 
     /// Showing a letter here fetches it in full, which marks it read (T8), as opening it does.
-    func loadReferenced(_ id: Int) {
+    func loadReferenced(_ id: PublicID) {
         guard referenced?.id != id else { return }
         Task { referenced = try? await api.letter(id: id) }
     }

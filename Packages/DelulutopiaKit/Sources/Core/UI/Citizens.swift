@@ -4,14 +4,15 @@ import DLI18n
 import DLNetwork
 import SwiftUI
 
-/// Writer colour key (web components/whoOf.ts): the universe's first citizen (lowest id) is "a"
-/// (terracotta), the other "b" (sage). Until Home has loaded, user 1 is "a".
+/// Writer colour key (web components/whoOf.ts): the universe's first citizen (the creator) is "a"
+/// (terracotta), the other "b" (sage). Ids are public UUIDs with no order (doc "Delululand — Public
+/// IDs"), so the creator's id is passed in. Until it is known, everyone is "a".
 public enum Who: Sendable {
     case a, b
 
-    public static func of(_ userId: Int?, first: Int?) -> Who {
-        if let first { return userId == first ? .a : .b }
-        return userId == 1 ? .a : .b
+    public static func of(_ userId: PublicID?, first: PublicID?) -> Who {
+        guard let first else { return .a }
+        return userId == first ? .a : .b
     }
 
     public var signature: Color { self == .a ? .dlUserA : .dlUserB }
@@ -20,8 +21,11 @@ public enum Who: Sendable {
 }
 
 public extension Home {
-    /// The universe's first citizen, for `Who`.
-    var firstCitizen: Int { min(me.id, friend?.id ?? me.id) }
+    /// The universe's first citizen (its creator), for `Who`.
+    var firstCitizen: PublicID {
+        guard let friend else { return me.id }
+        return universe.isCreator ? me.id : friend.id
+    }
 }
 
 /// P4: "Name Surname" initials, else the username's first letter.

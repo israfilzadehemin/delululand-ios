@@ -5,21 +5,25 @@ import DLNetwork
 import DLUI
 import SwiftUI
 
+/// Oldest first by time; public ids carry no order (doc "Delululand — Public IDs") and only settle
+/// same-millisecond ties.
 private func byTime(_ a: DComment, _ b: DComment) -> Bool {
     a.createdAt == b.createdAt ? a.id < b.id : a.createdAt < b.createdAt
 }
 
 /// Merge a fresh snapshot of comments with what is held (older pages, just-posted ones) without
 /// duplicates or resurrecting deleted ones.
-func reconcile(_ held: [DComment], _ snap: DComments, posted: [DComment], gone: Set<Int>) -> [DComment] {
+func reconcile(_ held: [DComment], _ snap: DComments, posted: [DComment], gone: Set<PublicID>) -> [DComment] {
     let items = snap.items.filter { !gone.contains($0.id) }
     let oldest = snap.items.min(by: byTime)
+    let newest = snap.items.max(by: byTime)
     let covers = { (c: DComment) in snap.olderCursor == nil || (oldest.map { !byTime(c, $0) } ?? false) }
-    let maxId = snap.items.map(\.id).max() ?? 0
-    var out: [Int: DComment] = [:]
+    // Own posts the snapshot predates: newer than everything in it.
+    let after = { (c: DComment) in newest.map { byTime($0, c) } ?? true }
+    var out: [PublicID: DComment] = [:]
     for c in held where !covers(c) && !gone.contains(c.id) { out[c.id] = c }
     for c in items { out[c.id] = c }
-    for c in posted where c.id > maxId && !gone.contains(c.id) && out[c.id] == nil { out[c.id] = c }
+    for c in posted where after(c) && !gone.contains(c.id) && out[c.id] == nil { out[c.id] = c }
     return out.values.sorted(by: byTime)
 }
 
@@ -31,7 +35,7 @@ func reconcile(_ held: [DComment], _ snap: DComments, posted: [DComment], gone: 
 final class DiscussionModel {
     enum UI { case loading, shown(DFull), notArrived(String), gone, unreachable }
 
-    let id: Int
+    let id: PublicID
     private(set) var ui: UI = .loading
     private(set) var comments: [DComment] = []
     private(set) var olderCursor: String?
@@ -39,12 +43,12 @@ final class DiscussionModel {
     private(set) var olderFailed = false
     @ObservationIgnored private var olderLoaded = false
     @ObservationIgnored private var posted: [DComment] = []
-    @ObservationIgnored private var gone: Set<Int> = []
-    @ObservationIgnored private var seenNewest: Int?
+    @ObservationIgnored private var gone: Set<PublicID> = []
+    @ObservationIgnored private var seenNewest: PublicID?
     @ObservationIgnored private var refresher: Refresher?
     @ObservationIgnored let backend: Backend
 
-    init(backend: Backend, id: Int) {
+    init(backend: Backend, id: PublicID) {
         self.backend = backend
         self.id = id
     }
@@ -174,12 +178,12 @@ final class DiscussionModel {
         }
     }
 
-    private func drop(_ commentId: Int) {
+    private func drop(_ commentId: PublicID) {
         gone.insert(commentId)
         comments.removeAll { $0.id == commentId }
     }
 
-    func react(target: String, targetId: Int, emoji: String, mine: Bool) async {
+    func react(target: String, targetId: PublicID, emoji: String, mine: Bool) async {
         do {
             _ = mine ? try await backend.api.unreact(target: target, id: targetId, emoji: emoji)
                 : try await backend.api.react(target: target, id: targetId, emoji: emoji)
@@ -227,12 +231,12 @@ final class DiscussionModel {
 /// S11 Discussion (canvas D-Thread): the opened note with its pin, title, body, photos and voice
 /// notes, its reactions; the comments as small askew notes; the composer.
 public struct DiscussionScreen: View {
-    let id: Int
+    let id: PublicID
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
     @State private var model: DiscussionModel?
 
-    public init(id: Int) {
+    public init(id: PublicID) {
         self.id = id
     }
 
@@ -410,7 +414,7 @@ private struct ThreadView: View {
 
     private struct PhotoIndex: Identifiable {
         let i: Int
-        var id: Int { i }
+        var id: PublicID { i }
     }
 
     private func remove(takeBack: Bool) {
@@ -425,7 +429,7 @@ private struct ThreadView: View {
 
     /// The comments (FS-D12–D15): count, "See older comments", small notes oldest first, the composer.
     @ViewBuilder
-    private func comments(meId: Int, friend: Citizen?, archived: Bool, now: Date) -> some View {
+    private func comments(meId: PublicID, friend: Citizen?, archived: Bool, now: Date) -> some View {
         let count = d.commentCount ?? model.comments.count
         VStack(alignment: .leading, spacing: 12) {
             Text(count == 0 ? t("discussions.noCommentsYet") : commentWords(count).uppercased())
@@ -472,7 +476,7 @@ private struct ThreadView: View {
         }
     }
 
-    private func commentNote(_ c: DComment, index: Int, meId: Int, friend: Citizen?, archived: Bool, now: Date) -> some View {
+    private func commentNote(_ c: DComment, index: Int, meId: PublicID, friend: Citizen?, archived: Bool, now: Date) -> some View {
         let mine = c.authorId == meId
         return Note(mine ? .of(d.color) : .blank, pin: 0, tilt: index % 2 == 0 ? -0.8 : 0.7) {
             VStack(alignment: .leading, spacing: 8) {
