@@ -409,7 +409,7 @@ private struct EmailCard: View {
 
     private struct LightboxIndex: Identifiable {
         let i: Int
-        var id: PublicID { i }
+        var id: Int { i }
     }
 }
 

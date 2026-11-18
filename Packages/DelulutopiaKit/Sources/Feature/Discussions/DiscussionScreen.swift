@@ -414,7 +414,7 @@ private struct ThreadView: View {
 
     private struct PhotoIndex: Identifiable {
         let i: Int
-        var id: PublicID { i }
+        var id: Int { i }
     }
 
     private func remove(takeBack: Bool) {

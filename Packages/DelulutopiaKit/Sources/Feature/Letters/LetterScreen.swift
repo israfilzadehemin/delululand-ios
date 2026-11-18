@@ -311,7 +311,7 @@ private struct LetterContent: View {
 
     private struct PhotoIndex: Identifiable {
         let i: Int
-        var id: PublicID { i }
+        var id: Int { i }
     }
 
     private func sheet(now: Date) -> some View {
