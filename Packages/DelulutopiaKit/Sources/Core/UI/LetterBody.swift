@@ -10,7 +10,7 @@ private let stepMax = 0.045
 /// The one renderer for letter JSON (Technical Design §6.4): paragraphs, bullet lists, bold, italic,
 /// underline, in Literata on the letter's line height. An empty paragraph keeps a short gap. `reveal`
 /// writes the letter onto the page word by word: every word is laid out from the start, only its ink
-/// fades in.
+/// fades in. Links are tappable (doc "Delululand — Links").
 public struct LetterBody: View {
     let doc: Doc
     let size: CGFloat
@@ -76,7 +76,7 @@ public struct LetterBody: View {
                     if runs.allSatisfy({ $0.text.isEmpty }) {
                         Spacer().frame(height: lineHeight * scale * 0.45)
                     } else {
-                        Text(Self.attributed(runs, start: starts[b], shown: shown, color: color, size: fontSize).0)
+                        Text(Self.linked(runs, start: starts[b], shown: shown, color: color, size: fontSize))
                             .lineSpacing(spacing)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -89,7 +89,7 @@ public struct LetterBody: View {
                             HStack(alignment: .firstTextBaseline, spacing: 10) {
                                 Text("•").font(.custom(DLFontName.literataRegular.name, fixedSize: fontSize)).foregroundStyle(color)
                                     .padding(.leading, 6)
-                                Text(Self.attributed(item, start: itemStarts[k], shown: shown, color: color, size: fontSize).0)
+                                Text(Self.linked(item, start: itemStarts[k], shown: shown, color: color, size: fontSize))
                                     .lineSpacing(spacing)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -99,6 +99,14 @@ public struct LetterBody: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .tint(color)
+    }
+
+    /// A block's text; once all its words are on the page, its http(s):// and www. runs are links
+    /// (LK3; a link's tint ink can't fade in, so it waits for the reveal).
+    static func linked(_ runs: [TextRun], start: Int, shown: Double, color: Color, size: CGFloat) -> AttributedString {
+        let (text, n) = attributed(runs, start: start, shown: shown, color: color, size: size)
+        return shown >= Double(start + n) ? text.withLinks() : text
     }
 
     static func countWords(_ doc: Doc) -> Int {

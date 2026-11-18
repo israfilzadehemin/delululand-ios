@@ -495,7 +495,7 @@ private struct ThreadView: View {
                         .disabled(busy || editText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                 } else {
-                    Text(c.text).font(.custom(DLFontName.literataRegular.name, size: 16, relativeTo: .body)).foregroundStyle(.dlNoteInk).ownText(c.text)
+                    Text(linking: c.text).font(.custom(DLFontName.literataRegular.name, size: 16, relativeTo: .body)).foregroundStyle(.dlNoteInk).tint(.dlNoteInk).ownText(c.text)
                     Text("\(mine ? t("board.you") : friend?.nickname ?? t("common.friend")) · \(DLTime.clock(c.createdAt, now: now))" + (c.editedAt != nil ? t("discussions.metaEdited") : ""))
                         .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption))
                         .foregroundStyle(.dlNoteInkQuiet)

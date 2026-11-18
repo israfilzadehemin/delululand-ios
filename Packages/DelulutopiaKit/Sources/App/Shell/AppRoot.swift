@@ -36,6 +36,7 @@ public struct AppRoot: View {
             .environment(\.locale, lang.locale)
             .environment(backend)
             .tint(.dlSeal)
+            .opensLinksInApp()
             .preferredColorScheme(backend.settings.themeMode.colorScheme)
             .task {
                 await backend.session.refresh()

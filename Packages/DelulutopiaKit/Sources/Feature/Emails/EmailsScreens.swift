@@ -378,7 +378,7 @@ private struct EmailCard: View {
             .accessibilityHint(open ? t("emails.fold") : t("emails.unfold"))
             if open {
                 if !email.text.isEmpty {
-                    Text(email.text).font(.system(size: 16)).foregroundStyle(.dlMailInk).textSelection(.enabled).ownText(email.text)
+                    Text(linking: email.text).font(.system(size: 16)).foregroundStyle(.dlMailInk).tint(.dlMailInk).textSelection(.enabled).ownText(email.text)
                 }
                 if !photos.isEmpty {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 6)], spacing: 6) {

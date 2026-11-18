@@ -490,7 +490,7 @@ struct BoardNote: View {
         ZStack(alignment: .top) {
             if let comment = board.comment {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(comment.text).font(caveat(23)).foregroundStyle(ink).fixedSize(horizontal: false, vertical: true)
+                    Text(linking: comment.text).font(caveat(23)).foregroundStyle(ink).tint(ink).fixedSize(horizontal: false, vertical: true)
                     Text("— \(mine ? t("board.you") : friend)")
                         .font(caveat(18))
                         .foregroundStyle(ink.opacity(0.72))
