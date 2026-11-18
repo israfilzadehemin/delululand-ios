@@ -18,6 +18,8 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
     public private(set) var loading: String?
     public private(set) var position: TimeInterval = 0
     public private(set) var duration: TimeInterval = 0
+    /// Voice Note Speed VS4: the pick kept on this phone, shared by every note.
+    public private(set) var speed: Float = VoiceSpeed.stored()
 
     @ObservationIgnored private var player: AVAudioPlayer?
     @ObservationIgnored private var ticker: Task<Void, Never>?
@@ -35,6 +37,13 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
         player?.pause()
         playing = nil
         ticker?.cancel()
+    }
+
+    /// VS5: applies at once, from the current position; AVAudioPlayer's rate keeps the pitch (VS6).
+    public func setSpeed(_ s: Float) {
+        speed = s
+        VoiceSpeed.store(s)
+        player?.rate = s
     }
 
     public func seek(_ url: String, to fraction: Double) {
@@ -63,6 +72,9 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
         try? AVAudioSession.sharedInstance().setActive(true)
         guard let p = try? AVAudioPlayer(contentsOf: file) else { return }
         p.delegate = self
+        p.enableRate = true
+        p.prepareToPlay()
+        p.rate = speed
         player = p
         duration = p.duration
         position = 0
@@ -143,9 +155,23 @@ public struct VoicePlayer: View {
             Text(DLTime.mediaLength(ms: Int((isPlaying ? player.position : total) * 1000)))
                 .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
                 .foregroundStyle(.dlLetterInk)
+            // VS3/VS8: the speed chip, always shown; a tap moves every note to the next speed.
+            let speedLabel = VoiceSpeed.label(player.speed)
+            Button { player.setSpeed(VoiceSpeed.next(player.speed)) } label: {
+                Text(speedLabel)
+                    .font(.custom(DLFontName.manropeBold.name, size: 12, relativeTo: .caption).monospacedDigit())
+                    .foregroundStyle(.dlLetterInk)
+                    .padding(.horizontal, 6)
+                    .frame(minWidth: 36, minHeight: 24)
+                    .overlay(Capsule().strokeBorder(Color.dlLetterInk.opacity(0.2), lineWidth: 1))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(DLPressStyle())
+            .accessibilityLabel(t("media.playbackSpeed", ["speed": speedLabel]))
         }
         .padding(.leading, 4)
-        .padding(.trailing, 14)
+        .padding(.trailing, 4)
         .padding(.vertical, 4)
         .background(Color.dlLetterInk.opacity(0.05), in: Capsule())
         // L5: a player's track runs left to right in every language, like the phone's own players.

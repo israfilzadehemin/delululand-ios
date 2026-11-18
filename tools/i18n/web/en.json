@@ -461,6 +461,7 @@
  "media.pickAVideo": "Pick a video",
  "media.play": "Play {label}",
  "media.playVoiceNote": "Play voice note",
+ "media.playbackSpeed": "Playback speed {speed}",
  "media.processing": "Processing",
  "media.progress": "{time} / {total}",
  "media.readFailed": "This file couldn't be read from your phone",

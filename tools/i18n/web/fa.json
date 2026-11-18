@@ -461,6 +461,7 @@
  "media.pickAVideo": "یه ویدیو انتخاب کن",
  "media.play": "پخش {label}",
  "media.playVoiceNote": "پخش پیام صوتی",
+ "media.playbackSpeed": "سرعت پخش {speed}",
  "media.processing": "در حال آماده‌سازی",
  "media.progress": "{time} / {total}",
  "media.readFailed": "این فایل از گوشیت خونده نشد",
