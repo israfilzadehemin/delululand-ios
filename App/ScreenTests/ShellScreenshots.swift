@@ -55,11 +55,11 @@ struct ShellScreenshots {
     }
 
     @Test func startPin() async {
-        await Shoot.screen(start([.pin(userId: 1)], state: signedOut), named: "start-pin-light", style: .light, wait: 1.5)
+        await Shoot.screen(start([.pin(userId: "1")], state: signedOut), named: "start-pin-light", style: .light, wait: 1.5)
     }
 
     @Test func startPinDark() async {
-        await Shoot.screen(start([.pin(userId: 1)], state: signedOut), named: "start-pin-dark", style: .dark, wait: 1.5)
+        await Shoot.screen(start([.pin(userId: "1")], state: signedOut), named: "start-pin-dark", style: .dark, wait: 1.5)
     }
 
     @Test func startCreate() async {
