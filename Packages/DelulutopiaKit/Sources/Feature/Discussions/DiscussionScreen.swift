@@ -308,7 +308,7 @@ private struct ThreadView: View {
     var body: some View {
         let me = backend.home.home?.me
         let friend = backend.home.home?.friend
-        let meId = me?.id ?? 0
+        let meId = me?.id ?? ""
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             let now = DLTime.now
             let state = LetterState.discussion(now: now, windowEndsAt: d.windowEndsAt, arrivesAt: d.arrivesAt)

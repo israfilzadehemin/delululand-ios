@@ -216,9 +216,12 @@ final class ThreadModel {
         do {
             let got = try await backend.api.thread(id: id)
             thread = got.thread
-            let ids = Set(got.emails.items.map(\.id))
-            let kept = emails.filter { !ids.contains($0.id) && $0.id < (got.emails.items.map(\.id).min() ?? .max) }
-            emails = (got.emails.items + kept).sorted { $0.id > $1.id }
+            // Public ids carry no order (doc "Delululand — Public IDs"): older pages are kept by time.
+            let fresh = got.emails.items
+            let ids = Set(fresh.map(\.id))
+            let oldest = fresh.map(\.sentAt).min()
+            let kept = emails.filter { e in !ids.contains(e.id) && (oldest.map { e.sentAt < $0 } ?? true) }
+            emails = (fresh + kept).sorted { $0.sentAt == $1.sentAt ? $0.id > $1.id : $0.sentAt > $1.sentAt }
             if olderCursor == nil || kept.isEmpty { olderCursor = got.emails.olderCursor }
             ui = .shown
             if got.thread.unread > 0 || got.thread.unseenReactions > 0 || !seen {
@@ -241,7 +244,7 @@ final class ThreadModel {
             do {
                 let page = try await backend.api.olderEmails(threadId: id, cursor: c)
                 let ids = Set(emails.map(\.id))
-                emails += page.items.filter { !ids.contains($0.id) }.sorted { $0.id > $1.id }
+                emails += page.items.filter { !ids.contains($0.id) }.sorted { $0.sentAt == $1.sentAt ? $0.id > $1.id : $0.sentAt > $1.sentAt }
                 olderCursor = page.olderCursor
             } catch {
                 olderFailed = true
@@ -275,7 +278,7 @@ public struct ThreadScreen: View {
 
     public var body: some View {
         let home = backend.home.home
-        let meId = home?.me.id ?? 0
+        let meId = home?.me.id ?? ""
         Group {
             switch model?.ui ?? .loading {
             case .shown:
