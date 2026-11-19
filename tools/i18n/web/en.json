@@ -879,5 +879,10 @@
  "plan.today": "Today",
  "plan.unlimited": "Unlimited",
  "plan.videoEach": "{seconds} s each · {daily} a day",
- "plan.videos": "Videos"
+ "plan.videos": "Videos",
+ "media.camera": "Camera",
+ "media.choosePhoto": "Choose a photo",
+ "media.snap": "Snap",
+ "media.takeAPhoto": "Take a photo",
+ "media.yourPhoto": "Your photo"
 }

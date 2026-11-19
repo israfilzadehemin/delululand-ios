@@ -879,5 +879,10 @@
  "plan.today": "Bu gün",
  "plan.unlimited": "Limitsiz",
  "plan.videoEach": "hərəsi {seconds} san · gündə {daily}",
- "plan.videos": "Videolar"
+ "plan.videos": "Videolar",
+ "media.camera": "Kamera",
+ "media.choosePhoto": "Foto seç",
+ "media.snap": "Çək",
+ "media.takeAPhoto": "Foto çək",
+ "media.yourPhoto": "Sənin fotoun"
 }

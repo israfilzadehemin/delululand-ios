@@ -199,20 +199,25 @@ struct ComposerView: View {
                 }
                 HStack(spacing: 0) {
                     if let recorder {
-                        AddBar(attachments: atts, recorder: recorder, enabled: !sending, doodleFull: true, limits: limits) {}
+                        AddBar(
+                            attachments: atts,
+                            recorder: recorder,
+                            enabled: !sending,
+                            doodleFull: true,
+                            limits: limits,
+                            video: VideoCapture(off: hasVideo || videoOff) { camera = true }
+                        ) {}
                             .fixedSize()
                     }
-                    Menu {
-                        Button(t("media.recordAVideo"), systemImage: "video") { camera = true }
-                        PhotosPicker(selection: $videoPick, matching: .videos) { Label(t("media.pickAVideo"), systemImage: "film") }
-                    } label: {
-                        Image(systemName: "video")
+                    // Camera CA8: Record a video lives in the Camera menu; this one picks from the library.
+                    PhotosPicker(selection: $videoPick, matching: .videos) {
+                        Image(systemName: "film")
                             .font(.system(size: 19, weight: .medium))
                             .foregroundStyle(hasVideo || videoOff ? Color.dlInkDisabled : Color.dlInk)
                             .frame(width: 44, height: 44)
                     }
                     .disabled(hasVideo || recording || videoOff)
-                    .accessibilityLabel(hasVideo ? t("media.videoAttachedOnePerEmail") : t("media.addAVideo"))
+                    .accessibilityLabel(hasVideo ? t("media.videoAttachedOnePerEmail") : t("media.pickAVideo"))
                     Spacer()
                     Button(sending ? t("common.sending") : t("common.send")) { send() }
                         .buttonStyle(.borderedProminent)
