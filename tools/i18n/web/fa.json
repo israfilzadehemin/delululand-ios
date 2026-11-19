@@ -879,5 +879,10 @@
  "plan.today": "امروز",
  "plan.unlimited": "نامحدود",
  "plan.videoEach": "هر کدوم {seconds} ثانیه · روزی {daily}",
- "plan.videos": "ویدیوها"
+ "plan.videos": "ویدیوها",
+ "media.camera": "دوربین",
+ "media.choosePhoto": "یه عکس انتخاب کن",
+ "media.snap": "بگیر",
+ "media.takeAPhoto": "یه عکس بگیر",
+ "media.yourPhoto": "عکست"
 }

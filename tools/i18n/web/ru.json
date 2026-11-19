@@ -893,5 +893,10 @@
  "plan.today": "Сегодня",
  "plan.unlimited": "Без ограничений",
  "plan.videoEach": "до {seconds} с · {daily} в день",
- "plan.videos": "Видео"
+ "plan.videos": "Видео",
+ "media.camera": "Камера",
+ "media.choosePhoto": "Выбрать фото",
+ "media.snap": "Снять",
+ "media.takeAPhoto": "Сделать фото",
+ "media.yourPhoto": "Твоё фото"
 }

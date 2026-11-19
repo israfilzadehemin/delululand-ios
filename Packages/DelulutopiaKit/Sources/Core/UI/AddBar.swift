@@ -81,8 +81,20 @@ public final class VoiceRecorder: NSObject, AVAudioRecorderDelegate {
     }
 }
 
-/// The add row under the writing (canvas W-Draft): photos, a voice note (tap to record, tap to
-/// stop), an audio file, and a doodle (one per letter).
+/// Emails only: Record a video in the Camera menu (doc "Delululand — Camera" CA8); [off] while the
+/// email already carries its video or none are left today (CA9).
+public struct VideoCapture {
+    let off: Bool
+    let onRecord: () -> Void
+
+    public init(off: Bool, onRecord: @escaping () -> Void) {
+        self.off = off
+        self.onRecord = onRecord
+    }
+}
+
+/// The add row under the writing (canvas W-Draft): photos, the camera (Take a photo; Record a video
+/// in emails), a voice note (tap to record, tap to stop), an audio file, and a doodle (one per letter).
 public struct AddBar: View {
     let attachments: Attachments
     let recorder: VoiceRecorder
@@ -90,12 +102,14 @@ public struct AddBar: View {
     let doodleFull: Bool
     let onDoodle: () -> Void
     let limits: StripLimits?
+    let video: VideoCapture?
 
     @Environment(\.dlNotice) private var notice
     @Environment(\.dlBrand) private var brand
     @Environment(\.openURL) private var openURL
     @State private var photos: [PhotosPickerItem] = []
     @State private var importing = false
+    @State private var takingPhoto = false
 
     public init(
         attachments: Attachments,
@@ -103,6 +117,7 @@ public struct AddBar: View {
         enabled: Bool,
         doodleFull: Bool,
         limits: StripLimits? = nil,
+        video: VideoCapture? = nil,
         onDoodle: @escaping () -> Void
     ) {
         self.attachments = attachments
@@ -110,6 +125,7 @@ public struct AddBar: View {
         self.enabled = enabled
         self.doodleFull = doodleFull
         self.limits = limits
+        self.video = video
         self.onDoodle = onDoodle
     }
 
@@ -123,6 +139,22 @@ public struct AddBar: View {
             }
             .disabled(!enabled || room == 0)
             .accessibilityLabel(t("media.addPhoto"))
+            // Camera CA5, CA8: the system camera, which has its own front/rear switch (CA4).
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                let videoOn = video.map { !$0.off } ?? false
+                Menu {
+                    Button(t("media.takeAPhoto"), systemImage: "camera") { takingPhoto = true }
+                        .disabled(room == 0)
+                    if let video {
+                        Button(t("media.recordAVideo"), systemImage: "video", action: video.onRecord)
+                            .disabled(video.off)
+                    }
+                } label: {
+                    AddIcon(symbol: "camera", enabled: on && !recorder.recording && (room > 0 || videoOn))
+                }
+                .disabled(!enabled || recorder.recording || (room == 0 && !videoOn))
+                .accessibilityLabel(t("media.camera"))
+            }
             if recorder.recording {
                 Button { recorder.stop() } label: {
                     HStack(spacing: 6) {
@@ -174,6 +206,15 @@ public struct AddBar: View {
                 }
             }
             photos = []
+        }
+        .fullScreenCover(isPresented: $takingPhoto) {
+            CameraPicker { image in
+                takingPhoto = false
+                // CA9: a shot is one more photo, under the same limits as picked ones.
+                guard let image, (limits?.photoRoom ?? 1) > 0, let data = image.jpegData(compressionQuality: 0.9) else { return }
+                attachments.add(.photo, name: "photo.jpg", mime: "image/jpeg") { data }
+            }
+            .ignoresSafeArea()
         }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.audio], allowsMultipleSelection: false) { result in
             guard case let .success(urls) = result, let url = urls.first else { return }
