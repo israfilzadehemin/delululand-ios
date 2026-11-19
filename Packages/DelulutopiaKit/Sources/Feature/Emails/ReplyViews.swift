@@ -3,6 +3,7 @@ import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
+import UIKit
 
 /// Email replies (doc "Delululand — Email Replies"; web emails/reply.tsx): the quote inside a bubble
 /// (RE11) and the strip in the reply bar (RE9). The edge and the name wear the quoted sender's
@@ -13,10 +14,10 @@ struct QuoteColours {
 
     static func of(_ who: Who, dark: Bool) -> QuoteColours {
         switch (who, dark) {
-        case (.a, false): QuoteColours(edge: DLRGBA(0xC9785E).color, name: DLRGBA(0x8E4730).color)
-        case (.b, false): QuoteColours(edge: DLRGBA(0x6E9C8E).color, name: DLRGBA(0x35685A).color)
-        case (.a, true): QuoteColours(edge: DLRGBA(0xD99A82).color, name: DLRGBA(0xEBB9A5).color)
-        case (.b, true): QuoteColours(edge: DLRGBA(0x9CBDB3).color, name: DLRGBA(0xAED3C7).color)
+        case (.a, false): QuoteColours(edge: Color(uiColor: DLRGBA(0xC9785E).uiColor), name: Color(uiColor: DLRGBA(0x8E4730).uiColor))
+        case (.b, false): QuoteColours(edge: Color(uiColor: DLRGBA(0x6E9C8E).uiColor), name: Color(uiColor: DLRGBA(0x35685A).uiColor))
+        case (.a, true): QuoteColours(edge: Color(uiColor: DLRGBA(0xD99A82).uiColor), name: Color(uiColor: DLRGBA(0xEBB9A5).uiColor))
+        case (.b, true): QuoteColours(edge: Color(uiColor: DLRGBA(0x9CBDB3).uiColor), name: Color(uiColor: DLRGBA(0xAED3C7).uiColor))
         }
     }
 }
