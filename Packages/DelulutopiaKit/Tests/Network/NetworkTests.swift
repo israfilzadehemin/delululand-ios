@@ -94,6 +94,16 @@ struct CookieTests {
         #expect(jar.header(for: url) == nil)
     }
 
+    @Test("Deletion previews decode; missing counts are zero")
+    func deletionPreview() throws {
+        let json = #"{"scope":"UNIVERSE","universe":"Moonbase","friend":"Leyla","counts":{"letters":4,"voice":1}}"#
+        let p = try Coders.decoder().decode(DeletionPreview.self, from: Data(json.utf8))
+        #expect(p.counts.of("letters") == 4)
+        #expect(p.counts.of("voice") == 1)
+        #expect(p.counts.of("doodles") == 0)
+        #expect(p.friend == "Leyla")
+    }
+
     @Test("Refusals keep the API's code, message and extras")
     func refusal() {
         let body = Data(#"{"code":"DRAFT_CONFLICT","message":"A newer version…","serverVersion":9}"#.utf8)

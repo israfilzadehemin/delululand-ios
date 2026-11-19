@@ -43,6 +43,13 @@ public extension Notification.Name {
     static let dlTierLimit = Notification.Name("dlTierLimit")
     /// FS-A13: a 401 `NO_SESSION` anywhere means the session is gone; the app returns to the start.
     static let dlSessionEnded = Notification.Name("dl.sessionEnded")
+    /// Doc "Delululand — Data Deletion" F5: a 401 `ACCOUNT_DELETED` / `UNIVERSE_CLOSED` (userInfo
+    /// `code`): the account or universe was deleted elsewhere; the app wipes the device and says goodbye.
+    static let dlSessionGone = Notification.Name("dl.sessionGone")
+}
+
+public extension APIError {
+    static let goneCodes: Set<String> = ["ACCOUNT_DELETED", "UNIVERSE_CLOSED"]
 }
 
 /// The API holds the only clock (Technical Design §3.1). Every response carries `X-Server-Time`;
@@ -369,6 +376,9 @@ public final class APIClient: Sendable {
         let error = APIError(status: status, code: code, message: message, extra: extra)
         if status == 401, code == "NO_SESSION" {
             NotificationCenter.default.post(name: .dlSessionEnded, object: nil)
+        }
+        if status == 401, APIError.goneCodes.contains(code) {
+            NotificationCenter.default.post(name: .dlSessionGone, object: nil, userInfo: ["code": code])
         }
         // Subscription Tiers CM-8, BD-2: a limit refusal means the plan on screen is stale.
         if APIError.tierLimits.contains(code) {

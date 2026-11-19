@@ -106,6 +106,7 @@ struct YouScreen: View {
                 }
                 .dlListRow()
             }
+            DangerZoneSection(brand: brand)
             Section {
                 aboutRow(t("settings.version"), value: "\(config.version) (\(config.build))")
                 aboutRow(t("settings.server"), value: config.apiBaseURL.host() ?? config.apiBaseURL.absoluteString)

@@ -3,6 +3,7 @@ import Foundation
 import LocalAuthentication
 import Observation
 import Security
+import UserNotifications
 
 /// One door to the server for every screen (Android `Backend`): the API, live updates, the session,
 /// Home's payload, this device's settings and the Face ID vault. Injected with
@@ -52,6 +53,28 @@ public final class Backend {
         self.letters = LettersStore(api: api, live: live)
         self.biometrics = biometrics ?? BiometricVault(service: "com.delulutopia.pin.\(config.environment.rawValue)")
         self.push = PushStore(api: api, environment: config.apnsEnvironment, system: systemPush)
+        session.wipe = { [weak self] in await self?.wipeDevice() }
+    }
+
+    /// Doc "Delululand — Data Deletion" DD9 (design DD-G*): the device keeps nothing of the citizen or
+    /// the universe — cookies (session and entry pass, shared with the widgets), Face ID PINs, the
+    /// letters held in memory, notifications, caches and device-only state. Language and theme stay.
+    public func wipeDevice() async {
+        didSignOut()
+        client.cookies.clear()
+        biometrics.removeAll()
+        settings.forgetDeviceState()
+        URLCache.shared.removeAllCachedResponses()
+        if let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first,
+           let items = try? FileManager.default.contentsOfDirectory(at: caches, includingPropertiesForKeys: nil) {
+            for item in items { try? FileManager.default.removeItem(at: item) }
+        }
+        // Not in package tests: the notification centre needs an app bundle.
+        if Bundle.main.bundleURL.pathExtension == "app" {
+            let center = UNUserNotificationCenter.current()
+            center.removeAllDeliveredNotifications()
+            center.removeAllPendingNotificationRequests()
+        }
     }
 
     public func loadServerSettings() async {
@@ -196,6 +219,15 @@ public final class BiometricVault: Sendable {
             guard status == errSecSuccess, let data = result as? Data else { return nil }
             return String(data: data, encoding: .utf8)
         }.value
+    }
+
+    /// Data deletion: every citizen's stored PIN on this device.
+    public func removeAll() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+        ]
+        SecItemDelete(query as CFDictionary)
     }
 
     public func remove(userId: PublicID) {

@@ -19,6 +19,9 @@ struct DraftVersionBody: Encodable { let draftVersion: Int }
 struct SendStickerBody: Encodable { let stickerId: String; let replyToId: String?; let clientId: String }
 struct BodyOnly: Encodable { let body: Doc }
 struct ChangePinBody: Encodable { let currentPin: String; let newPin: String }
+/// Doc "Delululand — Data Deletion" §5.1; `platform` goes to the deletion ledger only.
+struct DeleteMeBody: Encodable { let pin: String; let platform: String }
+struct DeleteUniverseBody: Encodable { let pin: String; let name: String; let platform: String }
 struct UniverseUpdate: Encodable { let name: String; let welcome: String }
 
 public struct CreateUniverseRequest: Encodable, Sendable {

@@ -91,22 +91,74 @@ public final class SessionStore {
         /// The start check could not reach the server; the start screen offers Try again.
         case unreachable
         case signedIn(HomeSession)
+        /// Doc "Delululand — Data Deletion" G1–G4: the account or universe is gone and the device is
+        /// wiped. `reason`: account (I deleted my data), universe (I deleted the universe), deleted
+        /// (deleted on another device), closed (the creator deleted the universe). Done → start.
+        case gone(reason: String, brand: String?)
     }
 
     public private(set) var state: State = .unknown
+    /// DD9: what this device forgets after a deletion; set by `Backend`.
+    @ObservationIgnored public var wipe: (@MainActor () async -> Void)?
     @ObservationIgnored private let api: API
     @ObservationIgnored private var observer: NSObjectProtocol?
+    @ObservationIgnored private var goneObserver: NSObjectProtocol?
 
     public init(api: API) {
         self.api = api
         // FS-A13: a 401 NO_SESSION anywhere returns the app to the start.
         observer = NotificationCenter.default.addObserver(forName: .dlSessionEnded, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.state = .signedOut }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if case .gone = self.state { return }
+                self.state = .signedOut
+            }
         }
+        // F5: deleted elsewhere; the next call here hears it.
+        goneObserver = NotificationCenter.default.addObserver(forName: .dlSessionGone, object: nil, queue: .main) { [weak self] note in
+            let code = note.userInfo?["code"] as? String
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if case .gone = self.state { return }
+                Task { await self.goodbye(code == "UNIVERSE_CLOSED" ? "closed" : "deleted") }
+            }
+        }
+    }
+
+    private var brand: String? {
+        if case let .signedIn(s) = state { return s.universe.name }
+        return nil
+    }
+
+    private func goodbye(_ reason: String) async {
+        let name = brand
+        await wipe?()
+        state = .gone(reason: reason, brand: name)
+    }
+
+    /// The confirm sheet's counts.
+    public func deletionPreview() async throws -> DeletionPreview { try await api.deletionPreview() }
+
+    /// DL-1: the second citizen deletes their own data; throws `APIError` on a wrong PIN etc.
+    public func deleteMe(pin: String) async throws {
+        try await api.deleteMe(pin: pin)
+        await goodbye("account")
+    }
+
+    /// DL-2: the creator deletes the whole universe, typing its name to confirm.
+    public func deleteUniverse(pin: String, name: String) async throws {
+        try await api.deleteUniverse(pin: pin, name: name)
+        await goodbye("universe")
+    }
+
+    /// "Done" on the goodbye screen.
+    public func leaveGoodbye() {
+        if case .gone = state { state = .signedOut }
     }
 
     /// FS-A2: a session cookie that the API still accepts opens Home straight away.
     public func refresh() async {
+        if case .gone = state { return }
         do {
             state = .signedIn(try await api.homeSession())
         } catch let error as APIError {
