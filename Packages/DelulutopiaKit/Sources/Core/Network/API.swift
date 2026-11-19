@@ -153,8 +153,8 @@ public struct API: Sendable {
     public func threadSeen(id: PublicID) async throws { try await client.run("POST", "api/emails/threads/\(id)/seen") }
     public func credits() async throws -> EmailCredits { try await client.call("GET", "api/emails/credits") }
     public func emailDraft(key: String) async throws -> EmailDraft { try await client.call("GET", "api/emails/drafts/\(key)") }
-    public func saveEmailDraft(key: String, subject: String, text: String, version: Int) async throws -> Saved {
-        try await client.call("PUT", "api/emails/drafts/\(key)", body: SaveEmailDraftBody(subject: subject, text: text, version: version))
+    public func saveEmailDraft(key: String, subject: String, text: String, version: Int, replyToId: String? = nil) async throws -> Saved {
+        try await client.call("PUT", "api/emails/drafts/\(key)", body: SaveEmailDraftBody(subject: subject, text: text, version: version, replyToId: replyToId))
     }
     public func deleteEmailDraftAttachment(key: String, id: String) async throws {
         try await client.run("DELETE", "api/emails/drafts/\(key)/attachments/\(id)")

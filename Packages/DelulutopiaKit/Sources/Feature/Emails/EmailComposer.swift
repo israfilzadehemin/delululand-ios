@@ -39,6 +39,41 @@ func mediaWords(photos: Int, audios: Int, videos: Int) -> String? {
 
 func emailCountWords(_ n: Int) -> String { tn("emails.count", n) }
 
+/// The quote of an email already on screen, built the way the server builds `replyTo` (Email Replies RE11).
+func quoteOf(_ e: Email) -> EmailQuote {
+    let oneLine = e.text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).joined(separator: " ")
+    let photos = e.attachments.filter { $0.kind == "photo" }.count
+    let audios = e.attachments.filter { $0.kind == "audio" }.count
+    let videos = e.attachments.filter { $0.kind == "video" }.count
+    let thumb = e.attachments.first { ($0.kind == "photo" || $0.kind == "video") && $0.thumbUrl != nil }?.thumbUrl
+    return EmailQuote(
+        id: e.id,
+        senderId: e.senderId,
+        text: oneLine.isEmpty ? nil : String(oneLine.unicodeScalars.prefix(120)),
+        media: ThreadMedia(photos: photos, audios: audios, videos: videos),
+        thumbUrl: thumb,
+        sentAt: e.sentAt
+    )
+}
+
+/// RE9, RE11: the quote's text, else "Photo" / "Voice note" / "Video".
+func quoteLine(_ q: EmailQuote) -> String {
+    q.text ?? mediaWords(photos: q.media?.photos ?? 0, audios: q.media?.audios ?? 0, videos: q.media?.videos ?? 0) ?? ""
+}
+
+/// RE6: the distance (pt) that arms a reply, and the most a bubble follows the finger.
+let swipeArm: CGFloat = 64
+let swipeMax: CGFloat = 96
+
+/// Where the bubble sits for a finger moved by `dx`: toward the column's centre only (`toward` +1 =
+/// trailing, −1 = leading), eased past the arm point, never past the max. Same as web replyGesture.
+func swipeOffset(_ dx: CGFloat, toward: CGFloat) -> CGFloat {
+    let along = dx * toward
+    guard along > 0 else { return 0 }
+    let eased = along <= swipeArm ? along : swipeArm + (along - swipeArm) * 0.35
+    return min(swipeMax, eased) * toward
+}
+
 /// One email composer's state (FS-E11–E16; web emails/EmailComposer.tsx): an optional Subject (a new
 /// email), the text with its 1024 counter, the strip with one video, one autosaved draft per key
 /// (`new` or a thread id) with the letter draft's saver and conflict rule.
@@ -53,6 +88,10 @@ final class EmailComposer {
     private(set) var text = ""
     private(set) var trimmed = false
     private(set) var attachments: Attachments?
+    /// Email Replies RE10: the email this reply answers, saved with the draft.
+    private(set) var replyTo: EmailQuote?
+    /// RE8: bumped when a reply is picked, so the bar puts the cursor in the field.
+    private(set) var focusAsk = 0
     @ObservationIgnored private(set) var saver: DraftSaver!
     @ObservationIgnored let backend: Backend
 
@@ -61,7 +100,13 @@ final class EmailComposer {
         self.backend = backend
         saver = DraftSaver { [weak self] version in
             guard let self else { throw CancellationError() }
-            return try await backend.api.saveEmailDraft(key: key, subject: self.withSubject ? self.subject : "", text: self.text, version: version)
+            return try await backend.api.saveEmailDraft(
+                key: key,
+                subject: self.withSubject ? self.subject : "",
+                text: self.text,
+                version: version,
+                replyToId: self.withSubject ? nil : self.replyTo?.id
+            )
         }
     }
 
@@ -77,6 +122,7 @@ final class EmailComposer {
     func apply(_ d: EmailDraft) {
         subject = d.subject
         text = d.text
+        replyTo = d.replyTo
         saver.load(version: d.version, savedAt: d.savedAt)
         if let attachments { attachments.reset(d.attachments) } else {
             attachments = Attachments(d.attachments, path: "api/emails/drafts/\(key)/attachments", api: backend.api)
@@ -89,6 +135,20 @@ final class EmailComposer {
         trimmed = cut && normalize(raw).count - text.count > 1
         guard next != text else { return }
         text = next
+        saver.touch()
+    }
+
+    /// RE6–RE8: answer this email; a new pick replaces the last.
+    func pickReply(_ quote: EmailQuote) {
+        guard !withSubject else { return }
+        replyTo = quote
+        saver.touch()
+        focusAsk += 1
+    }
+
+    /// RE9: × on the strip.
+    func cancelReply() {
+        replyTo = nil
         saver.touch()
     }
 
@@ -122,6 +182,7 @@ final class EmailComposer {
             if let next = try? await backend.api.emailDraft(key: key) { apply(next) } else {
                 text = ""
                 subject = ""
+                replyTo = nil""
                 attachments?.reset([])
             }
             trimmed = false
@@ -281,6 +342,9 @@ struct ComposerView: View {
 struct DockedComposerView: View {
     let composer: EmailComposer
     let credits: EmailCredits?
+    /// Email Replies RE9: "You" or the friend's name, and the colour key, for the strip.
+    var quoteName: (PublicID) -> String = { _ in "" }
+    var quoteWho: (PublicID) -> Who = { _ in .a }
     let onSent: (EmailSent) -> Void
 
     @Environment(Backend.self) private var backend
@@ -304,7 +368,7 @@ struct DockedComposerView: View {
             && (!composer.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !(atts?.done.isEmpty ?? true))
         // The tray stays open while it holds something; the bar is open while it is in use.
         let tray = trayAsked || !(atts?.items.isEmpty ?? true) || recording
-        let open = tray || focused || !composer.text.isEmpty
+        let open = tray || focused || !composer.text.isEmpty || composer.replyTo != nil
         let motion: Animation? = reduceMotion ? nil : .snappy(duration: 0.26)
         VStack(spacing: 6) {
             if tray, let atts {
@@ -341,6 +405,10 @@ struct DockedComposerView: View {
             }
             if composer.trimmed { Text(trimmedLine).font(.caption).foregroundStyle(.dlError) }
             if let error { Text(error).dlText(.footnote).foregroundStyle(.dlError) }
+            if let q = composer.replyTo {
+                ReplyStrip(quote: q, name: quoteName(q.senderId), who: quoteWho(q.senderId)) { withAnimation(motion) { composer.cancelReply() } }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
             HStack(spacing: 10) {
                 if open {
                     Text("\(composer.text.count) / \(emailMax)").monospacedDigit()
@@ -401,6 +469,9 @@ struct DockedComposerView: View {
         .overlay(alignment: .top) { Rectangle().fill(Color.dlLine).frame(height: 1) }
         .animation(motion, value: tray)
         .animation(motion, value: open)
+        .animation(motion, value: composer.replyTo?.id)
+        // RE8: a picked reply puts the cursor in the field (unlike +, EB15).
+        .onChange(of: composer.focusAsk) { focused = true }
         .onAppear {
             if recorder == nil, let atts {
                 recorder = VoiceRecorder { data, ms in atts.add(.audio, name: "voice.m4a", mime: "audio/mp4", durationMs: ms) { data } }

@@ -4,6 +4,7 @@ import DLI18n
 import DLNetwork
 import DLUI
 import SwiftUI
+import UIKit
 
 /// S13's threads (web emails/useThreads.ts): newest first, 20 per page, page 1 re-read on signals
 /// and polled while the stream is down.
@@ -137,7 +138,7 @@ private struct ThreadCard: View {
         let who = Who.of(row.startedBy, first: home?.firstCitizen)
         let snippet = reactionWins(row.lastReaction, count: reacted, otherActivityAt: row.lastEmailAt)
             ? noticeLine(row.lastReaction!, count: reacted, reactorName: friend?.nickname ?? t("common.friend"))
-            : (row.lastText?.isEmpty == false ? row.lastText! : mediaWords(photos: row.lastMedia?.photos ?? 0, audios: row.lastMedia?.audios ?? 0, videos: row.lastMedia?.videos ?? 0) ?? "")
+            : replyMarked(row, row.lastText?.isEmpty == false ? row.lastText! : mediaWords(photos: row.lastMedia?.photos ?? 0, audios: row.lastMedia?.audios ?? 0, videos: row.lastMedia?.videos ?? 0) ?? "")
         Button { open(.thread(row.id)) } label: {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -178,6 +179,11 @@ private struct ThreadCard: View {
     }
 }
 
+/// Email Replies RE13: ↩ before a reply's snippet, as Letters B2.
+private func replyMarked(_ row: ThreadRow, _ words: String) -> String {
+    row.lastIsReply && !words.isEmpty ? "↩ " + words : words
+}
+
 /// One thread (FS-E5–E10): re-read every 5 s while the stream is down; the newest email unfolded,
 /// shown oldest first as bubbles (doc "Delululand — Email Bubbles"); "See older" at the top; read and seen marks.
 @MainActor
@@ -192,6 +198,8 @@ final class ThreadModel {
     private(set) var olderCursor: String?
     private(set) var loadingOlder = false
     private(set) var olderFailed = false
+    /// RE12: true while older pages load past the fifth on the way to a quoted email.
+    private(set) var jumping = false
     @ObservationIgnored private var refresher: Refresher?
     @ObservationIgnored private var seen = false
     @ObservationIgnored let backend: Backend
@@ -255,6 +263,27 @@ final class ThreadModel {
         }
     }
 
+    /// RE12: loads older pages until `target` is among the emails; true when it is.
+    func ensureLoaded(_ target: PublicID) async -> Bool {
+        var pages = 0
+        defer { jumping = false }
+        while !emails.contains(where: { $0.id == target }) {
+            guard let c = olderCursor else { return false }
+            pages += 1
+            if pages > 5 { jumping = true }
+            do {
+                let page = try await backend.api.olderEmails(threadId: id, cursor: c)
+                let ids = Set(emails.map(\.id))
+                emails += page.items.filter { !ids.contains($0.id) }.sorted { $0.sentAt == $1.sentAt ? $0.id > $1.id : $0.sentAt > $1.sentAt }
+                olderCursor = page.olderCursor
+            } catch {
+                olderFailed = true
+                return false
+            }
+        }
+        return true
+    }
+
     func sent(_ e: Email) {
         if !emails.contains(where: { $0.id == e.id }) { emails.insert(e, at: 0) }
     }
@@ -277,6 +306,8 @@ public struct ThreadScreen: View {
     @State private var newBelow = false
     @State private var sentId: PublicID?
     @State private var olderAnchor: PublicID?
+    /// RE12: the original flashed after a jump.
+    @State private var flashId: PublicID?
 
     public init(id: PublicID) {
         self.id = id
@@ -329,6 +360,8 @@ public struct ThreadScreen: View {
         let oldestFirst = Array(model.emails.reversed())
         let first = home?.firstCitizen
         let myNewest = model.emails.first { $0.senderId == meId }?.id
+        // RE9, RE11: "You" for my own emails, else the friend's nickname.
+        let quoteName: (PublicID) -> String = { id in id == meId ? t("emails.you") : (home?.friend?.id == id ? home?.friend?.nickname ?? "" : "") }
         return ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 6) {
@@ -358,7 +391,21 @@ public struct ThreadScreen: View {
                             home: home,
                             meId: meId,
                             seen: e.id == myNewest ? e.readAt : nil,
-                            onReact: { emoji, mine in Task { await model.react(emailId: e.id, emoji: emoji, mine: mine) } }
+                            quoteName: quoteName,
+                            quoteWho: { Who.of($0, first: first) },
+                            flash: flashId == e.id,
+                            onReact: { emoji, mine in Task { await model.react(emailId: e.id, emoji: emoji, mine: mine) } },
+                            onReply: { composer?.pickReply(quoteOf(e)) },
+                            onOpenQuote: { target in
+                                Task {
+                                    guard await model.ensureLoaded(target) else { return }
+                                    try? await Task.sleep(for: .milliseconds(60))
+                                    withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo(target, anchor: .center) }
+                                    flashId = target
+                                    try? await Task.sleep(for: .seconds(1))
+                                    if flashId == target { flashId = nil }
+                                }
+                            }
                         )
                         .id(e.id)
                         .transition(.asymmetric(
@@ -376,6 +423,18 @@ public struct ThreadScreen: View {
             }
             .defaultScrollAnchor(.bottom)
             .scrollDismissesKeyboard(.interactively)
+            .overlay(alignment: .top) {
+                // RE12: past five older pages on the way to a quoted email.
+                if model.jumping {
+                    Label(t("emails.findingOriginal"), systemImage: "arrow.up")
+                        .font(.system(size: 13, weight: .heavy))
+                        .padding(.horizontal, 14).padding(.vertical, 7)
+                        .foregroundStyle(Color.dlOnSeal)
+                        .background(Color.dlSeal, in: Capsule())
+                        .padding(.top, 8)
+                        .transition(.opacity)
+                }
+            }
             .overlay(alignment: .bottom) {
                 if newBelow {
                     Button {
@@ -394,7 +453,12 @@ public struct ThreadScreen: View {
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if let composer, composer.loaded {
-                    DockedComposerView(composer: composer, credits: home?.emailCredits) { sent in
+                    DockedComposerView(
+                        composer: composer,
+                        credits: home?.emailCredits,
+                        quoteName: quoteName,
+                        quoteWho: { Who.of($0, first: first) }
+                    ) { sent in
                         sentId = sent.email.id
                         model.sent(sent.email)
                     }
@@ -463,10 +527,20 @@ private struct Bubble: View {
     let home: Home?
     let meId: PublicID
     let seen: String?
+    let quoteName: (PublicID) -> String
+    let quoteWho: (PublicID) -> Who
+    let flash: Bool
     let onReact: (String, Bool) -> Void
+    let onReply: () -> Void
+    let onOpenQuote: (PublicID) -> Void
 
     @Environment(Backend.self) private var backend
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var lightbox: Int?
+    /// RE6: the bubble's sideways offset while a finger drags it, and whether the reply is armed.
+    @State private var swipe: CGFloat = 0
+    @State private var armed = false
+    @State private var dragging: Bool?
 
     var body: some View {
         let sender: Citizen? = mine ? home?.me : home?.friend
@@ -488,6 +562,10 @@ private struct Bubble: View {
                 .padding(.top, 6)
             }
             VStack(alignment: .leading, spacing: 8) {
+                // RE11: the quote at the top inside the bubble.
+                if let q = email.replyTo {
+                    BubbleQuote(quote: q, name: quoteName(q.senderId), who: quoteWho(q.senderId)) { onOpenQuote(q.id) }
+                }
                 if !email.text.isEmpty {
                     Text(linking: email.text).font(.system(size: 16)).foregroundStyle(.dlInk).tint(.dlInk).textSelection(.enabled).ownText(email.text)
                 }
@@ -509,20 +587,79 @@ private struct Bubble: View {
             .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 9)
             .background(who.tint, in: shape)
             .overlay(shape.stroke(who.signature.opacity(0.75), lineWidth: 1))
+            // RE12: a ring around the original after a jump.
+            .overlay(shape.stroke(Color.dlMailBlue.opacity(flash ? 0.55 : 0), lineWidth: 3))
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: flash)
+            // RE6: the bubble follows the finger toward the centre; the ↩ cue shows behind it.
+            .background(alignment: mine ? .trailing : .leading) {
+                Image(systemName: "arrowshape.turn.up.left")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.dlInk)
+                    .flipsForRightToLeftLayoutDirection(true)
+                    .frame(width: 32, height: 32)
+                    .background(Color.dlPaperLetter, in: Circle())
+                    .overlay(Circle().stroke(Color.dlLine, lineWidth: 1))
+                    .opacity(min(1, abs(swipe) / swipeArm))
+                    .offset(x: -swipe)
+                    .accessibilityHidden(true)
+            }
+            .offset(x: swipe)
+            .simultaneousGesture(swipeGesture)
             // EB9: at most 420 pt, and never closer than 56 pt to the other side (about 80 % on a phone).
             .frame(maxWidth: 420, alignment: mine ? .trailing : .leading)
             .padding(mine ? .leading : .trailing, 56)
             HStack(spacing: 6) {
+                if mine { replyButton }
                 if mine { reactions }
                 Text(DLTime.clock(email.sentAt) + (seen.map { " · " + t("emails.seen", ["time": DLTime.clock($0)]) } ?? ""))
                     .font(.system(size: 12).monospacedDigit()).foregroundStyle(.dlInkQuiet)
                 if !mine { reactions }
+                if !mine { replyButton }
             }
         }
         .frame(maxWidth: .infinity, alignment: mine ? .trailing : .leading)
         .fullScreenCover(item: Binding(get: { lightbox.map { LightboxIndex(i: $0) } }, set: { lightbox = $0?.i })) { l in
             Lightbox(items: photos, index: l.i) { lightbox = nil }.environment(backend)
         }
+    }
+
+    /// RE7: ↩ beside the reactions (a 44 pt target around the 28×24 chip).
+    private var replyButton: some View {
+        Button(action: onReply) {
+            Image(systemName: "arrowshape.turn.up.left")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.dlInkQuiet)
+                .flipsForRightToLeftLayoutDirection(true)
+                .frame(width: 28, height: 24)
+                .overlay(Capsule().stroke(Color.dlLine, lineWidth: 1))
+                .frame(width: 40, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(t("emails.reply"))
+    }
+
+    /// RE6: horizontal only (a mostly vertical start is the scroll's); toward the column's centre —
+    /// trailing for the friend's bubble, leading for mine (SwiftUI mirrors both in Persian); arms
+    /// at 64 pt with a light tap, springs back on release.
+    private var swipeGesture: some Gesture {
+        DragGesture(minimumDistance: 10)
+            .onChanged { v in
+                if dragging == nil { dragging = abs(v.translation.width) > abs(v.translation.height) }
+                guard dragging == true else { return }
+                let next = swipeOffset(v.translation.width, toward: mine ? -1 : 1)
+                let nowArmed = abs(next) >= swipeArm
+                if nowArmed, !armed { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+                armed = nowArmed
+                swipe = next
+            }
+            .onEnded { _ in
+                let reply = dragging == true && armed
+                dragging = nil
+                armed = false
+                withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) { swipe = 0 }
+                if reply { onReply() }
+            }
     }
 
     private func name(_ c: Citizen) -> some View {

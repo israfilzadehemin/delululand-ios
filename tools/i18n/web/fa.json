@@ -890,5 +890,10 @@
  "emails.yesterday": "دیروز",
  "emails.newEmailBelow": "ایمیل تازه",
  "emails.attach": "پیوست",
- "emails.closeAttachments": "بستن پیوست‌ها"
+ "emails.closeAttachments": "بستن پیوست‌ها",
+ "emails.replyingTo": "پاسخ به {name}",
+ "emails.cancelReply": "لغو پاسخ",
+ "emails.you": "تو",
+ "emails.goToOriginal": "رفتن به ایمیلِ {name}",
+ "emails.findingOriginal": "در حال بارگذاری…"
 }
