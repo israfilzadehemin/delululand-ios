@@ -450,6 +450,12 @@ public struct ThreadMedia: Codable, Sendable, Hashable {
     @Default<Zero> public var photos: Int
     @Default<Zero> public var audios: Int
     @Default<Zero> public var videos: Int
+
+    public init(photos: Int = 0, audios: Int = 0, videos: Int = 0) {
+        self.photos = photos
+        self.audios = audios
+        self.videos = videos
+    }
 }
 
 public struct ThreadRow: Codable, Sendable, Hashable, Identifiable {
@@ -465,6 +471,28 @@ public struct ThreadRow: Codable, Sendable, Hashable, Identifiable {
     @Default<Zero> public var unread: Int
     @Default<Zero> public var unseenReactions: Int
     public var lastReaction: ReactionNotice?
+    /// The newest email answers another (doc "Delululand — Email Replies" RE13: the ↩ prefix).
+    @Default<False> public var lastIsReply: Bool
+}
+
+/// The quote of a reply (Email Replies RE9, RE11): the answered email's first 120 characters on one
+/// line (nil without text), its media counts and the first photo's thumbnail or the video's poster.
+public struct EmailQuote: Codable, Sendable, Hashable {
+    public var id: PublicID
+    public var senderId: PublicID
+    public var text: String?
+    public var media: ThreadMedia?
+    public var thumbUrl: String?
+    public var sentAt: String
+
+    public init(id: PublicID, senderId: PublicID, text: String?, media: ThreadMedia?, thumbUrl: String?, sentAt: String) {
+        self.id = id
+        self.senderId = senderId
+        self.text = text
+        self.media = media
+        self.thumbUrl = thumbUrl
+        self.sentAt = sentAt
+    }
 }
 
 public struct Email: Codable, Sendable, Hashable, Identifiable {
@@ -476,6 +504,8 @@ public struct Email: Codable, Sendable, Hashable, Identifiable {
     public var readAt: String?
     @Default<EmptyList<Att>> public var attachments: [Att]
     @Default<EmptyList<Reaction>> public var reactions: [Reaction]
+    /// The email this one answers (RE11); nil for a plain email.
+    public var replyTo: EmailQuote?
 }
 
 public struct EmailList: Codable, Sendable, Hashable {
@@ -505,6 +535,8 @@ public struct EmailDraft: Codable, Sendable, Hashable {
     @Default<EmptyList<Att>> public var attachments: [Att]
     @Default<Zero> public var version: Int
     public var savedAt: String?
+    /// A thread draft's reply target (RE10).
+    public var replyTo: EmailQuote?
 }
 
 // MARK: - Profile and settings (doc "Delululand — Menu, Profile & Settings" §6)

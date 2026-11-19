@@ -58,6 +58,20 @@ struct ModelTests {
         #expect(email.attachments.isEmpty)
         #expect(email.text == "")
     }
+
+    @Test("A reply carries its quote; a thread row says whether its newest is a reply (Email Replies RE11, RE13)")
+    func replies() throws {
+        let json = #"{"id":"9","threadId":"2","senderId":"3","sentAt":"2026-11-19T10:00:00Z","replyTo":{"id":"1","senderId":"4","media":{"photos":1},"thumbUrl":"/t","sentAt":"2026-11-19T09:00:00Z"}}"#
+        let email = try JSONDecoder().decode(Email.self, from: Data(json.utf8))
+        #expect(email.replyTo?.id == "1")
+        #expect(email.replyTo?.text == nil)
+        #expect(email.replyTo?.media?.photos == 1)
+        #expect(email.replyTo?.media?.videos == 0)
+        let plain = try JSONDecoder().decode(Email.self, from: Data(#"{"id":"1","threadId":"2","senderId":"3","sentAt":"2026-11-19T10:00:00Z"}"#.utf8))
+        #expect(plain.replyTo == nil)
+        let row = #"{"id":"t","subject":"S","startedBy":"a","createdAt":"x","lastEmailAt":"y"}"#
+        #expect(try JSONDecoder().decode(ThreadRow.self, from: Data(row.utf8)).lastIsReply == false)
+    }
 }
 
 @Suite("Cookies")

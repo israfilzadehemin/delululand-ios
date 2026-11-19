@@ -890,5 +890,10 @@
  "emails.yesterday": "Yesterday",
  "emails.newEmailBelow": "New email",
  "emails.attach": "Attach",
- "emails.closeAttachments": "Close attachments"
+ "emails.closeAttachments": "Close attachments",
+ "emails.replyingTo": "Replying to {name}",
+ "emails.cancelReply": "Cancel reply",
+ "emails.you": "You",
+ "emails.goToOriginal": "Go to the email from {name}",
+ "emails.findingOriginal": "Loading…"
 }

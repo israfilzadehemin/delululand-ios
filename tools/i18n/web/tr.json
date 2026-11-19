@@ -890,5 +890,10 @@
  "emails.yesterday": "Dün",
  "emails.newEmailBelow": "Yeni e-posta",
  "emails.attach": "Ekle",
- "emails.closeAttachments": "Ekleri kapat"
+ "emails.closeAttachments": "Ekleri kapat",
+ "emails.replyingTo": "Yanıt: {name}",
+ "emails.cancelReply": "Yanıtı iptal et",
+ "emails.you": "Sen",
+ "emails.goToOriginal": "{name} kişisinin e-postasına git",
+ "emails.findingOriginal": "Yükleniyor…"
 }

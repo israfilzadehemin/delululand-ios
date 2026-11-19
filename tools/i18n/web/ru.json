@@ -904,5 +904,10 @@
  "emails.yesterday": "Вчера",
  "emails.newEmailBelow": "Новый имейл",
  "emails.attach": "Прикрепить",
- "emails.closeAttachments": "Закрыть вложения"
+ "emails.closeAttachments": "Закрыть вложения",
+ "emails.replyingTo": "Ответ: {name}",
+ "emails.cancelReply": "Отменить ответ",
+ "emails.you": "Ты",
+ "emails.goToOriginal": "Перейти к имейлу — {name}",
+ "emails.findingOriginal": "Загрузка…"
 }

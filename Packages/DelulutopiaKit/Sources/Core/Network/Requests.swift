@@ -77,7 +77,8 @@ struct SendAgainBody: Encodable {
 
 struct SaveDiscussionDraftBody: Encodable { let title: String; let body: Doc; let version: Int; let color: String }
 struct EditDiscussionBody: Encodable { let title: String; let body: Doc; let color: String; let attachmentIds: [String] }
-struct SaveEmailDraftBody: Encodable { let subject: String; let text: String; let version: Int }
+/// `replyToId` (Email Replies RE10): a thread draft's target; nil is left out and clears it.
+struct SaveEmailDraftBody: Encodable { let subject: String; let text: String; let version: Int; let replyToId: String? }
 struct ProfileBody: Encodable { let username: String; let firstName: String; let lastName: String; let timezone: String }
 
 struct NotifyChange: Encodable {

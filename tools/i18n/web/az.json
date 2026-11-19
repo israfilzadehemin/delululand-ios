@@ -890,5 +890,10 @@
  "emails.yesterday": "Dünən",
  "emails.newEmailBelow": "Yeni e-məktub",
  "emails.attach": "Əlavə et",
- "emails.closeAttachments": "Əlavələri bağla"
+ "emails.closeAttachments": "Əlavələri bağla",
+ "emails.replyingTo": "Cavab: {name}",
+ "emails.cancelReply": "Cavabı ləğv et",
+ "emails.you": "Sən",
+ "emails.goToOriginal": "{name} göndərən e-məktuba keç",
+ "emails.findingOriginal": "Yüklənir…"
 }
