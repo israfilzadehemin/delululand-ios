@@ -182,7 +182,7 @@ final class EmailComposer {
             if let next = try? await backend.api.emailDraft(key: key) { apply(next) } else {
                 text = ""
                 subject = ""
-                replyTo = nil""
+                replyTo = nil
                 attachments?.reset([])
             }
             trimmed = false
