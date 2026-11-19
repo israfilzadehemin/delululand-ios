@@ -41,6 +41,20 @@ xcodebuild archive \
   | xcbeautify
 echo "::endgroup::"
 
+# An unsigned archive carries no entitlements, and the export re-signs with the ones it finds in the
+# binary. Sign the archived app ad hoc with the project's entitlements (nested code first) so the
+# export keeps them; it turns aps-environment development into production for App Store Connect.
+entitlements="$root/App/Delulutopia.entitlements"
+if [ -f "$entitlements" ]; then
+  echo "::group::Embed entitlements in the archive"
+  archived_app="$(find "$archive/Products/Applications" -maxdepth 1 -name '*.app' | head -1)"
+  find "$archived_app" -depth \( -name '*.framework' -o -name '*.dylib' -o -name '*.appex' \) -print0 |
+    while IFS= read -r -d '' nested; do codesign --force --sign - --timestamp=none "$nested"; done
+  codesign --force --sign - --timestamp=none --entitlements "$entitlements" "$archived_app"
+  codesign -d --entitlements - --xml "$archived_app" 2>/dev/null | grep -o 'aps-environment' || true
+  echo "::endgroup::"
+fi
+
 cat > "$out/ExportOptions.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
