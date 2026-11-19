@@ -220,11 +220,11 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					8CDCF64B84AD4F43F97AF008 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = NM3GZ4M68M;
 						ProvisioningStyle = Automatic;
 					};
 					AD9E276FFE2E24EB440F9E98 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = NM3GZ4M68M;
 						ProvisioningStyle = Automatic;
 					};
 				};
