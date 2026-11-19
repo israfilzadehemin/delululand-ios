@@ -4,6 +4,7 @@
 MARKETING_VERSION = 0.1.0
 CURRENT_PROJECT_VERSION = 1
 
-// Q1 is deferred: signing settings arrive with the first TestFlight build.
+// Q1: Apple Developer Program, Individual (team id is public, not a secret). Automatic signing:
+// Xcode creates the App IDs and profiles for com.delulutopia.app(.test) on first device build.
 CODE_SIGN_STYLE = Automatic
-DEVELOPMENT_TEAM =
+DEVELOPMENT_TEAM = NM3GZ4M68M
