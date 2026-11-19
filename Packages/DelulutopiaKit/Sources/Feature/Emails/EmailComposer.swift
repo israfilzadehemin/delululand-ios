@@ -274,6 +274,174 @@ struct ComposerView: View {
     }
 }
 
+/// The thread's reply bar (doc "Delululand — Email Bubbles" EB8; web ThreadView .dl-dock): one line
+/// docked at the bottom — + · the field · Send — under the credits line. + opens the tray (the strip
+/// and the add row) from the bottom and turns into ×; while the bar is in use the counter joins the
+/// credits line; the field grows to six lines. Reduce Motion: the same bar without the motion.
+struct DockedComposerView: View {
+    let composer: EmailComposer
+    let credits: EmailCredits?
+    let onSent: (EmailSent) -> Void
+
+    @Environment(Backend.self) private var backend
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var recorder: VoiceRecorder?
+    @State private var sending = false
+    @State private var error: String?
+    @State private var videoPick: PhotosPickerItem?
+    @State private var camera = false
+    @State private var trayAsked = false
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        let atts = composer.attachments
+        let noCredits = (credits?.left ?? 1) <= 0
+        let recording = recorder?.recording ?? false
+        let hasVideo = atts?.has("video") ?? false
+        let limits = atts.flatMap { stripLimits(backend.home.home?.plan, mediaOf($0.items)) }
+        let videoOff = limits.map { !$0.videoRoom } ?? false
+        let canSend = !sending && !noCredits && !(atts?.uploading ?? false) && !recording && limits?.block == nil
+            && (!composer.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !(atts?.done.isEmpty ?? true))
+        // The tray stays open while it holds something; the bar is open while it is in use.
+        let tray = trayAsked || !(atts?.items.isEmpty ?? true) || recording
+        let open = tray || focused || !composer.text.isEmpty
+        let motion: Animation? = reduceMotion ? nil : .snappy(duration: 0.26)
+        VStack(spacing: 6) {
+            if tray, let atts {
+                VStack(alignment: .leading, spacing: 6) {
+                    AttachmentStrip(atts, limits: limits) { item in
+                        let index = atts.items.firstIndex(of: item) ?? 0
+                        atts.remove(item.key)
+                        if let a = item.att { composer.deleteAttachment(a.id) { atts.restore(item, at: index) } }
+                    }
+                    HStack(spacing: 0) {
+                        if let recorder {
+                            AddBar(
+                                attachments: atts,
+                                recorder: recorder,
+                                enabled: !sending,
+                                doodleFull: true,
+                                limits: limits,
+                                video: VideoCapture(off: hasVideo || videoOff) { camera = true }
+                            ) {}
+                                .fixedSize()
+                        }
+                        PhotosPicker(selection: $videoPick, matching: .videos) {
+                            Image(systemName: "film")
+                                .font(.system(size: 19, weight: .medium))
+                                .foregroundStyle(hasVideo || videoOff ? Color.dlInkDisabled : Color.dlInk)
+                                .frame(width: 44, height: 44)
+                        }
+                        .disabled(hasVideo || recording || videoOff)
+                        .accessibilityLabel(hasVideo ? t("media.videoAttachedOnePerEmail") : t("media.pickAVideo"))
+                        Spacer(minLength: 0)
+                    }
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            if composer.trimmed { Text(trimmedLine).font(.caption).foregroundStyle(.dlError) }
+            if let error { Text(error).dlText(.footnote).foregroundStyle(.dlError) }
+            HStack(spacing: 10) {
+                if open {
+                    Text("\(composer.text.count) / \(emailMax)").monospacedDigit()
+                        .foregroundStyle(composer.text.count >= emailMax ? Color.dlError : Color.dlInkQuiet)
+                        .transition(.opacity)
+                }
+                if let line = creditsLine(credits) {
+                    Text(line).foregroundStyle(noCredits ? Color.dlError : Color.dlInkQuiet)
+                }
+            }
+            .font(.system(size: 12))
+            .frame(maxWidth: .infinity)
+            HStack(alignment: .bottom, spacing: 8) {
+                Button {
+                    withAnimation(motion) { trayAsked.toggle() }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(.dlInk)
+                        .rotationEffect(.degrees(tray ? 45 : 0))
+                        .frame(width: 44, height: 44)
+                        .background(Color.dlPaperLetter, in: Circle())
+                        .overlay(Circle().stroke(Color.dlLine, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tray && trayAsked ? t("emails.closeAttachments") : t("emails.attach"))
+                TextField(t("emails.writeAReply"), text: Binding(get: { composer.text }, set: { composer.changeText($0) }), axis: .vertical)
+                    .font(.system(size: 16))
+                    .foregroundStyle(.dlInk)
+                    .lineLimit(1 ... 6)
+                    .focused($focused)
+                    .padding(.horizontal, 16).padding(.vertical, 11)
+                    .frame(minHeight: 44)
+                    .background(Color.dlPaperLetter, in: RoundedRectangle(cornerRadius: 22))
+                    .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.dlLine, lineWidth: 1))
+                    .accessibilityLabel(t("emails.replyLabel"))
+                Button { send() } label: {
+                    Group {
+                        if sending {
+                            ProgressView().tint(Color.dlOnSeal)
+                        } else {
+                            Image(systemName: "arrow.forward").font(.system(size: 17, weight: .bold)).flipsForRightToLeftLayoutDirection(true)
+                        }
+                    }
+                    .foregroundStyle(canSend ? Color.dlOnSeal : Color.dlInkDisabled)
+                    .frame(width: 44, height: 44)
+                    .background(canSend ? Color.dlSeal : Color.dlLine, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSend)
+                .accessibilityLabel(sending ? t("common.sending") : t("common.send"))
+            }
+        }
+        .padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 8)
+        .background(.bar)
+        .overlay(alignment: .top) { Rectangle().fill(Color.dlLine).frame(height: 1) }
+        .animation(motion, value: tray)
+        .animation(motion, value: open)
+        .onAppear {
+            if recorder == nil, let atts {
+                recorder = VoiceRecorder { data, ms in atts.add(.audio, name: "voice.m4a", mime: "audio/mp4", durationMs: ms) { data } }
+            }
+        }
+        .onChange(of: videoPick) { _, item in
+            guard let item, let atts else { return }
+            atts.add(.video, name: "video.mp4", mime: "video/mp4") {
+                guard let movie = try await item.loadTransferable(type: Movie.self) else { throw Attachments.ReadError() }
+                return try await Movie.mp4(movie.url)
+            }
+            videoPick = nil
+        }
+        .fullScreenCover(isPresented: $camera) {
+            VideoCamera { url in
+                camera = false
+                guard let url, let atts else { return }
+                atts.add(.video, name: "video.mp4", mime: "video/mp4") { try await Movie.mp4(url) }
+            }
+            .ignoresSafeArea()
+        }
+        .alert(t("emails.aNewerVersionWasSaved"), isPresented: Binding(get: { composer.saver.status == .conflict }, set: { _ in })) {
+            Button(t("emails.keepMine"), role: .cancel) { composer.saver.keepMine() }
+            Button(t("emails.load")) { Task { await composer.loadServer() } }
+        }
+    }
+
+    private func send() {
+        sending = true
+        error = nil
+        Task {
+            switch await composer.send() {
+            case let .sent(s):
+                trayAsked = false
+                onSent(s)
+            case .conflict: break
+            case let .failed(text): error = text
+            }
+            sending = false
+        }
+    }
+}
+
 /// A picked video, copied out of the photo library.
 struct Movie: Transferable {
     let url: URL

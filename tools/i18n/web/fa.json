@@ -884,5 +884,11 @@
  "media.choosePhoto": "یه عکس انتخاب کن",
  "media.snap": "بگیر",
  "media.takeAPhoto": "یه عکس بگیر",
- "media.yourPhoto": "عکست"
+ "media.yourPhoto": "عکست",
+ "emails.emailsOldestFirst": "ایمیل‌ها، قدیمی‌ترها اول",
+ "emails.today": "امروز",
+ "emails.yesterday": "دیروز",
+ "emails.newEmailBelow": "ایمیل تازه",
+ "emails.attach": "پیوست",
+ "emails.closeAttachments": "بستن پیوست‌ها"
 }
