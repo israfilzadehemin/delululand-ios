@@ -469,6 +469,7 @@
  "media.pickAVideo": "Выбрать видео",
  "media.play": "Включить: {label}",
  "media.playVoiceNote": "Включить голосовое",
+ "media.playbackSpeed": "Скорость воспроизведения {speed}",
  "media.processing": "Обработка",
  "media.progress": "{time} / {total}",
  "media.readFailed": "Не удалось прочитать этот файл с телефона",

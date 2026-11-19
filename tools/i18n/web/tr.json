@@ -461,6 +461,7 @@
  "media.pickAVideo": "Video seç",
  "media.play": "Oynat: {label}",
  "media.playVoiceNote": "Sesli mesajı dinle",
+ "media.playbackSpeed": "Oynatma hızı {speed}",
  "media.processing": "Hazırlanıyor",
  "media.progress": "{time} / {total}",
  "media.readFailed": "Bu dosya telefonundan okunamadı",
