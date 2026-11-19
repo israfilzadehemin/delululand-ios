@@ -19,6 +19,8 @@ public final class Backend {
     public let letters: LettersStore
     public let settings: DeviceSettings
     public let biometrics: BiometricVault
+    /// iOS push: permission, the APNs token, the badge, tapped notifications.
+    public let push: PushStore
     /// `GET /api/config`: shortened timers on test servers (the TEST banner).
     public private(set) var server: ServerSettings?
     /// A PIN just typed at sign-in, waiting for the signed-in app to offer Face ID once (X1).
@@ -29,7 +31,8 @@ public final class Backend {
         settings: DeviceSettings,
         cookies: CookieStore? = nil,
         biometrics: BiometricVault? = nil,
-        protocolClasses: [AnyClass] = []
+        protocolClasses: [AnyClass] = [],
+        systemPush: Bool = true
     ) {
         self.config = config
         self.settings = settings
@@ -48,6 +51,7 @@ public final class Backend {
         self.home = HomeStore(api: api, live: live)
         self.letters = LettersStore(api: api, live: live)
         self.biometrics = biometrics ?? BiometricVault(service: "com.delulutopia.pin.\(config.environment.rawValue)")
+        self.push = PushStore(api: api, environment: config.apnsEnvironment, system: systemPush)
     }
 
     public func loadServerSettings() async {
@@ -81,12 +85,20 @@ public final class Backend {
     public func didSignIn() {
         live.start()
         home.start()
+        push.didSignIn()
     }
 
     public func didSignOut() {
         live.stop()
         home.stop()
         letters.clear()
+        push.didSignOut()
+    }
+
+    /// You › Log out (FS-A11): this install leaves the citizen's push list first, then the session ends.
+    public func logout() async {
+        await push.willSignOut()
+        await session.logout()
     }
 }
 

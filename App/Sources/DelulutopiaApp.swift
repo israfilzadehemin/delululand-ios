@@ -5,6 +5,8 @@ import SwiftUI
 
 @main
 struct DelulutopiaApp: App {
+    /// APNs token, notification taps and the foreground policy (iOS Build Q6).
+    @UIApplicationDelegateAdaptor(PushAppDelegate.self) private var pushDelegate
     @State private var backend = Backend(config: AppConfig.fromMainBundle(), settings: DeviceSettings())
     /// The app hosts the screenshot tests (DelulutopiaScreens); they draw their own screens.
     private let hostsTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
@@ -20,6 +22,7 @@ struct DelulutopiaApp: App {
                 Color.clear
             } else {
                 AppRoot(backend: backend)
+                    .onAppear { pushDelegate.backend = backend }
             }
         }
     }

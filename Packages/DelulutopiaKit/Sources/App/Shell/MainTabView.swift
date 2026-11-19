@@ -43,6 +43,39 @@ struct MainTabView: View {
         .environment(\.dlFirstCitizen, backend.home.home?.firstCitizen)
         .dlToast($toast, bottom: 96)
         .onChange(of: arrivals) { old, new in announce(old: old, new: new) }
+        // A tapped notification (iOS design I-5); logged out, it waited here for the PIN.
+        .onChange(of: backend.push.pendingLink, initial: true) { _, link in
+            if let link { open(link) }
+        }
+        // The icon badge follows the tab dots as items are read (Q7).
+        .onChange(of: unreadTotal) { _, total in
+            if let total { backend.push.setBadge(total) }
+        }
+    }
+
+    /// Letters, discussions and emails waiting, as the server counts the badge; nil before Home loads.
+    private var unreadTotal: Int? {
+        guard let h = backend.home.home else { return nil }
+        return h.unreadCount + h.discussionsUnseen + h.emailsUnread + h.emailsReacted
+    }
+
+    /// Opens a notification's screen on its own tab, over that tab's root.
+    private func open(_ link: AppLink) {
+        backend.push.pendingLink = nil
+        let target: (AppTab, [AppRoute]) =
+            switch link {
+            case .home: (.home, [])
+            case .letters: (.letters, [])
+            case let .letter(id): (.letters, [.letter(id)])
+            case .discussions: (.discussions, [])
+            case let .discussion(id): (.discussions, [.discussion(id)])
+            case .emails: (.emails, [])
+            case let .thread(id): (.emails, [.thread(id)])
+            case .notificationSettings: (.you, [.notifications])
+            }
+        paths[target.0] = target.1
+        selection = target.0
+        backend.home.refreshSoon()
     }
 
     /// What has arrived for me now: delivered letters, new discussions, new emails.

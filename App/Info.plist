@@ -24,6 +24,8 @@
 	<string>$(DL_API_BASE_URL)</string>
 	<key>DLEnvironment</key>
 	<string>$(DL_ENVIRONMENT)</string>
+	<key>DLApnsEnvironment</key>
+	<string>$(DL_APNS_ENVIRONMENT)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

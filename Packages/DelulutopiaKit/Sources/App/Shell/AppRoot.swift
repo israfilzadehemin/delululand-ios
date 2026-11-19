@@ -109,6 +109,7 @@ struct SignedInShell: View {
     let initialTab: AppTab
     @Environment(Backend.self) var backend
     @State private var selection: AppTab
+    @State private var askNotifications = false
 
     init(initialTab: AppTab) {
         self.initialTab = initialTab
@@ -134,6 +135,24 @@ struct SignedInShell: View {
                 }
             } message: {
                 Text(t(backend.biometrics.kind == .touchID ? "settings.bioOfferTextTouch" : "settings.bioOfferTextFace", ["device": deviceWord]))
+            }
+            // The one-time ask before the system prompt (iOS design X-Notif-ask; web S9): only while
+            // iOS has never asked, and never over the Face ID offer.
+            .background {
+                Color.clear
+                    .alert(t("notify.knowTheMomentALetter"), isPresented: $askNotifications) {
+                        Button(t("notify.notNow"), role: .cancel) { backend.push.asked = true }
+                        Button(t("notify.allow")) { Task { await backend.push.requestPermission() } }
+                    } message: {
+                        Text(t("notify.ifYouSayNoHome"))
+                    }
+            }
+            .task {
+                try? await Task.sleep(for: .seconds(1.5))
+                await backend.push.refreshPermission()
+                if backend.push.permission == .notAsked, !backend.push.asked, !offerVisible {
+                    askNotifications = true
+                }
             }
     }
 

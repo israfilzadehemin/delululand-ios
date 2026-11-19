@@ -353,7 +353,8 @@ public enum FixtureBackend {
             settings: settings,
             cookies: CookieStore(service: name, inMemory: true),
             biometrics: BiometricVault(service: name),
-            protocolClasses: [FixtureServer.self]
+            protocolClasses: [FixtureServer.self],
+            systemPush: false
         )
     }
 }
