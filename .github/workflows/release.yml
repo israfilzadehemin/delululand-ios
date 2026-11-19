@@ -1,0 +1,85 @@
+name: Release
+
+# Manual: Actions › Release › Run workflow (decision D14). Staging first; prod only from main after sign-off.
+# On PRs that touch the release files: a dry run (archive + cloud signing + App Store Connect validation, no upload).
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "staging → Delulutopia TST (TestFlight) · prod → Delulutopia"
+        type: choice
+        options: [staging, prod]
+        default: staging
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+      - tools/release/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.environment || format('dry-run-{0}', github.head_ref) }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: ${{ github.event_name == 'workflow_dispatch' && format('Upload {0}', inputs.environment) || 'Dry run (staging, no upload)' }}
+    runs-on: xcode-27
+    timeout-minutes: 60
+    env:
+      ENVIRONMENT: ${{ inputs.environment || 'staging' }}
+      MODE: ${{ github.event_name == 'workflow_dispatch' && 'upload' || 'validate' }}
+      # Unique and increasing per app: run 12, first attempt → 12.1
+      BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prod only from main
+        if: env.ENVIRONMENT == 'prod' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Prod releases run from main only (current ref: ${{ github.ref }})"
+          exit 1
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          brew install xcbeautify
+
+      - name: App Store Connect key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          for v in ASC_KEY_P8 ASC_KEY_ID ASC_ISSUER_ID; do
+            [ -n "${!v}" ] || { echo "::error::Repository secret $v is missing"; exit 1; }
+          done
+          key="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_KEY_P8" > "$key"
+          chmod 600 "$key"
+          echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
+
+      - name: Resolve packages
+        run: xcodebuild -resolvePackageDependencies -project Delulutopia.xcodeproj -scheme "Delulutopia Staging"
+
+      - name: Archive, sign and ${{ github.event_name == 'workflow_dispatch' && 'upload' || 'validate' }}
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: tools/release/release.sh "$ENVIRONMENT" "$MODE"
+
+      - name: Keep the .ipa and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ env.ENVIRONMENT }}-${{ env.BUILD_NUMBER }}
+          path: |
+            build/release/ipa
+            ~/Library/Logs/DistributionLogs
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove the key
+        if: always()
+        run: rm -f "$ASC_KEY_PATH" ~/.appstoreconnect/private_keys/AuthKey_*.p8
