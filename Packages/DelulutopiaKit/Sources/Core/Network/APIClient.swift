@@ -258,13 +258,18 @@ public final class APIClient: Sendable {
     }
 
     /// Absolute URL of an API path (`/api/attachments/…`); absolute URLs pass through.
+    /// A server-made path may carry its own query (the board image's `?u=<universe>`); it stays a
+    /// query, ahead of `query`, rather than being percent-encoded into the path.
     public func url(_ path: String, query: [String: String] = [:]) -> URL {
         if path.hasPrefix("http"), let absolute = URL(string: path) { return absolute }
         var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
         let base = components.path.hasSuffix("/") ? String(components.path.dropLast()) : components.path
-        components.path = base + "/" + path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        if !query.isEmpty {
-            components.queryItems = query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
+        let parts = path.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
+        components.path = base + "/" + String(parts[0]).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        var items = parts.count > 1 ? (URLComponents(string: "?" + parts[1])?.queryItems ?? []) : []
+        items += query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
+        if !items.isEmpty {
+            components.queryItems = items
         }
         return components.url!
     }
