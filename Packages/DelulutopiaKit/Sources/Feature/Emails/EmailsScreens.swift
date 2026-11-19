@@ -131,14 +131,19 @@ private struct ThreadCard: View {
         let me = home?.me
         let friend = home?.friend
         let fromMe = row.lastSenderId == me?.id
-        let unread = row.unread > 0
+        let unread = row.unread + row.unseenReactions > 0
         let reacted = row.unseenReactions
+        // Email Bubbles EB14: the card wears its starter's signature, like their bubbles.
+        let who = Who.of(row.startedBy, first: home?.firstCitizen)
         let snippet = reactionWins(row.lastReaction, count: reacted, otherActivityAt: row.lastEmailAt)
             ? noticeLine(row.lastReaction!, count: reacted, reactorName: friend?.nickname ?? t("common.friend"))
             : (row.lastText?.isEmpty == false ? row.lastText! : mediaWords(photos: row.lastMedia?.photos ?? 0, audios: row.lastMedia?.audios ?? 0, videos: row.lastMedia?.videos ?? 0) ?? "")
         Button { open(.thread(row.id)) } label: {
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    if unread {
+                        Circle().fill(Color.dlMailBlue).frame(width: 8, height: 8).accessibilityHidden(true)
+                    }
                     Text(row.subject)
                         .font(.custom(unread ? DLFontName.literataBold.name : DLFontName.literataSemiBold.name, size: 17, relativeTo: .headline))
                         .foregroundStyle(.dlMailInk)
@@ -166,11 +171,8 @@ private struct ThreadCard: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(unread ? Color.dlMailUnread : Color.dlMailBackground, in: RoundedRectangle(cornerRadius: 10))
-            .overlay(alignment: .leading) {
-                if unread { UnevenRoundedRectangle(topLeadingRadius: 10, bottomLeadingRadius: 10).fill(.dlMailBlue).frame(width: 4) }
-            }
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.dlMailLine))
+            .background(who.tint, in: RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(unread ? who.signature : who.signature.opacity(0.6), lineWidth: unread ? 2 : 1))
         }
         .buttonStyle(DLPressStyle(scale: 0.99))
     }

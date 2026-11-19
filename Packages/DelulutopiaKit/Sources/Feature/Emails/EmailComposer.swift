@@ -355,6 +355,8 @@ struct DockedComposerView: View {
             .frame(maxWidth: .infinity)
             HStack(alignment: .bottom, spacing: 8) {
                 Button {
+                    // Attaching is not typing (EB15): opening the tray puts the keyboard away.
+                    if !tray { focused = false }
                     withAnimation(motion) { trayAsked.toggle() }
                 } label: {
                     Image(systemName: "plus")
