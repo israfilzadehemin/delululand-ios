@@ -898,5 +898,11 @@
  "media.choosePhoto": "Выбрать фото",
  "media.snap": "Снять",
  "media.takeAPhoto": "Сделать фото",
- "media.yourPhoto": "Твоё фото"
+ "media.yourPhoto": "Твоё фото",
+ "emails.emailsOldestFirst": "Имейлы, сначала старые",
+ "emails.today": "Сегодня",
+ "emails.yesterday": "Вчера",
+ "emails.newEmailBelow": "Новый имейл",
+ "emails.attach": "Прикрепить",
+ "emails.closeAttachments": "Закрыть вложения"
 }

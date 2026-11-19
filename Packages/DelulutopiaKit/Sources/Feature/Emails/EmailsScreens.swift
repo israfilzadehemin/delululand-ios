@@ -177,7 +177,7 @@ private struct ThreadCard: View {
 }
 
 /// One thread (FS-E5–E10): re-read every 5 s while the stream is down; the newest email unfolded,
-/// older folded; "See older" at the bottom; read and seen marks.
+/// shown oldest first as bubbles (doc "Delululand — Email Bubbles"); "See older" at the top; read and seen marks.
 @MainActor
 @Observable
 final class ThreadModel {
@@ -268,9 +268,13 @@ public struct ThreadScreen: View {
     let id: PublicID
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model: ThreadModel?
     @State private var composer: EmailComposer?
-    @State private var unfolded: Set<PublicID> = []
+    @State private var atBottom = true
+    @State private var newBelow = false
+    @State private var sentId: PublicID?
+    @State private var olderAnchor: PublicID?
 
     public init(id: PublicID) {
         self.id = id
@@ -283,31 +287,7 @@ public struct ThreadScreen: View {
             switch model?.ui ?? .loading {
             case .shown:
                 if let model {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(model.thread?.subject ?? "")
-                                .font(.custom(DLFontName.literataSemiBold.name, size: 22, relativeTo: .title2))
-                                .foregroundStyle(.dlMailInk)
-                            if let composer, composer.loaded {
-                                ComposerView(composer: composer, credits: home?.emailCredits) { sent in model.sent(sent.email) }
-                            }
-                            ForEach(Array(model.emails.enumerated()), id: \.element.id) { i, e in
-                                EmailCard(email: e, open: i == 0 || unfolded.contains(e.id), meId: meId, home: home,
-                                          onToggle: { if unfolded.contains(e.id) { unfolded.remove(e.id) } else { unfolded.insert(e.id) } },
-                                          onReact: { emoji, mine in Task { await model.react(emailId: e.id, emoji: emoji, mine: mine) } })
-                            }
-                            if model.olderCursor != nil {
-                                Button(model.loadingOlder ? t("emails.loadingOlder") : t("emails.seeOlder")) { model.seeOlder() }
-                                    .buttonStyle(DLButtonStyle(.text))
-                                    .frame(maxWidth: .infinity)
-                            } else {
-                                Text(t("emails.thatIsEverything")).dlText(.footnote).foregroundStyle(.dlInkQuiet).frame(maxWidth: .infinity)
-                            }
-                            if model.olderFailed { Text(t("emails.couldntLoadOlderEmailsTry")).dlText(.footnote).foregroundStyle(.dlError) }
-                        }
-                        .padding(16)
-                    }
-                    .scrollDismissesKeyboard(.interactively)
+                    thread(model, home: home, meId: meId)
                 }
             case .gone, .unreachable:
                 VStack(spacing: 16) {
@@ -321,7 +301,7 @@ public struct ThreadScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .navigationTitle(t("emails.email"))
+        .navigationTitle(model?.thread?.subject ?? t("emails.email"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .task {
@@ -340,53 +320,182 @@ public struct ThreadScreen: View {
             composer?.close()
         }
     }
+
+    /// The emails as chat bubbles (doc "Delululand — Email Bubbles"; web ThreadView): oldest at the
+    /// top (EB3), opening at the newest, with the reply bar docked at the bottom (EB8).
+    private func thread(_ model: ThreadModel, home: Home?, meId: PublicID) -> some View {
+        let oldestFirst = Array(model.emails.reversed())
+        let first = home?.firstCitizen
+        let myNewest = model.emails.first { $0.senderId == meId }?.id
+        return ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 6) {
+                    VStack(spacing: 8) {
+                        if model.olderCursor != nil {
+                            Button(model.loadingOlder ? t("emails.loadingOlder") : t("emails.seeOlder")) {
+                                // Keep the reader's place: the email that was the oldest stays on screen.
+                                olderAnchor = oldestFirst.first?.id
+                                model.seeOlder()
+                            }
+                            .buttonStyle(DLButtonStyle(.text))
+                        } else if model.emails.count > 20 {
+                            Text(t("emails.thatIsEverything")).dlText(.footnote).foregroundStyle(.dlInkQuiet)
+                        }
+                        if model.olderFailed { Text(t("emails.couldntLoadOlderEmailsTry")).dlText(.footnote).foregroundStyle(.dlError) }
+                    }
+                    .frame(maxWidth: .infinity)
+                    ForEach(Array(oldestFirst.enumerated()), id: \.element.id) { i, e in
+                        let prev = i > 0 ? oldestFirst[i - 1] : nil
+                        let newDay = prev.map { !sameDay($0.sentAt, e.sentAt) } ?? true
+                        if newDay { DayChip(label: dayLabel(e.sentAt)) }
+                        Bubble(
+                            email: e,
+                            first: newDay || prev?.senderId != e.senderId,
+                            mine: e.senderId == meId,
+                            who: Who.of(e.senderId, first: first),
+                            home: home,
+                            meId: meId,
+                            seen: e.id == myNewest ? e.readAt : nil,
+                            onReact: { emoji, mine in Task { await model.react(emailId: e.id, emoji: emoji, mine: mine) } }
+                        )
+                        .id(e.id)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.92, anchor: e.senderId == meId ? .bottomTrailing : .bottomLeading).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                    }
+                    Color.clear.frame(height: 1).id("bottom")
+                        .onAppear { atBottom = true; newBelow = false }
+                        .onDisappear { atBottom = false }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .animation(reduceMotion ? nil : .snappy(duration: 0.26), value: model.emails.first?.id)
+            }
+            .defaultScrollAnchor(.bottom)
+            .scrollDismissesKeyboard(.interactively)
+            .overlay(alignment: .bottom) {
+                if newBelow {
+                    Button {
+                        newBelow = false
+                        withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo("bottom", anchor: .bottom) }
+                    } label: {
+                        Label(t("emails.newEmailBelow"), systemImage: "arrow.down")
+                            .font(.system(size: 13, weight: .heavy))
+                            .padding(.horizontal, 14).padding(.vertical, 8)
+                            .foregroundStyle(Color.dlOnSeal)
+                            .background(Color.dlSeal, in: Capsule())
+                    }
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if let composer, composer.loaded {
+                    DockedComposerView(composer: composer, credits: home?.emailCredits) { sent in
+                        sentId = sent.email.id
+                        model.sent(sent.email)
+                    }
+                    .transition(.move(edge: .bottom))
+                }
+            }
+            .onChange(of: model.olderFailed) { _, failed in
+                if failed { olderAnchor = nil }
+            }
+            .onChange(of: model.emails.count) {
+                if let a = olderAnchor, !model.loadingOlder {
+                    olderAnchor = nil
+                    proxy.scrollTo(a, anchor: .top)
+                }
+            }
+            .onChange(of: model.emails.first?.id) { _, newest in
+                guard let newest else { return }
+                // EB10: at the bottom (or my own send) follow the newest; scrolled up, the pill says so.
+                if atBottom || newest == sentId {
+                    withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo("bottom", anchor: .bottom) }
+                } else if model.emails.first?.senderId != meId {
+                    withAnimation(reduceMotion ? nil : .snappy) { newBelow = true }
+                }
+            }
+        }
+    }
+
+    private func sameDay(_ a: String, _ b: String) -> Bool {
+        guard let x = DLTime.date(a), let y = DLTime.date(b) else { return false }
+        return Calendar.current.isDate(x, inSameDayAs: y)
+    }
+
+    /// EB7: "Today", "Yesterday" or the day (FS-T6 forms).
+    private func dayLabel(_ iso: String) -> String {
+        guard let d = DLTime.date(iso) else { return "" }
+        let cal = Calendar.current
+        if cal.isDate(d, inSameDayAs: DLTime.now) { return t("emails.today") }
+        if let y = cal.date(byAdding: .day, value: -1, to: DLTime.now), cal.isDate(d, inSameDayAs: y) { return t("emails.yesterday") }
+        return DLTime.day(iso)
+    }
 }
 
-/// One email (FS-E6–E9): sender, time, text, photos, voice, video; folded to one line when older.
-private struct EmailCard: View {
+/// EB7: the day between runs.
+private struct DayChip: View {
+    let label: String
+
+    var body: some View {
+        Text(label)
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(.dlInkQuiet)
+            .padding(.horizontal, 10).padding(.vertical, 3)
+            .background(Color.dlPaperLetter, in: Capsule())
+            .frame(maxWidth: .infinity)
+            .padding(.top, 10).padding(.bottom, 4)
+            .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// One email as a bubble (EB1–EB6): the sender's signature colour (the avatar ring's), on the
+/// viewer's side, every one open; the run's first bubble names the sender and points at them.
+private struct Bubble: View {
     let email: Email
-    let open: Bool
-    let meId: PublicID
+    let first: Bool
+    let mine: Bool
+    let who: Who
     let home: Home?
-    let onToggle: () -> Void
+    let meId: PublicID
+    let seen: String?
     let onReact: (String, Bool) -> Void
 
     @Environment(Backend.self) private var backend
     @State private var lightbox: Int?
 
     var body: some View {
-        let mine = email.senderId == meId
         let sender: Citizen? = mine ? home?.me : home?.friend
         let photos = email.attachments.filter { $0.kind == "photo" }
-        VStack(alignment: .leading, spacing: 10) {
-            Button(action: onToggle) {
-                HStack(spacing: 10) {
-                    if let sender { CitizenAvatar(sender, size: 32) }
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(sender?.nickname ?? "").font(.system(size: 15, weight: .semibold)).foregroundStyle(.dlMailInk)
-                        if !open {
-                            Text(email.text.isEmpty ? (mediaWords(photos: photos.count, audios: email.attachments.filter { $0.kind == "audio" }.count, videos: email.attachments.filter { $0.kind == "video" }.count) ?? "") : email.text)
-                                .font(.system(size: 13)).foregroundStyle(.dlInkQuiet).lineLimit(1)
-                        }
-                    }
-                    Spacer()
-                    Text(DLTime.clock(email.sentAt)).font(.system(size: 12)).foregroundStyle(.dlInkQuiet)
+        let tail: CGFloat = first ? 4 : 16
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: mine ? 16 : tail,
+            bottomLeadingRadius: 16,
+            bottomTrailingRadius: 16,
+            topTrailingRadius: mine ? tail : 16
+        )
+        VStack(alignment: mine ? .trailing : .leading, spacing: 3) {
+            if first, let sender {
+                HStack(spacing: 6) {
+                    if mine { name(sender) }
+                    CitizenAvatar(sender, size: 24)
+                    if !mine { name(sender) }
                 }
-                .contentShape(Rectangle())
+                .padding(.top, 6)
             }
-            .buttonStyle(.plain)
-            .accessibilityHint(open ? t("emails.fold") : t("emails.unfold"))
-            if open {
+            VStack(alignment: .leading, spacing: 8) {
                 if !email.text.isEmpty {
-                    Text(linking: email.text).font(.system(size: 16)).foregroundStyle(.dlMailInk).tint(.dlMailInk).textSelection(.enabled).ownText(email.text)
+                    Text(linking: email.text).font(.system(size: 16)).foregroundStyle(.dlInk).tint(.dlInk).textSelection(.enabled).ownText(email.text)
                 }
                 if !photos.isEmpty {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 6)], spacing: 6) {
+                    HStack(spacing: 6) {
                         ForEach(Array(photos.enumerated()), id: \.element.id) { i, p in
                             Button { lightbox = i } label: {
-                                RemoteImage(p.thumbUrl ?? p.url, contentMode: .fill, maxPixel: 320) { Color.dlMailLine }
-                                    .frame(height: 96)
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                                RemoteImage(p.thumbUrl ?? p.url, contentMode: .fill, maxPixel: 320) { Color.dlPaperLetter }
+                                    .frame(width: 72, height: 72)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             .accessibilityLabel(t("emails.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
                         }
@@ -394,20 +503,35 @@ private struct EmailCard: View {
                 }
                 ForEach(email.attachments.filter { $0.kind == "audio" }) { a in VoicePlayer(url: a.url, durationMs: a.durationMs) }
                 ForEach(email.attachments.filter { $0.kind == "video" }) { v in VideoTile(att: v) }
-                ReactionRow(email.reactions, me: meId, compact: true) { emoji in
-                    onReact(emoji, email.reactions.first { $0.emoji == emoji }?.userIds.contains(meId) ?? false)
-                }
-                if mine, let read = email.readAt {
-                    Text(t("emails.seen", ["time": DLTime.clock(read)])).font(.caption).foregroundStyle(.dlInkQuiet)
-                }
+            }
+            .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 9)
+            .background(who.tint, in: shape)
+            .overlay(shape.stroke(who.signature.opacity(0.75), lineWidth: 1))
+            // EB9: at most 420 pt, and never closer than 56 pt to the other side (about 80 % on a phone).
+            .frame(maxWidth: 420, alignment: mine ? .trailing : .leading)
+            .padding(mine ? .leading : .trailing, 56)
+            HStack(spacing: 6) {
+                if mine { reactions }
+                Text(DLTime.clock(email.sentAt) + (seen.map { " · " + t("emails.seen", ["time": DLTime.clock($0)]) } ?? ""))
+                    .font(.system(size: 12).monospacedDigit()).foregroundStyle(.dlInkQuiet)
+                if !mine { reactions }
             }
         }
-        .padding(14)
-        .background(mine ? Color.dlMailMine : Color.dlMailBackground, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.dlMailLine))
+        .frame(maxWidth: .infinity, alignment: mine ? .trailing : .leading)
         .fullScreenCover(item: Binding(get: { lightbox.map { LightboxIndex(i: $0) } }, set: { lightbox = $0?.i })) { l in
             Lightbox(items: photos, index: l.i) { lightbox = nil }.environment(backend)
         }
+    }
+
+    private func name(_ c: Citizen) -> some View {
+        Text(c.nickname).font(.system(size: 13, weight: .heavy)).foregroundStyle(.dlInk)
+    }
+
+    private var reactions: some View {
+        ReactionRow(email.reactions, me: meId, compact: true) { emoji in
+            onReact(emoji, email.reactions.first { $0.emoji == emoji }?.userIds.contains(meId) ?? false)
+        }
+        .fixedSize()
     }
 
     private struct LightboxIndex: Identifiable {

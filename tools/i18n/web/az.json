@@ -884,5 +884,11 @@
  "media.choosePhoto": "Foto seç",
  "media.snap": "Çək",
  "media.takeAPhoto": "Foto çək",
- "media.yourPhoto": "Sənin fotoun"
+ "media.yourPhoto": "Sənin fotoun",
+ "emails.emailsOldestFirst": "E-məktublar, ən köhnələr əvvəldə",
+ "emails.today": "Bu gün",
+ "emails.yesterday": "Dünən",
+ "emails.newEmailBelow": "Yeni e-məktub",
+ "emails.attach": "Əlavə et",
+ "emails.closeAttachments": "Əlavələri bağla"
 }
