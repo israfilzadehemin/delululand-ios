@@ -63,6 +63,7 @@ private struct HomeContent: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 if stale { OfflineBanner() }
+                NotificationHint()
                 BoardTile(home: home, now: now, actions: actions)
                 VStack(alignment: .leading, spacing: 8) {
                     MyMood(me: home.me, now: now) { moodOpen = true }

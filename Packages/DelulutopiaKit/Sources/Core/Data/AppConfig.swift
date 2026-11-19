@@ -16,15 +16,19 @@ public struct AppConfig: Sendable, Equatable {
     public let apiBaseURL: URL
     public let version: String
     public let build: String
+    /// The APNs environment of this build's tokens (`DLApnsEnvironment`): `sandbox` for Debug builds
+    /// run from Xcode, `production` for Release (TestFlight, App Store).
+    public let apnsEnvironment: String
 
-    public init(environment: Environment, apiBaseURL: URL, version: String, build: String) {
+    public init(environment: Environment, apiBaseURL: URL, version: String, build: String, apnsEnvironment: String = "production") {
         self.environment = environment
         self.apiBaseURL = apiBaseURL
         self.version = version
         self.build = build
+        self.apnsEnvironment = apnsEnvironment
     }
 
-    /// Reads `DLEnvironment`, `DLApiBaseURL`, `CFBundleShortVersionString` and `CFBundleVersion`.
+    /// Reads `DLEnvironment`, `DLApiBaseURL`, `DLApnsEnvironment`, `CFBundleShortVersionString` and `CFBundleVersion`.
     /// A missing or malformed entry falls back to staging, never to production.
     public init(info: [String: Any]) {
         let environment = (info["DLEnvironment"] as? String).flatMap(Environment.init(rawValue:)) ?? .staging
@@ -35,6 +39,7 @@ public struct AppConfig: Sendable, Equatable {
         self.apiBaseURL = url ?? Self.stagingURL
         self.version = info["CFBundleShortVersionString"] as? String ?? "0"
         self.build = info["CFBundleVersion"] as? String ?? "0"
+        self.apnsEnvironment = (info["DLApnsEnvironment"] as? String) == "sandbox" ? "sandbox" : "production"
     }
 
     public static func fromMainBundle() -> AppConfig {

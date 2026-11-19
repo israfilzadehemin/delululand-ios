@@ -122,7 +122,7 @@ struct YouScreen: View {
             }
         }
         .confirmationDialog(t("app.logOutOf", ["brand": brand]), isPresented: $confirmLogout, titleVisibility: .visible) {
-            Button(t("settings.logOut"), role: .destructive) { Task { await backend.session.logout() } }
+            Button(t("settings.logOut"), role: .destructive) { Task { await backend.logout() } }
             Button(t("settings.cancel"), role: .cancel) {}
         } message: {
             Text(t("app.yourLettersAndDraftsStayDevice", ["device": deviceWord]))

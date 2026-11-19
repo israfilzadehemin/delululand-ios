@@ -33,6 +33,18 @@ public struct API: Sendable {
         try await client.run("POST", "api/me/pin", body: ChangePinBody(currentPin: current, newPin: new))
     }
 
+    // MARK: Push (iOS Build Q6)
+
+    /// Idempotent; sent at every sign-in and start, and when iOS renews the token.
+    public func registerPushDevice(platform: String, token: String, appId: String?, environment: String?) async throws {
+        try await client.run("PUT", "api/push/devices", body: PushDeviceBody(platform: platform, token: token, appId: appId, environment: environment))
+    }
+
+    /// Before log-out: this install stops getting this citizen's pushes.
+    public func unregisterPushDevice(platform: String, token: String) async throws {
+        try await client.run("DELETE", "api/push/devices", body: PushDeviceRemoveBody(platform: platform, token: token))
+    }
+
     // MARK: Universe
 
     public func checkInvite(_ invite: String) async throws { try await client.run("POST", "api/invites/check", body: InviteBody(invite: invite)) }

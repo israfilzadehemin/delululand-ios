@@ -345,9 +345,8 @@ struct NotificationsScreen: View {
             return
         }
         Task {
-            _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+            await backend.push.requestPermission()
             permission = await UNAuthorizationStatusWord.current()
-            if permission == .on { UIApplication.shared.registerForRemoteNotifications() }
         }
     }
 }

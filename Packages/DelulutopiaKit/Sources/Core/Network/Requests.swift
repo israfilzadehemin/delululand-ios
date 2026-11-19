@@ -41,6 +41,9 @@ public struct CreateUniverseRequest: Encodable, Sendable {
 
 struct JoinBody: Encodable { let username: String; let timezone: String; let pin: String; let language: String }
 struct LanguageBody: Encodable { let language: String }
+/// iOS push (Q6): `environment` is the APNs one of the token (sandbox from Xcode, production from TestFlight and the App Store).
+struct PushDeviceBody: Encodable { let platform: String; let token: String; let appId: String?; let environment: String? }
+struct PushDeviceRemoveBody: Encodable { let platform: String; let token: String }
 
 /// `pinnedLetterId` and `stampSlug` are sent as null to clear them.
 struct SaveDraftBody: Encodable {

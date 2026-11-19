@@ -68,6 +68,14 @@ unzip -q -o "$ipa" -d "$out/unzipped"
 app="$(find "$out/unzipped/Payload" -maxdepth 1 -name '*.app' | head -1)"
 codesign -dvv "$app" 2>&1 | grep -E 'Identifier|Authority|TeamIdentifier' || true
 actual_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Info.plist")"
+# Push (iOS Build Q6): the signed app must carry aps-environment = production, or APNs refuses
+# every token. The archive is unsigned, so this checks that the export added it from the profile.
+if grep -q "aps-environment" "$root/App/Delulutopia.entitlements" 2>/dev/null; then
+  codesign -d --entitlements - --xml "$app" > "$out/entitlements.plist" 2>/dev/null || true
+  aps="$(/usr/libexec/PlistBuddy -c 'Print :aps-environment' "$out/entitlements.plist" 2>/dev/null || true)"
+  echo "aps-environment: ${aps:-missing}"
+  [ "$aps" = "production" ] || { echo "::error::Exported app has aps-environment '${aps:-missing}', expected production" >&2; exit 1; }
+fi
 [ "$actual_id" = "$bundle_id" ] || { echo "bundle id $actual_id, expected $bundle_id" >&2; exit 1; }
 
 # altool reads the key from ~/.appstoreconnect/private_keys/AuthKey_<id>.p8

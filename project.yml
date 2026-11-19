@@ -53,6 +53,18 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: $(DL_APP_ICON)
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
+        # Push (iOS Build Q6). Xcode signs Debug with aps-environment development and an App Store
+        # export with production; DLApnsEnvironment tells the server which APNs host the token is for.
+        CODE_SIGN_ENTITLEMENTS: App/Delulutopia.entitlements
+      configs:
+        Debug-Staging:
+          DL_APNS_ENVIRONMENT: sandbox
+        Debug-Prod:
+          DL_APNS_ENVIRONMENT: sandbox
+        Release-Staging:
+          DL_APNS_ENVIRONMENT: production
+        Release-Prod:
+          DL_APNS_ENVIRONMENT: production
     dependencies:
       - package: DelulutopiaKit
         product: AppShell
