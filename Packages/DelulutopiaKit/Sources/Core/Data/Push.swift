@@ -164,7 +164,7 @@ public final class PushStore {
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: options)
     }
 
-    public static func hex(_ data: Data) -> String {
+    nonisolated public static func hex(_ data: Data) -> String {
         data.map { String(format: "%02x", $0) }.joined()
     }
 
