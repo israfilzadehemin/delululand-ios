@@ -41,7 +41,7 @@ struct ProfileScreen: View {
                         }
                         .disabled(photoBusy)
                     }
-                    DLField(t("profile.username"), text: $username)
+                    DLField(t("profile.username"), text: $username, kind: .username)
                     DLField(t("settings.name"), text: $first)
                     DLField(t("profile.surname"), text: $last)
                     DLTimeZoneField(zone: zone) { zone = $0 }

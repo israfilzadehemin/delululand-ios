@@ -18,12 +18,17 @@ struct MainTabView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var paths: [AppTab: [AppRoute]] = [:]
     @State private var toast: DLToastItem?
+    /// Your picture for the You tab (iOS design §3: 26 pt, accent ring when selected).
+    @State private var youPhoto: UIImage?
 
     var body: some View {
         TabView(selection: tabSelection) {
             ForEach(AppTab.allCases) { tab in
                 NavigationStack(path: path(tab)) {
                     root(for: tab)
+                        // Tabs slide in from the side they sit on (Android PR #8 parity, 20 Nov).
+                        .modifier(TabSlide(index: AppTab.allCases.firstIndex(of: tab) ?? 0,
+                                           selected: AppTab.allCases.firstIndex(of: selection) ?? 0))
                         .overlay { if tab != .you { LeafLayer() } }
                         .navigationDestination(for: AppRoute.self) { route in
                             RouteScreen(route: route)
@@ -56,6 +61,13 @@ struct MainTabView: View {
         .environment(\.dlBrand, backend.home.home?.universe.name ?? "Delulutopia")
         .environment(\.dlFirstCitizen, backend.home.home?.firstCitizen)
         .dlToast($toast, bottom: 96)
+        .task(id: backend.home.home?.me.avatarUrl) {
+            guard let url = backend.home.home?.me.avatarUrl else {
+                youPhoto = nil
+                return
+            }
+            youPhoto = await ImageCache.shared.load(url, client: backend.client, maxPixel: 96)
+        }
         .onChange(of: arrivals) { old, new in announce(old: old, new: new) }
         // A tapped notification (iOS design I-5); logged out, it waited here for the PIN.
         .onChange(of: backend.push.pendingLink, initial: true) { _, link in
@@ -65,6 +77,11 @@ struct MainTabView: View {
         .onChange(of: unreadTotal) { _, total in
             if let total { backend.push.setBadge(total) }
         }
+    }
+
+    /// This iPhone shows no notifications: the red dot on You (iOS design §3).
+    private var notificationsOff: Bool {
+        backend.push.permission == .blocked || backend.push.permission == .notAsked
     }
 
     /// Nobody has joined yet (Home loaded, no friend).
@@ -181,8 +198,15 @@ struct MainTabView: View {
             Label {
                 Text(tab.title)
             } icon: {
-                Image(uiImage: YouTabIcon.image(selected: selection == .you, style: style))
+                Image(uiImage: YouTabIcon.image(
+                    selected: selection == .you,
+                    style: style,
+                    photo: youPhoto,
+                    initial: backend.home.home.map { String($0.me.nickname.prefix(1)).uppercased() },
+                    dot: notificationsOff
+                ))
             }
+            .accessibilityLabel(notificationsOff ? t("tabs.titleNew", ["title": tab.title]) : tab.title)
         } else if hasNew(tab) {
             Label {
                 Text(tab.title)
@@ -192,6 +216,8 @@ struct MainTabView: View {
             .accessibilityLabel(t("tabs.titleNew", ["title": tab.title]))
         } else {
             Label(tab.title, systemImage: tab.symbol)
+                // Canvas tab bar: outline icons; iOS fills tab symbols by default (user report 20 Nov).
+                .environment(\.symbolVariants, .none)
         }
     }
 }
@@ -260,31 +286,82 @@ private struct AppearanceScreenHost: View {
     var body: some View { AppearanceScreen(settings: backend.settings) }
 }
 
-/// The You tab shows the citizen's picture at 26 pt with an accent ring when selected (iOS design §3).
-/// Until signing in arrives (PR #2) it is a neutral person on the paper tint.
+/// The You tab shows the citizen's picture at 26 pt with an accent ring when selected (iOS design §3);
+/// initials on the paper tint until it loads, and the red dot while this iPhone's notifications are off.
 @MainActor
 enum YouTabIcon {
-    static func image(selected: Bool, style: UIUserInterfaceStyle) -> UIImage {
-        let size = CGSize(width: 28, height: 28)
+    static func image(selected: Bool, style: UIUserInterfaceStyle, photo: UIImage?, initial: String?, dot: Bool) -> UIImage {
+        let size = CGSize(width: 32, height: 30)
         let renderer = UIGraphicsImageRenderer(size: size)
         let image = renderer.image { _ in
-            let rect = CGRect(origin: .zero, size: size).insetBy(dx: 1, dy: 1)
+            let rect = CGRect(x: 2, y: 2, width: 26, height: 26)
             let circle = UIBezierPath(ovalIn: rect)
             DLPalette.userATint.value(for: style).uiColor.setFill()
             circle.fill()
 
-            let symbolConfig = UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
-            if let person = UIImage(systemName: "person.fill", withConfiguration: symbolConfig)?
-                .withTintColor(DLPalette.inkQuiet.value(for: style).uiColor, renderingMode: .alwaysOriginal) {
-                let origin = CGPoint(x: (size.width - person.size.width) / 2, y: (size.height - person.size.height) / 2 + 1)
-                person.draw(at: origin)
+            if let photo {
+                UIGraphicsGetCurrentContext()?.saveGState()
+                circle.addClip()
+                photo.draw(in: rect)
+                UIGraphicsGetCurrentContext()?.restoreGState()
+            } else if let initial, !initial.isEmpty {
+                let font = UIFont.systemFont(ofSize: 12, weight: .heavy)
+                let ink = DLPalette.ink.value(for: style).uiColor
+                let text = NSAttributedString(string: initial, attributes: [.font: font, .foregroundColor: ink])
+                let box = text.size()
+                text.draw(at: CGPoint(x: rect.midX - box.width / 2, y: rect.midY - box.height / 2))
+            } else {
+                let symbolConfig = UIImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
+                if let person = UIImage(systemName: "person.fill", withConfiguration: symbolConfig)?
+                    .withTintColor(DLPalette.inkQuiet.value(for: style).uiColor, renderingMode: .alwaysOriginal) {
+                    person.draw(at: CGPoint(x: rect.midX - person.size.width / 2, y: rect.midY - person.size.height / 2 + 1))
+                }
             }
 
-            let ring = UIBezierPath(ovalIn: selected ? rect.insetBy(dx: 0.75, dy: 0.75) : rect.insetBy(dx: 0.25, dy: 0.25))
-            ring.lineWidth = selected ? 1.5 : 0.5
+            let ring = UIBezierPath(ovalIn: selected ? rect.insetBy(dx: -1, dy: -1) : rect)
+            ring.lineWidth = selected ? 2 : 0.5
             (selected ? DLPalette.seal : DLPalette.line).value(for: style).uiColor.setStroke()
             ring.stroke()
+
+            if dot {
+                let badge = CGRect(x: size.width - 11, y: 0, width: 10, height: 10)
+                UIColor.white.withAlphaComponent(0.78).setFill()
+                UIBezierPath(ovalIn: badge.insetBy(dx: -2, dy: -2)).fill()
+                UIColor.systemRed.setFill()
+                UIBezierPath(ovalIn: badge).fill()
+            }
         }
         return image.withRenderingMode(.alwaysOriginal)
+    }
+}
+
+
+/// A tab's root slides in by position when it becomes the selected tab: from the right when it sits
+/// to the right of the tab that was showing, from the left otherwise (Design Consistency, Nov 2026).
+private struct TabSlide: ViewModifier {
+    let index: Int
+    let selected: Int
+    @State private var shift: CGFloat = 0
+    @State private var fade: Double = 1
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dlMotionEnabled) private var motionEnabled
+
+    func body(content: Content) -> some View {
+        content
+            .offset(x: shift)
+            .opacity(fade)
+            .onChange(of: selected) { old, new in
+                guard new == index, old != new, motionEnabled, !reduceMotion else { return }
+                var jump = Transaction()
+                jump.disablesAnimations = true
+                withTransaction(jump) {
+                    shift = new > old ? 56 : -56
+                    fade = 0.35
+                }
+                withAnimation(.spring(duration: 0.34, bounce: 0)) {
+                    shift = 0
+                    fade = 1
+                }
+            }
     }
 }

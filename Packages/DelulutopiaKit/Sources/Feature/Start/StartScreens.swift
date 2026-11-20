@@ -90,14 +90,19 @@ struct EntryScreen: View {
         ScrollView {
             VStack(spacing: 16) {
                 VStack(spacing: 6) {
+                    // Canvas S-Landing: the sealed envelope over the name in Literata (iOS audit F19).
+                    EnvelopeMark()
+                        .frame(width: 88, height: 63)
+                        .padding(.bottom, 8)
+                        .accessibilityHidden(true)
                     Text("Delulutopia")
-                        .font(.custom(DLFontName.manropeExtraBold.name, size: 28, relativeTo: .title))
+                        .font(.custom(DLFontName.literataSemiBold.name, size: 30, relativeTo: .title))
                         .foregroundStyle(.dlInk)
                     Text(t("entry.enterYourUniversesKey"))
                         .dlText(.subheadline)
                         .foregroundStyle(.dlInkQuiet)
                 }
-                .padding(.top, 120)
+                .padding(.top, 72)
                 .padding(.bottom, 16)
                 .dlEnter(.rise)
 
@@ -661,10 +666,9 @@ struct CitizenStep: View {
                 t("universe.username"),
                 text: Binding(get: { citizen.username }, set: { citizen.username = $0.filter { !$0.isWhitespace } }),
                 hint: t("universe.316LettersOrDigits"),
-                error: usernameProblem
+                error: usernameProblem,
+                kind: .username
             )
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
             DLTimeZoneField(zone: citizen.timezone, hint: t("universe.thisDevicesZonePickedFor")) { citizen.timezone = $0 }
             Text(t("universe.nameSurnameAndEverythingElse"))
                 .dlText(.footnote)
@@ -696,37 +700,53 @@ struct KeyReveal: View {
                 .font(.custom(DLFontName.literataSemiBold.name, size: 30, relativeTo: .title))
                 .foregroundStyle(.dlInk)
                 .dlEnter(.rise)
-            Text(grouped)
-                .font(.system(size: 24, weight: .regular, design: .monospaced))
-                .tracking(2)
-                .foregroundStyle(.dlInk)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 22)
-                .background(.dlCell, in: RoundedRectangle(cornerRadius: DLRadius.field, style: .continuous))
-                .accessibilityLabel(t("entry.key") + " " + localDigits(code.map(String.init).joined(separator: " ")))
-                .dlEnter(.stamp, delay: 0.1)
-            HStack(spacing: 12) {
-                Button {
-                    UIPasteboard.general.string = grouped
-                    copied = true
-                    ready = true
-                } label: {
-                    Label(copied ? t("universe.copied") : t("universe.copy"), systemImage: copied ? "checkmark" : "doc.on.doc")
+            // Canvas U-Key: one card holds the label, the key and its two lavender actions (F20).
+            VStack(spacing: 10) {
+                Text(t("entry.key"))
+                    .dlText(.footnote)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.dlInkQuiet)
+                Text(grouped)
+                    .font(.system(size: 26, weight: .semibold, design: .monospaced))
+                    .tracking(1.5)
+                    .foregroundStyle(.dlInk)
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
+                    .accessibilityLabel(t("entry.key") + " " + localDigits(code.map(String.init).joined(separator: " ")))
+                HStack(spacing: 10) {
+                    Button {
+                        UIPasteboard.general.string = grouped
+                        copied = true
+                        ready = true
+                    } label: {
+                        Label(copied ? t("universe.copied") : t("universe.copy"), systemImage: copied ? "checkmark" : "doc.on.doc")
+                    }
+                    .buttonStyle(DLButtonStyle(.tint))
+                    ShareLink(item: t("universe.shareText", ["name": name, "key": grouped])) {
+                        Label(t("universe.share"), systemImage: "square.and.arrow.up")
+                    }
+                    .buttonStyle(DLButtonStyle(.tint))
+                    .simultaneousGesture(TapGesture().onEnded { ready = true })
                 }
-                .buttonStyle(.dlOutline)
-                ShareLink(item: t("universe.shareText", ["name": name, "key": grouped])) {
-                    Label(t("universe.share"), systemImage: "square.and.arrow.up")
-                }
-                .buttonStyle(.dlOutline)
-                .simultaneousGesture(TapGesture().onEnded { ready = true })
+                .padding(.top, 8)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24)
+            .padding(.horizontal, 16)
+            .background(.dlCell, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
+            .dlEnter(.stamp, delay: 0.1)
             Text(t("universe.sendItToTheOne"))
                 .dlText(.body)
                 .foregroundStyle(.dlInk)
-            Text(t("universe.itsShownOnlyNowLost"))
+            Label {
+                Text(t("universe.itsShownOnlyNowLost"))
+            } icon: {
+                Image(systemName: "info.circle").foregroundStyle(.dlInkQuiet)
+            }
                 .dlText(.footnote)
-                .foregroundStyle(.dlInkQuiet)
-                .padding(12)
+                .foregroundStyle(.dlInk)
+                .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.dlPaperLetter, in: RoundedRectangle(cornerRadius: DLRadius.row, style: .continuous))
             Button(continueTitle, action: onContinue)
@@ -737,6 +757,28 @@ struct KeyReveal: View {
         .task {
             try? await Task.sleep(for: .seconds(3))
             ready = true
+        }
+    }
+}
+
+
+/// The brand mark on the landing (canvas S-Landing): an envelope with its flap and the terracotta seal.
+private struct EnvelopeMark: View {
+    var body: some View {
+        Canvas { context, size in
+            let sx = size.width / 100, sy = size.height / 72
+            let body = Path(roundedRect: CGRect(x: 3 * sx, y: 3 * sy, width: 94 * sx, height: 66 * sy), cornerRadius: 6 * sx)
+            context.fill(body, with: .color(.dlLetterEnvelope))
+            context.stroke(body, with: .color(.dlLetterEdge), lineWidth: 1.5)
+            var flap = Path()
+            flap.move(to: CGPoint(x: 3 * sx, y: 6 * sy))
+            flap.addLine(to: CGPoint(x: 50 * sx, y: 42 * sy))
+            flap.addLine(to: CGPoint(x: 97 * sx, y: 6 * sy))
+            context.fill(flap, with: .color(.dlLetterFlap))
+            context.stroke(flap, with: .color(.dlLetterEdge), style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
+            let seal = CGRect(x: 40 * sx, y: 42 * sy - 10 * sx, width: 20 * sx, height: 20 * sx)
+            context.fill(Path(ellipseIn: seal), with: .color(.dlUserA))
+            context.stroke(Path(ellipseIn: seal.insetBy(dx: 3.5 * sx, dy: 3.5 * sx)), with: .color(.white.opacity(0.35)), lineWidth: 1.5)
         }
     }
 }

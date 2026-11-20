@@ -285,19 +285,6 @@ private struct LetterContent: View {
                     .environment(backend)
             }
         }
-        .takeBackDialog(
-            isPresented: $askCancel,
-            friend: backend.home.home?.friend?.nickname ?? t("common.friend"),
-            draftEmpty: backend.home.home?.me.draftEmpty != false
-        ) {
-            Task {
-                switch await reader.cancel(letter.id) {
-                case .done: open(.write())
-                case .tooLate: notice(.text(LetterActions.tooLate))
-                case .failed: notice(.text(LetterActions.notCancelled))
-                }
-            }
-        }
         .task(id: opening) {
             guard opening else { return }
             if !motion {
@@ -333,6 +320,20 @@ private struct LetterContent: View {
                     ReachBar(t("letters.leftToEditOrCancel", ["countdown": DLTime.countdown(DLTime.remaining(until: letter.windowEndsAt, now: now))])) {
                         ReachChip(t("letters.edit")) { open(.write(editId: letter.id)) }
                         ReachChip(t("letters.cancel")) { askCancel = true }
+                            // On the chip that asks, so iOS 26 grows the dialog from it (F9).
+                            .takeBackDialog(
+                                isPresented: $askCancel,
+                                friend: backend.home.home?.friend?.nickname ?? t("common.friend"),
+                                draftEmpty: backend.home.home?.me.draftEmpty != false
+                            ) {
+                                Task {
+                                    switch await reader.cancel(letter.id) {
+                                    case .done: open(.write())
+                                    case .tooLate: notice(.text(LetterActions.tooLate))
+                                    case .failed: notice(.text(LetterActions.notCancelled))
+                                    }
+                                }
+                            }
                     }
                 }
                 ZStack(alignment: .top) {

@@ -6,7 +6,7 @@ import DLUI
 import SwiftUI
 
 /// S3 (web home/MoodSheet.tsx; canvas A-Mood): the universe's moods — the 32 defaults, then its own —
-/// in pages of 8 (4 × 2) with "+ New mood" last (disabled at the limit). Swipe for the next page;
+/// in pages of 8 (2 columns × 4 rows, emoji beside the label) with "+ New mood" last (disabled at the limit). Swipe for the next page;
 /// dots and ‹ › show where you are. Opens on the page holding the current mood, which is marked.
 /// One tap sets it and closes. Each custom mood has a ✎ that opens its form, with Delete inside.
 struct MoodSheet: View {
@@ -43,7 +43,7 @@ struct MoodSheet: View {
                 grid
             }
         }
-        .presentationDetents([.height(form == nil ? 400 : 470)])
+        .presentationDetents([.height(form == nil ? 452 : 470)])
         .presentationDragIndicator(.visible)
         .presentationBackground(.dlSheet)
         .onAppear {
@@ -53,15 +53,18 @@ struct MoodSheet: View {
 
     private var grid: some View {
         VStack(spacing: 0) {
-            HStack {
+            // iOS sheet header (canvas A-Mood): × leading, the title centred.
+            ZStack {
                 Text(t("home.howDoYouFeel"))
-                    .font(.custom(DLFontName.manropeBold.name, size: 18, relativeTo: .title3))
+                    .font(.custom(DLFontName.manropeBold.name, size: 17, relativeTo: .headline))
                     .foregroundStyle(.dlInk)
-                Spacer()
-                DLGlassIconButton("xmark", label: t("home.close"), action: onClose)
+                    .padding(.horizontal, 60)
+                HStack {
+                    DLGlassIconButton("xmark", label: t("home.close"), action: onClose)
+                    Spacer()
+                }
             }
-            .padding(.leading, 20)
-            .padding(.trailing, 12)
+            .padding(.horizontal, 12)
             .padding(.top, 16)
             .padding(.bottom, 8)
 
@@ -71,7 +74,7 @@ struct MoodSheet: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: 76 * 2 + 10)
+            .frame(height: 56 * 4 + 10 * 3)
 
             HStack(spacing: 16) {
                 pageArrow("chevron.backward", t("home.previousMoods"), enabled: page > 0) { page -= 1 }
@@ -119,7 +122,7 @@ struct MoodSheet: View {
     }
 
     private func pageView(_ entries: [Mood?]) -> some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 2)
         return LazyVGrid(columns: columns, spacing: 10) {
             ForEach(Array(entries.enumerated()), id: \.offset) { i, mood in
                 Group {
@@ -150,20 +153,21 @@ struct MoodSheet: View {
                 }
             }
         } label: {
-            VStack(spacing: 6) {
-                Text(mood.emoji).font(.system(size: 26))
+            HStack(spacing: 10) {
+                Text(mood.emoji).font(.system(size: 24))
                 Text(mood.label)
-                    .font(.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption))
+                    .font(.custom(DLFontName.manropeBold.name, size: 15, relativeTo: .subheadline))
                     .foregroundStyle(.dlInk)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.85)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 4)
-            .frame(maxWidth: .infinity, minHeight: 76, maxHeight: 76)
-            .background(on ? Color.dlSealTint : Color.dlPaper, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(on ? Color.dlSeal : Color.dlLine, lineWidth: on ? 2 : 1))
-            .contentShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.leading, 14)
+            .padding(.trailing, mood.custom ? 30 : 10)
+            .frame(maxWidth: .infinity, minHeight: 56, maxHeight: 56)
+            .background(on ? Color.dlSealTint : Color.dlCell, in: RoundedRectangle(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(on ? Color.dlSeal : Color.dlLine, lineWidth: on ? 2 : 1))
+            .contentShape(RoundedRectangle(cornerRadius: 18))
         }
         .buttonStyle(DLPressStyle())
         .disabled(busy)
@@ -191,15 +195,18 @@ struct MoodSheet: View {
     private var newTile: some View {
         let enabled = !busy && !full
         return Button { form = .new } label: {
-            VStack(spacing: 6) {
-                Text("+").font(.system(size: 26)).foregroundStyle(enabled ? Color.dlSeal : Color.dlInkDisabled)
+            HStack(spacing: 10) {
+                Image(systemName: "plus").font(.system(size: 18, weight: .semibold)).foregroundStyle(enabled ? Color.dlSeal : Color.dlInkDisabled)
                 Text(t("home.newMood"))
-                    .font(.custom(DLFontName.manropeSemiBold.name, size: 12, relativeTo: .caption))
-                    .foregroundStyle(.dlInkQuiet)
+                    .font(.custom(DLFontName.manropeBold.name, size: 15, relativeTo: .subheadline))
+                    .foregroundStyle(enabled ? Color.dlSeal : Color.dlInkQuiet)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, minHeight: 76, maxHeight: 76)
-            .background(.dlPaper, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.dlInkDisabled, style: StrokeStyle(lineWidth: 1, dash: [6, 6])))
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity, minHeight: 56, maxHeight: 56)
+            .background(.dlPaper, in: RoundedRectangle(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Color.dlInkDisabled, style: StrokeStyle(lineWidth: 1, dash: [6, 6])))
         }
         .buttonStyle(DLPressStyle())
         .disabled(!enabled)
@@ -297,8 +304,14 @@ struct MoodForm: View {
             if editing != nil {
                 Button(t("home.deleteMood"), role: .destructive) { confirm = true }
                     .buttonStyle(DLButtonStyle(.text))
-                    .foregroundStyle(.dlError)
                     .disabled(busy)
+                    // Anchored on the button, not the sheet: iOS 26 grows the dialog from here (F9).
+                    .confirmationDialog(t("home.deleteThisMood"), isPresented: $confirm, titleVisibility: .visible) {
+                        Button(t("home.yesDelete"), role: .destructive) { delete() }
+                        Button(t("home.no"), role: .cancel) {}
+                    } message: {
+                        Text(deleteMessage)
+                    }
             }
             Spacer(minLength: 0)
         }
@@ -306,12 +319,6 @@ struct MoodForm: View {
         .onAppear {
             emoji = editing?.emoji ?? ""
             label = editing?.label ?? ""
-        }
-        .confirmationDialog(t("home.deleteThisMood"), isPresented: $confirm, titleVisibility: .visible) {
-            Button(t("home.yesDelete"), role: .destructive) { delete() }
-            Button(t("home.no"), role: .cancel) {}
-        } message: {
-            Text(deleteMessage)
         }
     }
 

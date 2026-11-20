@@ -45,6 +45,8 @@ struct BoardTile: View {
     @State private var drawn: String?
     @State private var ribbon: Int?
     @State private var capped: String?
+    /// The board tile the pad and the viewer zoom out of.
+    @Namespace private var zoom
 
     private var board: Board? { home.board }
     private var friend: String { home.friendName }
@@ -83,15 +85,19 @@ struct BoardTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            // §9 fold/unfold: the board shrinks up into the strip and grows back out of it.
             if mini {
                 strip
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
             } else if let board {
                 unfolded(board)
+                    .transition(.opacity.combined(with: .scale(scale: 0.6, anchor: .top)))
             } else {
                 empty
+                    .transition(.opacity.combined(with: .scale(scale: 0.6, anchor: .top)))
             }
         }
-        .animation(DLMotion.easeOut(0.28), value: mini)
+        .animation(DLMotion.easeOut(0.32), value: mini)
         .onAppear { markRibbon() }
         .onChange(of: board?.version) { _, _ in markRibbon() }
         .onChange(of: mini) { _, _ in markRibbon() }
@@ -110,6 +116,7 @@ struct BoardTile: View {
                 .environment(\.dlFirstCitizen, first)
                 .environment(\.dlNotice, notice)
                 .sheet(isPresented: $picking) { reactSheet(board) }
+                .dlZoomDestination(id: "board", in: zoom)
             }
         }
         .fullScreenCover(item: $pad) { mode in
@@ -135,6 +142,8 @@ struct BoardTile: View {
                 }
             )
             .environment(backend)
+            // Edit / Draw zoom into the board instead of sliding up as a sheet (F2, 20 Nov report).
+            .dlZoomDestination(id: "board", in: zoom)
             .alert(conflictTitle, isPresented: conflictShown) {
                 Button(conflictKeep, role: .cancel) {
                     conflict = nil
@@ -221,6 +230,7 @@ struct BoardTile: View {
                             }
                         }
                     }
+                    .dlZoomSource(id: "board", in: zoom)
                 }
                 .buttonStyle(DLPressStyle(scale: 0.99))
                 .accessibilityLabel(board.authorId == home.me.id ? t("board.frame.mine") : t("board.frame.friends", ["friend": friend]))
@@ -243,7 +253,7 @@ struct BoardTile: View {
                     .disabled(noDoodles)
                 DrawButton(symbol: "scribble", title: t("board.draw"), label: nil) { pad = .new }
                     .disabled(noDoodles)
-                FoldButton(up: true) { backend.settings.setBoardMini(true) }
+                FoldButton(up: true) { withAnimation(DLMotion.easeOut(0.32)) { backend.settings.setBoardMini(true) } }
                     .padding(.trailing, -8)
             }
             if let capLine {
@@ -291,14 +301,15 @@ struct BoardTile: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            FoldButton(up: true) { backend.settings.setBoardMini(true) }
+            .dlZoomSource(id: "board", in: zoom)
+            FoldButton(up: true) { withAnimation(DLMotion.easeOut(0.32)) { backend.settings.setBoardMini(true) } }
                 .offset(y: 8)
         }
     }
 
     /// §9: the folded strip, with NEW while unseen.
     private var strip: some View {
-        Button { backend.settings.setBoardMini(false) } label: {
+        Button { withAnimation(DLMotion.easeOut(0.32)) { backend.settings.setBoardMini(false) } } label: {
             HStack(spacing: 12) {
                 ZStack {
                     Color.dlBoardSurface

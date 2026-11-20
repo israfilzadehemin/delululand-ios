@@ -246,6 +246,15 @@ public struct ComposeDiscussionScreen: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { confirmDiscard = true } label: { Image(systemName: "chevron.backward") }
                         .accessibilityLabel(t("discussions.backDiscardChanges"))
+                        .confirmationDialog(t("discussions.discardYourChanges"), isPresented: $confirmDiscard, titleVisibility: .visible) {
+                            Button(t("doodle.discard"), role: .destructive) {
+                                Task {
+                                    await model.discardEdit()
+                                    dismiss()
+                                }
+                            }
+                            Button(t("discussions.no"), role: .cancel) {}
+                        }
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -280,15 +289,6 @@ public struct ComposeDiscussionScreen: View {
         .alert(t("discussions.aNewerVersionWasSaved"), isPresented: Binding(get: { model.saver?.status == .conflict }, set: { _ in })) {
             Button(t("discussions.keepMine"), role: .cancel) { model.saver?.keepMine() }
             Button(t("discussions.load")) { Task { if let doc = await model.loadServer() { editor.set(doc) } } }
-        }
-        .confirmationDialog(t("discussions.discardYourChanges"), isPresented: $confirmDiscard, titleVisibility: .visible) {
-            Button(t("discussions.yes"), role: .destructive) {
-                Task {
-                    await model.discardEdit()
-                    dismiss()
-                }
-            }
-            Button(t("discussions.no"), role: .cancel) {}
         }
     }
 }

@@ -302,6 +302,8 @@ private struct ThreadView: View {
     @State private var editing: DComment?
     @State private var text = ""
     @State private var editText = ""
+    /// The comment being edited takes the keyboard from the composer (iOS audit F13).
+    @FocusState private var editFocused: Bool
     @State private var busy = false
     @State private var error: String?
 
@@ -322,6 +324,11 @@ private struct ThreadView: View {
                         ReachBar(t("discussions.leftToTakeBack", ["countdown": DLTime.countdown(DLTime.remaining(until: d.windowEndsAt, now: now))])) {
                             ReachChip(t("discussions.edit")) { open(.composeDiscussion(editId: d.id)) }
                             ReachChip(t("discussions.cancel")) { askTakeBack = true }
+                                // Dialogs hang on the control that opens them (iOS 26 popover origin, F9).
+                                .confirmationDialog(t("discussions.takeItBack"), isPresented: $askTakeBack, titleVisibility: .visible) {
+                                    Button(t("discussions.yesTakeItBack"), role: .destructive) { remove(takeBack: true) }
+                                    Button(t("discussions.no"), role: .cancel) {}
+                                } message: { Text(t("discussions.thisDeletesTheDiscussionAnd")) }
                         }
                     }
                     if let archivedAt = d.archivedAt {
@@ -389,27 +396,16 @@ private struct ThreadView: View {
                         Image(systemName: "ellipsis")
                     }
                     .accessibilityLabel(t("discussions.discussionOptions"))
+                    .confirmationDialog(t("discussions.deleteThisDiscussion"), isPresented: $askDelete, titleVisibility: .visible) {
+                        Button(t("discussions.yesDelete"), role: .destructive) { remove(takeBack: false) }
+                        Button(t("discussions.no"), role: .cancel) {}
+                    } message: { Text(t("discussions.itDisappearsForBothOf2")) }
                 }
             }
         }
         .fullScreenCover(item: Binding(get: { photo.map { PhotoIndex(i: $0) } }, set: { photo = $0?.i })) { p in
             Lightbox(items: d.attachments.filter { $0.kind == "photo" }, index: p.i) { photo = nil }.environment(backend)
         }
-        .confirmationDialog(t("discussions.takeItBack"), isPresented: $askTakeBack, titleVisibility: .visible) {
-            Button(t("discussions.yesTakeItBack"), role: .destructive) { remove(takeBack: true) }
-            Button(t("discussions.no"), role: .cancel) {}
-        } message: { Text(t("discussions.thisDeletesTheDiscussionAnd")) }
-        .confirmationDialog(t("discussions.deleteThisDiscussion"), isPresented: $askDelete, titleVisibility: .visible) {
-            Button(t("discussions.yesDelete"), role: .destructive) { remove(takeBack: false) }
-            Button(t("discussions.no"), role: .cancel) {}
-        } message: { Text(t("discussions.itDisappearsForBothOf2")) }
-        .confirmationDialog(t("discussions.deleteThisComment"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
-            Button(t("discussions.yesDelete"), role: .destructive) {
-                guard let c = deleting else { return }
-                Task { if let failed = await model.delete(c) { notice(.text(failed)) } }
-            }
-            Button(t("discussions.no"), role: .cancel) {}
-        } message: { Text(t("discussions.itDisappearsForBothOf")) }
     }
 
     private struct PhotoIndex: Identifiable {
@@ -482,6 +478,8 @@ private struct ThreadView: View {
             VStack(alignment: .leading, spacing: 8) {
                 if editing?.id == c.id {
                     TextField(t("discussions.editComment"), text: $editText, axis: .vertical).dlText(.input).lineLimit(1 ... 8)
+                        .focused($editFocused)
+                        .onAppear { editFocused = true }
                     HStack {
                         Button(t("discussions.cancel")) { editing = nil }.buttonStyle(DLButtonStyle(.outline)).disabled(busy)
                         Button(busy ? t("common.saving") : t("discussions.save")) {
@@ -508,6 +506,14 @@ private struct ThreadView: View {
             .padding(14)
         }
         .padding(mine ? .leading : .trailing, 36)
+        // Each note carries its own delete dialog so it grows from that note (F9).
+        .confirmationDialog(t("discussions.deleteThisComment"), isPresented: Binding(get: { deleting?.id == c.id }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+            Button(t("discussions.yesDelete"), role: .destructive) {
+                deleting = nil
+                Task { if let failed = await model.delete(c) { notice(.text(failed)) } }
+            }
+            Button(t("discussions.no"), role: .cancel) {}
+        } message: { Text(t("discussions.itDisappearsForBothOf")) }
         .contextMenu {
             if mine, !archived {
                 Button(t("discussions.edit"), systemImage: "pencil") {
