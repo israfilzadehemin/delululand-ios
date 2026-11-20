@@ -191,6 +191,16 @@ private struct WriteForm: View {
                     Button { if changed { confirmDiscard = true } else { dismiss() } } label: { Image(systemName: "chevron.backward") }
                         .disabled(late)
                         .accessibilityLabel(t("write.backDiscardChanges"))
+                        // From the back button it guards (F9); "Discard" names the action, not "Yes".
+                        .confirmationDialog(t("write.discardYourChanges"), isPresented: $confirmDiscard, titleVisibility: .visible) {
+                            Button(t("doodle.discard"), role: .destructive) {
+                                Task {
+                                    await model.discardEdit()
+                                    dismiss()
+                                }
+                            }
+                            Button(t("letters.no"), role: .cancel) {}
+                        }
                 }
             }
             ToolbarItem(placement: .principal) {
@@ -254,15 +264,6 @@ private struct WriteForm: View {
         } message: {
             Text(t("write.getsTheLetterAsYou", ["friend": friend, "arrives": model.letter.map { DLTime.time($0.arrivesAt) } ?? ""])
                 + (backend.home.home?.me.draftEmpty == false ? " " + t("write.keepingItReplacesYourCurrent") : ""))
-        }
-        .confirmationDialog(t("write.discardYourChanges"), isPresented: $confirmDiscard, titleVisibility: .visible) {
-            Button(t("write.yes"), role: .destructive) {
-                Task {
-                    await model.discardEdit()
-                    dismiss()
-                }
-            }
-            Button(t("letters.no"), role: .cancel) {}
         }
     }
 

@@ -40,6 +40,17 @@ struct ProfileScreen: View {
                             }
                         }
                         .disabled(photoBusy)
+                        // Grows from the photo buttons, not the top of the page (F9).
+                        .confirmationDialog(t("profile.removeYourPhoto"), isPresented: $confirmRemove, titleVisibility: .visible) {
+                            Button(t("profile.remove"), role: .destructive) {
+                                Task {
+                                    photoBusy = true
+                                    if let p = try? await backend.api.removeAvatar() { profile = p; backend.home.refreshSoon() }
+                                    photoBusy = false
+                                }
+                            }
+                            Button(t("profile.keepIt"), role: .cancel) {}
+                        } message: { Text(t("profile.yourInitialsShowInsteadFor", ["friend": friend])) }
                     }
                     DLField(t("profile.username"), text: $username)
                     DLField(t("settings.name"), text: $first)
@@ -61,16 +72,6 @@ struct ProfileScreen: View {
         .navigationTitle(t("profile.profile"))
         .navigationBarTitleDisplayMode(.inline)
         .dlPhotoChooser(isPresented: $choosing, hasPhoto: profile?.avatarUrl != nil, onPhoto: upload) { confirmRemove = true }
-        .confirmationDialog(t("profile.removeYourPhoto"), isPresented: $confirmRemove, titleVisibility: .visible) {
-            Button(t("profile.remove"), role: .destructive) {
-                Task {
-                    photoBusy = true
-                    if let p = try? await backend.api.removeAvatar() { profile = p; backend.home.refreshSoon() }
-                    photoBusy = false
-                }
-            }
-            Button(t("profile.keepIt"), role: .cancel) {}
-        } message: { Text(t("profile.yourInitialsShowInsteadFor", ["friend": friend])) }
         .task {
             guard profile == nil, let p = try? await backend.api.profile() else { return }
             profile = p

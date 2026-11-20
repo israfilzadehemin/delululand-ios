@@ -104,6 +104,13 @@ struct YouScreen: View {
                 Button(role: .destructive) { confirmLogout = true } label: {
                     DLRowLabel(t("settings.logOut"), icon: DLRowIcon("rectangle.portrait.and.arrow.forward", tint: .dlSystemRed))
                 }
+                // On the row itself: iOS 26 grows the dialog out of the view it is attached to (F9).
+                .confirmationDialog(t("app.logOutOf", ["brand": brand]), isPresented: $confirmLogout, titleVisibility: .visible) {
+                    Button(t("settings.logOut"), role: .destructive) { Task { await backend.logout() } }
+                    Button(t("settings.cancel"), role: .cancel) {}
+                } message: {
+                    Text(t("app.yourLettersAndDraftsStayDevice", ["device": deviceWord]))
+                }
                 .dlListRow()
             }
             Section {
@@ -120,12 +127,6 @@ struct YouScreen: View {
             case .designSystem:
                 DLComponentCatalog().navigationTitle("Design system").navigationBarTitleDisplayMode(.inline)
             }
-        }
-        .confirmationDialog(t("app.logOutOf", ["brand": brand]), isPresented: $confirmLogout, titleVisibility: .visible) {
-            Button(t("settings.logOut"), role: .destructive) { Task { await backend.logout() } }
-            Button(t("settings.cancel"), role: .cancel) {}
-        } message: {
-            Text(t("app.yourLettersAndDraftsStayDevice", ["device": deviceWord]))
         }
         .sheet(isPresented: $changePin) { ChangePinSheet().environment(backend) }
         .sheet(isPresented: Binding(get: { biometricAsk != nil }, set: { if !$0 { biometricAsk = nil } })) {

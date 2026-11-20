@@ -297,8 +297,14 @@ struct MoodForm: View {
             if editing != nil {
                 Button(t("home.deleteMood"), role: .destructive) { confirm = true }
                     .buttonStyle(DLButtonStyle(.text))
-                    .foregroundStyle(.dlError)
                     .disabled(busy)
+                    // Anchored on the button, not the sheet: iOS 26 grows the dialog from here (F9).
+                    .confirmationDialog(t("home.deleteThisMood"), isPresented: $confirm, titleVisibility: .visible) {
+                        Button(t("home.yesDelete"), role: .destructive) { delete() }
+                        Button(t("home.no"), role: .cancel) {}
+                    } message: {
+                        Text(deleteMessage)
+                    }
             }
             Spacer(minLength: 0)
         }
@@ -306,12 +312,6 @@ struct MoodForm: View {
         .onAppear {
             emoji = editing?.emoji ?? ""
             label = editing?.label ?? ""
-        }
-        .confirmationDialog(t("home.deleteThisMood"), isPresented: $confirm, titleVisibility: .visible) {
-            Button(t("home.yesDelete"), role: .destructive) { delete() }
-            Button(t("home.no"), role: .cancel) {}
-        } message: {
-            Text(deleteMessage)
         }
     }
 

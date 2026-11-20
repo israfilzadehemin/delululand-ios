@@ -13,7 +13,7 @@ public struct DLButtonStyle: ButtonStyle {
         case tint
         /// Error fill, 50 pt.
         case danger
-        /// Seal text only.
+        /// Seal text only; error red for a destructive role ("Delete mood").
         case text
     }
 
@@ -61,6 +61,7 @@ private struct DLButtonBody: View {
         switch kind {
         case .filled, .danger: return .dlOnSeal
         case .grey: return .dlInk
+        case .text where configuration.role == .destructive: return .dlError
         case .outline, .tint, .text: return .dlSeal
         }
     }

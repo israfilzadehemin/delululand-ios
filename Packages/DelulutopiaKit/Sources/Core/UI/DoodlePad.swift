@@ -280,10 +280,6 @@ public struct DoodlePad: View {
             }
         }
         .interactiveDismissDisabled(!history.isUnchanged)
-        .confirmationDialog(t("doodle.discardDoodle"), isPresented: $askDiscard, titleVisibility: .visible) {
-            Button(t("doodle.discard"), role: .destructive, action: onClose)
-            Button(t("doodle.keepDrawing"), role: .cancel) {}
-        }
         .task(id: backdropURL) {
             guard let backdropURL else { return }
             if let image = await ImageCache.shared.load(backdropURL, client: backend.client, maxPixel: 2048) {
@@ -313,6 +309,10 @@ public struct DoodlePad: View {
             HStack {
                 DLGlassIconButton("xmark", label: t("media.close")) {
                     if history.isUnchanged { onClose() } else { askDiscard = true }
+                }
+                .confirmationDialog(t("doodle.discardDoodle"), isPresented: $askDiscard, titleVisibility: .visible) {
+                    Button(t("doodle.discard"), role: .destructive, action: onClose)
+                    Button(t("doodle.keepDrawing"), role: .cancel) {}
                 }
                 Spacer()
                 Button {
