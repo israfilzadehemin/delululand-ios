@@ -276,11 +276,11 @@ private struct LetterContent: View {
             sheet(now: now)
         }
         .fullScreenCover(item: Binding(get: { photo.map { PhotoIndex(i: $0) } }, set: { photo = $0?.i })) { p in
-            Lightbox(items: letter.attachments.filter { $0.kind == "photo" }, index: p.i) { photo = nil }
+            Lightbox(items: letter.attachments.filter { $0.kind == "photo" && !$0.expired }, index: p.i) { photo = nil }
                 .environment(backend)
         }
         .fullScreenCover(isPresented: $doodleOpen) {
-            if let doodle = letter.attachments.first(where: { $0.kind == "doodle" }) {
+            if let doodle = letter.attachments.first(where: { $0.kind == "doodle" && !$0.expired }) {
                 Lightbox(items: [doodle], index: 0, title: t("letters.doodle")) { doodleOpen = false }
                     .environment(backend)
             }
@@ -309,9 +309,12 @@ private struct LetterContent: View {
         let inReach = sent && state == LetterState.inReach
         let arrived = state == LetterState.delivered || state == LetterState.read
         let feeling: String? = if let e = letter.moodEmoji, !e.isEmpty, let l = letter.moodLabel, !l.isEmpty { "\(e) \(l)" } else { Moods.text(letter.moodAtSend) }
-        let photos = letter.attachments.filter { $0.kind == "photo" }
+        // Attachment Retention AR6: expired files keep their slots; only live photos open in the lightbox.
+        let allPhotos = letter.attachments.filter { $0.kind == "photo" }
+        let photos = allPhotos.filter { !$0.expired }
         let audios = letter.attachments.filter { $0.kind == "audio" }
         let doodle = letter.attachments.first { $0.kind == "doodle" }
+        let anyExpired = letter.attachments.contains { $0.expired }
         let mediaDelay = fresh && !swiped ? 1.0 : 0.26
         let first = home?.firstCitizen
         return GeometryReader { geo in ScrollView {
@@ -377,9 +380,11 @@ private struct LetterContent: View {
                                 .contentShape(Rectangle())
                                 .onTapGesture { if reveal { reveal = false } }
                             Spacer(minLength: 0)
-                            if doodle != nil || !photos.isEmpty || !audios.isEmpty || sent {
+                            if doodle != nil || !allPhotos.isEmpty || !audios.isEmpty || sent {
                                 VStack(alignment: .leading, spacing: 10) {
-                                    if let doodle {
+                                    if let doodle, doodle.expired {
+                                        ExpiredBlock(kind: "doodle")
+                                    } else if let doodle {
                                         Button { doodleOpen = true } label: {
                                             RemoteImage(doodle.url, contentMode: .fit, maxPixel: 1024) { Color.dlLetterSheet }
                                                 .aspectRatio(1, contentMode: .fit)
@@ -389,26 +394,37 @@ private struct LetterContent: View {
                                         .buttonStyle(.plain)
                                         .accessibilityLabel(t("letters.doodleOpenFullSize"))
                                     }
-                                    if !photos.isEmpty {
+                                    if !allPhotos.isEmpty {
                                         HStack(spacing: 12) {
-                                            ForEach(Array(photos.enumerated()), id: \.element.id) { i, p in
-                                                Print(url: p.thumbUrl ?? p.url, tilt: i % 2 == 0 ? -1.5 : 1.2) { photo = i }
-                                                    .accessibilityLabel(t("letters.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
-                                                    .dlEnter(.popIn, delay: mediaDelay)
+                                            ForEach(allPhotos) { p in
+                                                if p.expired {
+                                                    ExpiredThumb()
+                                                } else {
+                                                    let i = photos.firstIndex(of: p) ?? 0
+                                                    Print(url: p.thumbUrl ?? p.url, tilt: i % 2 == 0 ? -1.5 : 1.2) { photo = i }
+                                                        .accessibilityLabel(t("letters.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
+                                                        .dlEnter(.popIn, delay: mediaDelay)
+                                                }
                                             }
                                         }
                                         .padding(.top, 4)
                                     }
                                     ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
-                                        // EP7: the letter's later voice notes play on after this one.
-                                        VoicePlayer(
-                                            url: a.url,
-                                            durationMs: a.durationMs,
-                                            label: audios.count > 1 ? t("letters.voiceNoteN", ["n": i + 1]) : t("letters.voiceNoteLower"),
-                                            next: audios.dropFirst(i + 1).map(\.url)
-                                        )
+                                        // EP7: the letter's later voice notes play on after this one; expired
+                                        // ones (AR6) keep their slot but are left out of the run.
+                                        if a.expired {
+                                            ExpiredVoice(durationMs: a.durationMs)
+                                        } else {
+                                            VoicePlayer(
+                                                url: a.url,
+                                                durationMs: a.durationMs,
+                                                label: audios.count > 1 ? t("letters.voiceNoteN", ["n": i + 1]) : t("letters.voiceNoteLower"),
+                                                next: audios.dropFirst(i + 1).filter { !$0.expired }.map(\.url)
+                                            )
                                             .dlEnter(.popIn, delay: mediaDelay)
+                                        }
                                     }
+                                    if anyExpired { RetentionCaption(days: backend.server?.retention?.letterDays) }
                                     if sent { StatusLine(letter: letter, state: state, now: now) }
                                 }
                                 .padding(EdgeInsets(top: 12, leading: 16, bottom: 16, trailing: 16))

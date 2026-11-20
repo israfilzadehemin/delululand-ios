@@ -917,5 +917,13 @@
  "emails.cancelReply": "Yanıtı iptal et",
  "emails.you": "Sen",
  "emails.goToOriginal": "{name} kişisinin e-postasına git",
- "emails.findingOriginal": "Yükleniyor…"
+ "emails.findingOriginal": "Yükleniyor…",
+ "media.photoExpired": "Fotoğrafın süresi doldu",
+ "media.videoExpired": "Videonun süresi doldu",
+ "media.doodleExpired": "Karalamanın süresi doldu",
+ "media.voiceExpired": "Sesli mesajın süresi doldu · {time}",
+ "retention.kept_one": "Ekler {n} gün saklanır",
+ "retention.kept_other": "Ekler {n} gün saklanır",
+ "retention.removed_one": "Ekler gönderildikten {n} gün sonra silinir",
+ "retention.removed_other": "Ekler gönderildikten {n} gün sonra silinir"
 }

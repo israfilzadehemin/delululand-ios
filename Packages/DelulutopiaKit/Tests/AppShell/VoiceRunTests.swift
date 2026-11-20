@@ -38,6 +38,13 @@ struct VoiceRunTests {
         #expect(VoiceRun.after(emails, index: 0).isEmpty)
     }
 
+    @Test("An email whose voice notes expired ends the run")
+    func expired() {
+        let gone = Email(id: "x", threadId: "t", senderId: "me", text: "", sentAt: "2026-11-20T10:00:00Z",
+                         attachments: [Att(id: "e", kind: "audio", url: "/media/e", expired: true)])
+        #expect(VoiceRun.after([email("8", "me", ["now"]), gone, email("9", "me", ["late"])], index: 0).isEmpty)
+    }
+
     @Test("The newest email has nothing after it")
     func newest() {
         #expect(VoiceRun.after(emails, index: 5).isEmpty)

@@ -92,7 +92,9 @@ private struct QuoteThumb: View {
     let quote: EmailQuote
 
     var body: some View {
-        if let thumb = quote.thumbUrl {
+        if quote.thumbExpired {
+            ExpiredThumb(size: 36)
+        } else if let thumb = quote.thumbUrl {
             RemoteImage(thumb, contentMode: .fill, maxPixel: 120) { Color.dlPaperLetter }
                 .frame(width: 36, height: 36)
                 .clipShape(RoundedRectangle(cornerRadius: 6))

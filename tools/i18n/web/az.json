@@ -917,5 +917,13 @@
  "emails.cancelReply": "Cavabı ləğv et",
  "emails.you": "Sən",
  "emails.goToOriginal": "{name} göndərən e-məktuba keç",
- "emails.findingOriginal": "Yüklənir…"
+ "emails.findingOriginal": "Yüklənir…",
+ "media.photoExpired": "Fotonun vaxtı bitib",
+ "media.videoExpired": "Videonun vaxtı bitib",
+ "media.doodleExpired": "Cızma-qaranın vaxtı bitib",
+ "media.voiceExpired": "Səsli mesajın vaxtı bitib · {time}",
+ "retention.kept_one": "Əlavələr {n} gün saxlanır",
+ "retention.kept_other": "Əlavələr {n} gün saxlanır",
+ "retention.removed_one": "Əlavələr göndəriləndən {n} gün sonra silinir",
+ "retention.removed_other": "Əlavələr göndəriləndən {n} gün sonra silinir"
 }

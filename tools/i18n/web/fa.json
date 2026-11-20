@@ -917,5 +917,13 @@
  "emails.cancelReply": "لغو پاسخ",
  "emails.you": "تو",
  "emails.goToOriginal": "رفتن به ایمیلِ {name}",
- "emails.findingOriginal": "در حال بارگذاری…"
+ "emails.findingOriginal": "در حال بارگذاری…",
+ "media.photoExpired": "عکس منقضی شده",
+ "media.videoExpired": "ویدیو منقضی شده",
+ "media.doodleExpired": "خط‌خطی منقضی شده",
+ "media.voiceExpired": "پیام صوتی منقضی شده · {time}",
+ "retention.kept_one": "پیوست‌ها {n} روز نگه داشته می‌شن",
+ "retention.kept_other": "پیوست‌ها {n} روز نگه داشته می‌شن",
+ "retention.removed_one": "پیوست‌ها {n} روز بعد از فرستادن پاک می‌شن",
+ "retention.removed_other": "پیوست‌ها {n} روز بعد از فرستادن پاک می‌شن"
 }

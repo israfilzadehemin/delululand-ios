@@ -316,8 +316,11 @@ private struct ThreadView: View {
             let state = LetterState.discussion(now: now, windowEndsAt: d.windowEndsAt, arrivesAt: d.arrivesAt)
             let arrived = state == LetterState.arrived
             let inReach = d.mine && state == LetterState.inReach
-            let photos = d.attachments.filter { $0.kind == "photo" }
+            // Attachment Retention AR6: expired files keep their slots; only live photos open in the lightbox.
+            let allPhotos = d.attachments.filter { $0.kind == "photo" }
+            let photos = allPhotos.filter { !$0.expired }
             let audios = d.attachments.filter { $0.kind == "audio" }
+            let anyExpired = d.attachments.contains { $0.expired }
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     if inReach {
@@ -347,24 +350,35 @@ private struct ThreadView: View {
                                 .font(.custom(DLFontName.manropeMedium.name, size: 12, relativeTo: .caption))
                                 .foregroundStyle(.dlNoteInkQuiet)
                             LetterBody(d.doc, size: 16, lineHeight: 25, color: .dlNoteInk)
-                            if !photos.isEmpty {
+                            if !allPhotos.isEmpty {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 10) {
-                                        ForEach(Array(photos.enumerated()), id: \.element.id) { i, p in
-                                            Button { photo = i } label: {
-                                                RemoteImage(p.thumbUrl ?? p.url, contentMode: .fill, maxPixel: 320) { Color.black.opacity(0.08) }
-                                                    .frame(width: 88, height: 88)
-                                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                                        ForEach(allPhotos) { p in
+                                            if p.expired {
+                                                ExpiredThumb(size: 88)
+                                            } else {
+                                                let i = photos.firstIndex(of: p) ?? 0
+                                                Button { photo = i } label: {
+                                                    RemoteImage(p.thumbUrl ?? p.url, contentMode: .fill, maxPixel: 320) { Color.black.opacity(0.08) }
+                                                        .frame(width: 88, height: 88)
+                                                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                                                }
+                                                .accessibilityLabel(t("discussions.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
                                             }
-                                            .accessibilityLabel(t("discussions.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
                                         }
                                     }
                                 }
                             }
-                            // EP7: the discussion's later voice notes play on after this one.
+                            // EP7: the discussion's later voice notes play on after this one; expired ones
+                            // (AR6) keep their slot but are left out of the run.
                             ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
-                                VoicePlayer(url: a.url, durationMs: a.durationMs, next: audios.dropFirst(i + 1).map(\.url))
+                                if a.expired {
+                                    ExpiredVoice(durationMs: a.durationMs)
+                                } else {
+                                    VoicePlayer(url: a.url, durationMs: a.durationMs, next: audios.dropFirst(i + 1).filter { !$0.expired }.map(\.url))
+                                }
                             }
+                            if anyExpired { RetentionCaption(days: backend.server?.retention?.otherDays) }
                             if d.mine, !arrived {
                                 Text(t("discussions.arrivesForIn", ["friend": friend?.nickname ?? t("settings.yourFriend"), "countdown": DLTime.countdown(DLTime.remaining(until: d.arrivesAt, now: now))]))
                                     .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
@@ -407,7 +421,7 @@ private struct ThreadView: View {
             }
         }
         .fullScreenCover(item: Binding(get: { photo.map { PhotoIndex(i: $0) } }, set: { photo = $0?.i })) { p in
-            Lightbox(items: d.attachments.filter { $0.kind == "photo" }, index: p.i) { photo = nil }.environment(backend)
+            Lightbox(items: d.attachments.filter { $0.kind == "photo" && !$0.expired }, index: p.i) { photo = nil }.environment(backend)
         }
     }
 
