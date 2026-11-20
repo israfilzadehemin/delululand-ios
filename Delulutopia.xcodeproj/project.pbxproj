@@ -19,16 +19,26 @@
 		8CB0441CA2C97C6AC70D3548 /* DLDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = BC5CA5F7736869F5C1E61E6D /* DLDesignSystem */; };
 		8F288843F44E1021EAEA20DF /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = 527B3BDEDC35254A318BDF5A /* DLData */; };
 		B63676DF42DACA1815C4D711 /* FeatureStart in Frameworks */ = {isa = PBXBuildFile; productRef = A36F5CC59C946F9020F7D093 /* FeatureStart */; };
+		BE622631986CF0A77DE7CEBA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0D77EDB142956EC0F1A54 /* NotificationService.swift */; };
+		BFE965593BA20D9E589A20F2 /* DLNetwork in Frameworks */ = {isa = PBXBuildFile; productRef = 43A9A53728A032B8E9ECDBD0 /* DLNetwork */; };
 		C2F8AD62F462D5C74ED79109 /* FeatureEmails in Frameworks */ = {isa = PBXBuildFile; productRef = 85C2684739F7051B1DFFF91E /* FeatureEmails */; };
 		D1FA9754A0C737A05A41AD4A /* DLI18n in Frameworks */ = {isa = PBXBuildFile; productRef = F82D76EB375ADC093145AEE4 /* DLI18n */; };
 		D80CA666683EEFA7DE22531B /* FeatureHome in Frameworks */ = {isa = PBXBuildFile; productRef = 43032E393299D077EE8970E4 /* FeatureHome */; };
 		D854EF0AF3C87E168BBC4BB5 /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 61E820D413B1D49EE9B6D6C3 /* AppShell */; };
+		E3810935A7FC1C887861B638 /* DelulutopiaNotify.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 987B556D843E22DE044FDDE6 /* DelulutopiaNotify.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F48CD9C7A5BBF42692A94073 /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = BDD68A0A08CA5287AE6058AC /* DLData */; };
 		F6C854F7DC5F84B4F3D8D77A /* FeatureLetters in Frameworks */ = {isa = PBXBuildFile; productRef = 941987CC3761B9121501B044 /* FeatureLetters */; };
 		FD37B14D762D2CFFBA67B76E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		4DB08FD00593B51960732999 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 50CC5B60FE3CC44F276251C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E9036A1EEC88F5D753757F6B;
+			remoteInfo = DelulutopiaNotify;
+		};
 		BC8C379048D59524972EEB97 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 50CC5B60FE3CC44F276251C7 /* Project object */;
@@ -38,13 +48,30 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		8A06027A0822784201922034 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E3810935A7FC1C887861B638 /* DelulutopiaNotify.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		11F0D77EDB142956EC0F1A54 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogScreenshots.swift; sourceTree = "<group>"; };
 		24C08093F003F94991B707A0 /* Prod.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Prod.xcconfig; sourceTree = "<group>"; };
 		2AB8A901C788027C29970DBF /* DelulutopiaKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DelulutopiaKit; path = Packages/DelulutopiaKit; sourceTree = SOURCE_ROOT; };
+		5FD4CFC3086166B5616C4EEA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		66B52D7A5E0A4489A76F05B0 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
 		8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DelulutopiaScreens.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B8765B756B9F7FB135D0D61 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		987B556D843E22DE044FDDE6 /* DelulutopiaNotify.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = DelulutopiaNotify.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A08AB8F3AD1BD33012593C32 /* Delulutopia.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Delulutopia.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5AB35B69274C41DA740EE63 /* DelulutopiaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelulutopiaApp.swift; sourceTree = "<group>"; };
 		B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -67,6 +94,14 @@
 				882FD8EC7AF1944DFCC82911 /* DLUI in Frameworks */,
 				6BE1DD9B4681D1048055D04B /* DLDesignSystem in Frameworks */,
 				8F288843F44E1021EAEA20DF /* DLData in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		64EC08F054809CD5F8E7C4CD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BFE965593BA20D9E589A20F2 /* DLNetwork in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,15 +160,26 @@
 			children = (
 				147182A4D19412CB79B1158C /* App */,
 				42489E8DAAF5C7FEADA20A23 /* Configs */,
+				8C9F8D2C51ED5C45F3B3232C /* Notify */,
 				BC82C56281C39C4CC6469DA2 /* Packages */,
 				AAFA56F9507BF5D63485DF63 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		8C9F8D2C51ED5C45F3B3232C /* Notify */ = {
+			isa = PBXGroup;
+			children = (
+				5FD4CFC3086166B5616C4EEA /* Info.plist */,
+				11F0D77EDB142956EC0F1A54 /* NotificationService.swift */,
+			);
+			path = Notify;
 			sourceTree = "<group>";
 		};
 		AAFA56F9507BF5D63485DF63 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				A08AB8F3AD1BD33012593C32 /* Delulutopia.app */,
+				987B556D843E22DE044FDDE6 /* DelulutopiaNotify.appex */,
 				8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */,
 			);
 			name = Products;
@@ -165,10 +211,12 @@
 				3F1D0AD5FFFB4D829C8A63D9 /* Sources */,
 				4C1768B1048F307B9C75D6A5 /* Resources */,
 				DD1CF0A832241C85EB027FFC /* Frameworks */,
+				8A06027A0822784201922034 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				1D383B78CF0836B78E106FB4 /* PBXTargetDependency */,
 			);
 			name = Delulutopia;
 			packageProductDependencies = (
@@ -210,6 +258,25 @@
 			productReference = 8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		E9036A1EEC88F5D753757F6B /* DelulutopiaNotify */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5FDA1BAD91EA8192FC4EB0B4 /* Build configuration list for PBXNativeTarget "DelulutopiaNotify" */;
+			buildPhases = (
+				BF4C29A47EADE4313DE110BD /* Sources */,
+				64EC08F054809CD5F8E7C4CD /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DelulutopiaNotify;
+			packageProductDependencies = (
+				43A9A53728A032B8E9ECDBD0 /* DLNetwork */,
+			);
+			productName = DelulutopiaNotify;
+			productReference = 987B556D843E22DE044FDDE6 /* DelulutopiaNotify.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -217,13 +284,17 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1600;
+				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					8CDCF64B84AD4F43F97AF008 = {
 						DevelopmentTeam = NM3GZ4M68M;
 						ProvisioningStyle = Automatic;
 					};
 					AD9E276FFE2E24EB440F9E98 = {
+						DevelopmentTeam = NM3GZ4M68M;
+						ProvisioningStyle = Automatic;
+					};
+					E9036A1EEC88F5D753757F6B = {
 						DevelopmentTeam = NM3GZ4M68M;
 						ProvisioningStyle = Automatic;
 					};
@@ -247,6 +318,7 @@
 			projectRoot = "";
 			targets = (
 				8CDCF64B84AD4F43F97AF008 /* Delulutopia */,
+				E9036A1EEC88F5D753757F6B /* DelulutopiaNotify */,
 				AD9E276FFE2E24EB440F9E98 /* DelulutopiaScreens */,
 			);
 		};
@@ -273,6 +345,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BF4C29A47EADE4313DE110BD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BE622631986CF0A77DE7CEBA /* NotificationService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		EA2895515B5B23DF1E0DD473 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -285,6 +365,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		1D383B78CF0836B78E106FB4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E9036A1EEC88F5D753757F6B /* DelulutopiaNotify */;
+			targetProxy = 4DB08FD00593B51960732999 /* PBXContainerItemProxy */;
+		};
 		D823C87CA1E839DDC80E53D4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 8CDCF64B84AD4F43F97AF008 /* Delulutopia */;
@@ -461,6 +546,26 @@
 			};
 			name = "Debug-Staging";
 		};
+		26898DF739BCCF65C048BFE8 /* Release-Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Notify/DelulutopiaNotify.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Notify/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID).notify";
+				PRODUCT_NAME = DelulutopiaNotify;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-Staging";
+		};
 		2AC3C61A96B72E4E36721176 /* Release-Prod */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 24C08093F003F94991B707A0 /* Prod.xcconfig */;
@@ -555,6 +660,66 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Delulutopia.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Delulutopia";
 			};
 			name = "Debug-Prod";
+		};
+		689FCB0B007680D5AC9A7C90 /* Release-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Notify/DelulutopiaNotify.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Notify/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID).notify";
+				PRODUCT_NAME = DelulutopiaNotify;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-Prod";
+		};
+		84BAA20E0620D3AEE11BDBF3 /* Debug-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Notify/DelulutopiaNotify.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Notify/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID).notify";
+				PRODUCT_NAME = DelulutopiaNotify;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug-Prod";
+		};
+		8E5AACCE777B1F5934C4C556 /* Debug-Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Notify/DelulutopiaNotify.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Notify/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID).notify";
+				PRODUCT_NAME = DelulutopiaNotify;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug-Staging";
 		};
 		948D04A468B6D548C368BB8F /* Release-Staging */ = {
 			isa = XCBuildConfiguration;
@@ -721,6 +886,17 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug-Prod";
 		};
+		5FDA1BAD91EA8192FC4EB0B4 /* Build configuration list for PBXNativeTarget "DelulutopiaNotify" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84BAA20E0620D3AEE11BDBF3 /* Debug-Prod */,
+				8E5AACCE777B1F5934C4C556 /* Debug-Staging */,
+				689FCB0B007680D5AC9A7C90 /* Release-Prod */,
+				26898DF739BCCF65C048BFE8 /* Release-Staging */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug-Prod";
+		};
 		DE106E01D78852031333C94B /* Build configuration list for PBXNativeTarget "Delulutopia" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -756,6 +932,10 @@
 		43032E393299D077EE8970E4 /* FeatureHome */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FeatureHome;
+		};
+		43A9A53728A032B8E9ECDBD0 /* DLNetwork */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLNetwork;
 		};
 		527B3BDEDC35254A318BDF5A /* DLData */ = {
 			isa = XCSwiftPackageProductDependency;
