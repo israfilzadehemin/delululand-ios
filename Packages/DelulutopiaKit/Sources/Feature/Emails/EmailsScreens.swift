@@ -364,7 +364,7 @@ public struct ThreadScreen: View {
         let quoteName: (PublicID) -> String = { id in id == meId ? t("emails.you") : (home?.friend?.id == id ? home?.friend?.nickname ?? "" : "") }
         return ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 6) {
+                LazyVStack(spacing: 4) {
                     VStack(spacing: 8) {
                         if model.olderCursor != nil {
                             Button(model.loadingOlder ? t("emails.loadingOlder") : t("emails.seeOlder")) {
@@ -517,8 +517,11 @@ private struct DayChip: View {
     }
 }
 
-/// One email as a bubble (EB1–EB6): the sender's signature colour (the avatar ring's), on the
-/// viewer's side, every one open; the run's first bubble names the sender and points at them.
+/// One email as a bubble (EB1–EB5): the sender's signature colour (the avatar ring's), on the
+/// viewer's side, every one open; the run's first bubble names the sender and points at them. Its
+/// actions (doc "Delululand — Bubble Actions"): the time inside (BA1), the ↩ disc beside it (BA2),
+/// long-press for the layer (BA4, BA5), the pill on its edge and the Reactions sheet (BA7, BA8);
+/// VoiceOver gets React / Reply / Copy text as actions.
 private struct Bubble: View {
     let email: Email
     let first: Bool
@@ -536,22 +539,24 @@ private struct Bubble: View {
 
     @Environment(Backend.self) private var backend
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.layoutDirection) private var layoutDirection
     @State private var lightbox: Int?
     /// RE6: the bubble's sideways offset while a finger drags it, and whether the reply is armed.
     @State private var swipe: CGFloat = 0
     @State private var armed = false
     @State private var dragging: Bool?
+    /// BA4–BA8: the layer, the sheet, where the bubble is, and the "Copied" note.
+    @State private var layer = false
+    @State private var sheet = false
+    @State private var frameBox = FrameBox()
+    @State private var copied = false
+
+    /// BA1: where the time goes.
+    private enum TimeAt { case text, photos, line }
 
     var body: some View {
         let sender: Citizen? = mine ? home?.me : home?.friend
-        let photos = email.attachments.filter { $0.kind == "photo" }
-        let tail: CGFloat = first ? 4 : 16
-        let shape = UnevenRoundedRectangle(
-            topLeadingRadius: mine ? 16 : tail,
-            bottomLeadingRadius: 16,
-            bottomTrailingRadius: 16,
-            topTrailingRadius: mine ? tail : 16
-        )
+        let reacted = !email.reactions.isEmpty
         VStack(alignment: mine ? .trailing : .leading, spacing: 3) {
             if first, let sender {
                 HStack(spacing: 6) {
@@ -559,84 +564,222 @@ private struct Bubble: View {
                     CitizenAvatar(sender, size: 24)
                     if !mine { name(sender) }
                 }
-                .padding(.top, 6)
+                .padding(.top, 8)
             }
-            VStack(alignment: .leading, spacing: 8) {
-                // RE11: the quote at the top inside the bubble.
-                if let q = email.replyTo {
-                    BubbleQuote(quote: q, name: quoteName(q.senderId), who: quoteWho(q.senderId)) { onOpenQuote(q.id) }
+            surface(interactive: true)
+                .opacity(layer ? 0 : 1)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frameBox.rect = $0 }
+                // RE6: the bubble follows the finger toward the centre; the ↩ cue shows behind it.
+                .background(alignment: mine ? .trailing : .leading) {
+                    Image(systemName: "arrowshape.turn.up.left")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.dlInk)
+                        .flipsForRightToLeftLayoutDirection(true)
+                        .frame(width: 32, height: 32)
+                        .background(Color.dlPaperLetter, in: Circle())
+                        .overlay(Circle().stroke(Color.dlLine, lineWidth: 1))
+                        .opacity(min(1, abs(swipe) / swipeArm))
+                        .offset(x: -swipe)
+                        .accessibilityHidden(true)
                 }
-                if !email.text.isEmpty {
-                    Text(linking: email.text).font(.system(size: 16)).foregroundStyle(.dlInk).tint(.dlInk).textSelection(.enabled).ownText(email.text)
-                }
-                if !photos.isEmpty {
-                    HStack(spacing: 6) {
-                        ForEach(Array(photos.enumerated()), id: \.element.id) { i, p in
-                            Button { lightbox = i } label: {
-                                RemoteImage(p.thumbUrl ?? p.url, contentMode: .fill, maxPixel: 320) { Color.dlPaperLetter }
-                                    .frame(width: 72, height: 72)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                            }
-                            .accessibilityLabel(t("emails.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
-                        }
+                .offset(x: swipe)
+                .simultaneousGesture(swipeGesture)
+                .simultaneousGesture(
+                    LongPressGesture(minimumDuration: BubbleActionsSpec.longPress, maximumDistance: BubbleActionsSpec.slop)
+                        .onEnded { _ in openLayer() }
+                )
+                .accessibilityActions {
+                    Button(t("emails.react")) { openLayer() }
+                    Button(t("emails.reply")) { onReply() }
+                    if !email.text.isEmpty {
+                        Button(t("emails.copyText")) { copyText() }
                     }
                 }
-                ForEach(email.attachments.filter { $0.kind == "audio" }) { a in VoicePlayer(url: a.url, durationMs: a.durationMs) }
-                ForEach(email.attachments.filter { $0.kind == "video" }) { v in VideoTile(att: v) }
-            }
-            .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 9)
-            .background(who.tint, in: shape)
-            .overlay(shape.stroke(who.signature.opacity(0.75), lineWidth: 1))
-            // RE12: a ring around the original after a jump.
-            .overlay(shape.stroke(Color.dlMailBlue.opacity(flash ? 0.55 : 0), lineWidth: 3))
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: flash)
-            // RE6: the bubble follows the finger toward the centre; the ↩ cue shows behind it.
-            .background(alignment: mine ? .trailing : .leading) {
-                Image(systemName: "arrowshape.turn.up.left")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.dlInk)
-                    .flipsForRightToLeftLayoutDirection(true)
-                    .frame(width: 32, height: 32)
-                    .background(Color.dlPaperLetter, in: Circle())
-                    .overlay(Circle().stroke(Color.dlLine, lineWidth: 1))
-                    .opacity(min(1, abs(swipe) / swipeArm))
-                    .offset(x: -swipe)
-                    .accessibilityHidden(true)
-            }
-            .offset(x: swipe)
-            .simultaneousGesture(swipeGesture)
-            // EB9: at most 420 pt, and never closer than 56 pt to the other side (about 80 % on a phone).
-            .frame(maxWidth: 420, alignment: mine ? .trailing : .leading)
-            .padding(mine ? .leading : .trailing, 56)
-            HStack(spacing: 6) {
-                if mine { replyButton }
-                if mine { reactions }
-                Text(DLTime.clock(email.sentAt) + (seen.map { " · " + t("emails.seen", ["time": DLTime.clock($0)]) } ?? ""))
-                    .font(.system(size: 12).monospacedDigit()).foregroundStyle(.dlInkQuiet)
-                if !mine { reactions }
-                if !mine { replyButton }
-            }
+                // BA7: the pill hangs 15 pt below the outer edge, 10 pt in.
+                .overlay(alignment: mine ? .bottomTrailing : .bottomLeading) {
+                    if reacted {
+                        ReactionPill(reactions: email.reactions, mine: email.reactions.contains { $0.userIds.contains(meId) }, onOpen: { sheet = true }, onLong: openLayer)
+                            .offset(x: mine ? -10 : 10, y: 24)
+                            .transition(.scale(scale: 0.6).combined(with: .opacity))
+                    }
+                }
+                .animation(reduceMotion ? nil : .spring(response: 0.26, dampingFraction: 0.6), value: reacted)
+                // BA2: the ↩ disc on the free side, 4 pt from the bubble, bottom-aligned.
+                .overlay(alignment: mine ? .bottomLeading : .bottomTrailing) {
+                    ReplyDisc(action: onReply).offset(x: mine ? -40 : 40)
+                }
+                .overlay(alignment: .top) {
+                    if copied {
+                        Text(t("emails.copied"))
+                            .font(.system(size: 13, weight: .heavy))
+                            .foregroundStyle(Color.dlOnSeal)
+                            .padding(.horizontal, 14).padding(.vertical, 7)
+                            .background(Color.dlSeal, in: Capsule())
+                            .offset(y: -36)
+                            .transition(.opacity)
+                            .accessibilityAddTraits(.updatesFrequently)
+                    }
+                }
+                .fullScreenCover(isPresented: $layer) {
+                    BubbleLayer(
+                        frame: frameBox.rect,
+                        mine: mine,
+                        quick: BubbleActionsSpec.quick(recents: backend.settings.recentEmojis),
+                        isMine: isMine,
+                        canCopy: !email.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                        onPick: { e in
+                            closeLayer()
+                            toggle(e)
+                        },
+                        onReply: {
+                            closeLayer()
+                            onReply()
+                        },
+                        onCopy: {
+                            closeLayer()
+                            copyText()
+                        },
+                        onClose: closeLayer
+                    ) {
+                        surface(interactive: false)
+                    }
+                    .environment(backend)
+                    .presentationBackground(.clear)
+                }
+                // EB9: at most 420 pt, and never closer than 56 pt to the other side (about 80 % on a
+                // phone); the ↩ disc sits in that room.
+                .frame(maxWidth: 420, alignment: mine ? .trailing : .leading)
+                .padding(mine ? .leading : .trailing, 56)
         }
+        .padding(.bottom, reacted ? 15 : 0)
         .frame(maxWidth: .infinity, alignment: mine ? .trailing : .leading)
         .fullScreenCover(item: Binding(get: { lightbox.map { LightboxIndex(i: $0) } }, set: { lightbox = $0?.i })) { l in
-            Lightbox(items: photos, index: l.i) { lightbox = nil }.environment(backend)
+            Lightbox(items: email.attachments.filter { $0.kind == "photo" }, index: l.i) { lightbox = nil }.environment(backend)
+        }
+        .sheet(isPresented: $sheet) {
+            ReactionsSheet(
+                reactions: email.reactions,
+                meId: meId,
+                nameOf: { $0 == meId ? t("emails.you") : (home?.friend?.id == $0 ? home?.friend?.nickname ?? "" : "") },
+                onToggle: { emoji, isMine in
+                    if !isMine { backend.settings.pushRecentEmoji(emoji) }
+                    onReact(emoji, isMine)
+                },
+                onClose: { sheet = false }
+            )
         }
     }
 
-    /// RE7: ↩ beside the reactions (a 44 pt target around the 28×24 chip).
-    private var replyButton: some View {
-        Button(action: onReply) {
-            Image(systemName: "arrowshape.turn.up.left")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.dlInkQuiet)
-                .flipsForRightToLeftLayoutDirection(true)
-                .frame(width: 28, height: 24)
-                .overlay(Capsule().stroke(Color.dlLine, lineWidth: 1))
-                .frame(width: 40, height: 44)
-                .contentShape(Rectangle())
+    /// The bubble itself (EB1, EB5, RE11) with the time inside (BA1): after the text on its last line
+    /// (a clear copy of the time at the end of the text keeps that room), as a chip on photos that
+    /// come last, on its own line after a voice note or a video. Drawn in the thread and, lifted, in
+    /// the long-press layer.
+    private func surface(interactive: Bool) -> some View {
+        let photos = email.attachments.filter { $0.kind == "photo" }
+        let audios = email.attachments.filter { $0.kind == "audio" }
+        let videos = email.attachments.filter { $0.kind == "video" }
+        let reacted = !email.reactions.isEmpty
+        let tail: CGFloat = first ? 4 : 16
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: mine ? 16 : tail,
+            bottomLeadingRadius: 16,
+            bottomTrailingRadius: 16,
+            topTrailingRadius: mine ? tail : 16
+        )
+        let stamp = DLTime.clock(email.sentAt) + (seen.map { " · " + t("emails.seen", ["time": DLTime.clock($0)]) } ?? "")
+        // Text written the other way round from the screen ends on the other side: the time gets its own line.
+        let sameWay = ContentDirection.of(email.text).map { $0 == layoutDirection } ?? true
+        let timeAt: TimeAt = !videos.isEmpty || !audios.isEmpty ? .line : !photos.isEmpty ? .photos : (!email.text.isEmpty && sameWay) ? .text : .line
+        return VStack(alignment: .leading, spacing: 8) {
+            // RE11: the quote at the top inside the bubble.
+            if let q = email.replyTo {
+                BubbleQuote(quote: q, name: quoteName(q.senderId), who: quoteWho(q.senderId)) { onOpenQuote(q.id) }
+            }
+            if !email.text.isEmpty {
+                if timeAt == .text {
+                    (Text(linking: email.text) + Text("\u{2002}" + stamp).font(.system(size: 11).monospacedDigit()).foregroundStyle(Color.clear))
+                        .font(.system(size: 16)).foregroundStyle(.dlInk).tint(.dlInk).ownText(email.text)
+                        .accessibilityLabel(email.text)
+                        .overlay(alignment: .bottomTrailing) { time(stamp).offset(y: -2) }
+                } else {
+                    Text(linking: email.text).font(.system(size: 16)).foregroundStyle(.dlInk).tint(.dlInk).ownText(email.text)
+                }
+            }
+            if !photos.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(Array(photos.enumerated()), id: \.element.id) { i, p in
+                        Button { lightbox = i } label: {
+                            RemoteImage(p.thumbUrl ?? p.url, contentMode: .fill, maxPixel: 320) { Color.dlPaperLetter }
+                                .frame(width: 72, height: 72)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .accessibilityLabel(t("emails.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
+                    }
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    if timeAt == .photos { chip(stamp).padding(5) }
+                }
+            }
+            ForEach(audios) { a in VoicePlayer(url: a.url, durationMs: a.durationMs) }
+            ForEach(videos) { v in VideoTile(att: v) }
+            if timeAt == .line {
+                time(stamp).frame(maxWidth: .infinity, alignment: .trailing)
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(t("emails.reply"))
+        .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, reacted ? 17 : 9)
+        .background(who.tint, in: shape)
+        .overlay(shape.stroke(who.signature.opacity(0.75), lineWidth: 1))
+        // RE12: a ring around the original after a jump.
+        .overlay(shape.stroke(Color.dlMailBlue.opacity(flash && interactive ? 0.55 : 0), lineWidth: 3))
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: flash)
+        .contentShape(shape)
+    }
+
+    private func time(_ stamp: String) -> some View {
+        Text(stamp).font(.system(size: 11).monospacedDigit()).foregroundStyle(.dlInkQuiet)
+    }
+
+    private func chip(_ stamp: String) -> some View {
+        Text(stamp)
+            .font(.system(size: 11).monospacedDigit())
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6).padding(.vertical, 1)
+            .background(Color(red: 20 / 255, green: 22 / 255, blue: 30 / 255).opacity(0.58), in: Capsule())
+    }
+
+    private func isMine(_ emoji: String) -> Bool {
+        email.reactions.first { $0.emoji == emoji }?.userIds.contains(meId) ?? false
+    }
+
+    private func toggle(_ emoji: String) {
+        let mine = isMine(emoji)
+        if !mine { backend.settings.pushRecentEmoji(emoji) }
+        onReact(emoji, mine)
+    }
+
+    /// BA4: the layer appears without the cover's slide; it fades itself in.
+    private func openLayer() {
+        guard !layer else { return }
+        var tx = Transaction()
+        tx.disablesAnimations = true
+        withTransaction(tx) { layer = true }
+    }
+
+    private func closeLayer() {
+        var tx = Transaction()
+        tx.disablesAnimations = true
+        withTransaction(tx) { layer = false }
+    }
+
+    /// BA5: Copy text, then "Copied" for a moment.
+    private func copyText() {
+        guard !email.text.isEmpty else { return }
+        UIPasteboard.general.string = email.text
+        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.18)) { copied = true }
+        Task {
+            try? await Task.sleep(for: .seconds(1.6))
+            withAnimation(reduceMotion ? nil : .easeIn(duration: 0.18)) { copied = false }
+        }
     }
 
     /// RE6: horizontal only (a mostly vertical start is the scroll's); toward the column's centre —
@@ -664,13 +807,6 @@ private struct Bubble: View {
 
     private func name(_ c: Citizen) -> some View {
         Text(c.nickname).font(.system(size: 13, weight: .heavy)).foregroundStyle(.dlInk)
-    }
-
-    private var reactions: some View {
-        ReactionRow(email.reactions, me: meId, compact: true) { emoji in
-            onReact(emoji, email.reactions.first { $0.emoji == emoji }?.userIds.contains(meId) ?? false)
-        }
-        .fixedSize()
     }
 
     private struct LightboxIndex: Identifiable {
