@@ -361,7 +361,10 @@ private struct ThreadView: View {
                                     }
                                 }
                             }
-                            ForEach(audios) { a in VoicePlayer(url: a.url, durationMs: a.durationMs) }
+                            // EP7: the discussion's later voice notes play on after this one.
+                            ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
+                                VoicePlayer(url: a.url, durationMs: a.durationMs, next: audios.dropFirst(i + 1).map(\.url))
+                            }
                             if d.mine, !arrived {
                                 Text(t("discussions.arrivesForIn", ["friend": friend?.nickname ?? t("settings.yourFriend"), "countdown": DLTime.countdown(DLTime.remaining(until: d.arrivesAt, now: now))]))
                                     .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())

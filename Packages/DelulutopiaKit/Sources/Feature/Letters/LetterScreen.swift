@@ -400,7 +400,13 @@ private struct LetterContent: View {
                                         .padding(.top, 4)
                                     }
                                     ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
-                                        VoicePlayer(url: a.url, durationMs: a.durationMs, label: audios.count > 1 ? t("letters.voiceNoteN", ["n": i + 1]) : t("letters.voiceNoteLower"))
+                                        // EP7: the letter's later voice notes play on after this one.
+                                        VoicePlayer(
+                                            url: a.url,
+                                            durationMs: a.durationMs,
+                                            label: audios.count > 1 ? t("letters.voiceNoteN", ["n": i + 1]) : t("letters.voiceNoteLower"),
+                                            next: audios.dropFirst(i + 1).map(\.url)
+                                        )
                                             .dlEnter(.popIn, delay: mediaDelay)
                                     }
                                     if sent { StatusLine(letter: letter, state: state, now: now) }

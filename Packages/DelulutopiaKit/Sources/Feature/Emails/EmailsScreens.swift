@@ -417,7 +417,8 @@ public struct ThreadScreen: View {
                             onReply: { composer?.pickReply(quoteOf(e)) },
                             onOpenQuote: { target in openOriginal(target, model: model, proxy: proxy) },
                             pending: pendingOf(e, unsent),
-                            onUnsent: { unsentSheet = true }
+                            onUnsent: { unsentSheet = true },
+                            voiceAfter: VoiceRun.after(oldestFirst, index: i)
                         )
                         .id(e.id)
                         .transition(bubbleTransition(e, meId: meId))
@@ -611,6 +612,8 @@ private struct Bubble: View {
     /// OS3/OS4: my provisional email while it is sending or after it failed.
     var pending: EmailOutbox.Status?
     var onUnsent: () -> Void = {}
+    /// EP7: the same sender's next voice notes in the thread, which play on after this bubble's.
+    var voiceAfter: [String] = []
 
     @Environment(Backend.self) private var backend
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -807,7 +810,11 @@ private struct Bubble: View {
                     if timeAt == .photos { chip(stamp).padding(5) }
                 }
             }
-            ForEach(audios) { a in VoicePlayer(url: a.url, durationMs: a.durationMs) }
+            // EP7: the bubble's later notes, then the same sender's next emails, play on.
+            let voices = audios.map(\.url) + voiceAfter
+            ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
+                VoicePlayer(url: a.url, durationMs: a.durationMs, next: Array(voices.dropFirst(i + 1)))
+            }
             ForEach(videos) { v in VideoTile(att: v) }
             if timeAt == .line {
                 time(stamp).frame(maxWidth: .infinity, alignment: .trailing)
