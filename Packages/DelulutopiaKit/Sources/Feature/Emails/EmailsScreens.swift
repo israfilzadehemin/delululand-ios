@@ -415,25 +415,12 @@ public struct ThreadScreen: View {
                             flash: flashId == e.id,
                             onReact: { emoji, mine in Task { await model.react(emailId: e.id, emoji: emoji, mine: mine) } },
                             onReply: { composer?.pickReply(quoteOf(e)) },
-                            pending: unsent?.email.id == e.id ? unsent?.status : nil,
-                            onUnsent: { unsentSheet = true },
-                            onOpenQuote: { target in
-                                Task {
-                                    guard await model.ensureLoaded(target) else { return }
-                                    try? await Task.sleep(for: .milliseconds(60))
-                                    withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo(target, anchor: .center) }
-                                    flashId = target
-                                    try? await Task.sleep(for: .seconds(1))
-                                    if flashId == target { flashId = nil }
-                                }
-                            }
+                            onOpenQuote: { target in openOriginal(target, model: model, proxy: proxy) },
+                            pending: pendingOf(e, unsent),
+                            onUnsent: { unsentSheet = true }
                         )
                         .id(e.id)
-                        .transition(quiet.contains(e.id) ? .identity : .asymmetric(
-                            insertion: .scale(scale: 0.92, anchor: e.senderId == meId ? .bottomTrailing : .bottomLeading).combined(with: .opacity),
-                            // OS6: a cancelled bubble collapses away.
-                            removal: e.id.hasPrefix("local-") ? .scale(scale: 0.92, anchor: .bottomTrailing).combined(with: .opacity) : .opacity
-                        ))
+                        .transition(bubbleTransition(e, meId: meId))
                     }
                     Color.clear.frame(height: 1).id("bottom")
                         .onAppear { atBottom = true; newBelow = false }
@@ -528,6 +515,33 @@ public struct ThreadScreen: View {
                 }
             }
         }
+    }
+
+    /// RE12: load older pages until the original is there, scroll to it and flash it.
+    private func openOriginal(_ target: PublicID, model: ThreadModel, proxy: ScrollViewProxy) {
+        Task {
+            guard await model.ensureLoaded(target) else { return }
+            try? await Task.sleep(for: .milliseconds(60))
+            withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo(target, anchor: .center) }
+            flashId = target
+            try? await Task.sleep(for: .seconds(1))
+            if flashId == target { flashId = nil }
+        }
+    }
+
+    /// OS3/OS4: the status of the provisional bubble, nil for every email the server has.
+    private func pendingOf(_ e: Email, _ unsent: EmailOutbox.Entry?) -> EmailOutbox.Status? {
+        guard let unsent, unsent.email.id == e.id else { return nil }
+        return unsent.status
+    }
+
+    /// EB11 grow-in; OS3 none for the email that replaces a provisional one; OS6 Cancel collapses it.
+    private func bubbleTransition(_ e: Email, meId: PublicID) -> AnyTransition {
+        if quiet.contains(e.id) { return .identity }
+        let anchor: UnitPoint = e.senderId == meId ? .bottomTrailing : .bottomLeading
+        let insertion = AnyTransition.scale(scale: 0.92, anchor: anchor).combined(with: .opacity)
+        let removal: AnyTransition = e.id.hasPrefix("local-") ? AnyTransition.scale(scale: 0.92, anchor: anchor).combined(with: .opacity) : .opacity
+        return .asymmetric(insertion: insertion, removal: removal)
     }
 
     /// OS5: the sheet's reason line.
