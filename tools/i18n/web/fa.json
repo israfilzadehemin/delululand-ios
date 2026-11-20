@@ -931,5 +931,8 @@
  "retention.kept_one": "پیوست‌ها {n} روز نگه داشته می‌شن",
  "retention.kept_other": "پیوست‌ها {n} روز نگه داشته می‌شن",
  "retention.removed_one": "پیوست‌ها {n} روز بعد از فرستادن پاک می‌شن",
- "retention.removed_other": "پیوست‌ها {n} روز بعد از فرستادن پاک می‌شن"
+ "retention.removed_other": "پیوست‌ها {n} روز بعد از فرستادن پاک می‌شن",
+ "media.groupAudio": "صدا · {n}",
+ "media.groupPhotos": "عکس · {n}",
+ "media.groupVideo": "ویدیو · {n}"
 }

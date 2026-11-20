@@ -931,5 +931,8 @@
  "retention.kept_one": "Attachments are kept for {n} day",
  "retention.kept_other": "Attachments are kept for {n} days",
  "retention.removed_one": "Attachments are removed {n} day after sending",
- "retention.removed_other": "Attachments are removed {n} days after sending"
+ "retention.removed_other": "Attachments are removed {n} days after sending",
+ "media.groupAudio": "Voice & audio · {n}",
+ "media.groupPhotos": "Photos · {n}",
+ "media.groupVideo": "Video · {n}"
 }
