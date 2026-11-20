@@ -94,12 +94,30 @@ final class EmailComposer {
     private(set) var focusAsk = 0
     @ObservationIgnored private(set) var saver: DraftSaver!
     @ObservationIgnored let backend: Backend
+    /// Optimistic send for thread replies (doc "Delululand — Optimistic Send" OS1); nil on New email.
+    @ObservationIgnored let outbox: EmailOutbox?
+    /// OS7: what the draft holds while an email of this thread is in the air or failed.
+    @ObservationIgnored private var hold: EmailOutbox.Snapshot?
+    private var releasing = false
+    @ObservationIgnored private var listener: UUID?
 
-    init(key: String, backend: Backend) {
+    var optimistic: Bool { outbox != nil && !withSubject }
+    /// OS3–OS7: this thread's email in the air or failed.
+    var unsent: EmailOutbox.Entry? { optimistic ? outbox?.entry(key) : nil }
+    /// OS7: Send and + wait while it is unresolved.
+    var held: Bool { optimistic && (unsent != nil || releasing) }
+    /// OS11: emails in the air have spent their credit already.
+    var inAir: Int { outbox?.sendingCount ?? 0 }
+
+    init(key: String, backend: Backend, outbox: EmailOutbox? = nil) {
         self.key = key
         self.backend = backend
+        self.outbox = outbox
         saver = DraftSaver { [weak self] version in
             guard let self else { throw CancellationError() }
+            if let h = self.hold {
+                return try await backend.api.saveEmailDraft(key: key, subject: "", text: h.text, version: version, replyToId: h.replyToId)
+            }
             return try await backend.api.saveEmailDraft(
                 key: key,
                 subject: self.withSubject ? self.subject : "",
@@ -107,6 +125,17 @@ final class EmailComposer {
                 version: version,
                 replyToId: self.withSubject ? nil : self.replyTo?.id
             )
+        }
+        if let outbox, key != "new" {
+            outbox.bind(key) { [weak self] in
+                guard let self else { throw CancellationError() }
+                self.saver.touch()
+                return try await self.saver.flush()
+            }
+            listener = outbox.listen { [weak self] threadId, r in
+                guard let self, threadId == self.key else { return }
+                Task { await self.release(r) }
+            }
         }
     }
 
@@ -120,13 +149,50 @@ final class EmailComposer {
     }
 
     func apply(_ d: EmailDraft) {
+        // OS10: opened while one is in the air or failed: the draft is that email, the screen starts empty.
+        let e = unsent
+        hold = e?.snapshot
         subject = d.subject
-        text = d.text
-        replyTo = d.replyTo
+        text = e == nil ? d.text : ""
+        replyTo = e == nil ? d.replyTo : nil
         saver.load(version: d.version, savedAt: d.savedAt)
-        if let attachments { attachments.reset(d.attachments) } else {
-            attachments = Attachments(d.attachments, path: "api/emails/drafts/\(key)/attachments", api: backend.api)
+        let shown = e == nil ? d.attachments : []
+        if let attachments { attachments.reset(shown) } else {
+            attachments = Attachments(shown, path: "api/emails/drafts/\(key)/attachments", api: backend.api)
         }
+    }
+
+    /// OS3: the bubble shows at once; the composer clears and the send runs behind it.
+    func sendOptimistic(senderId: PublicID) {
+        guard let outbox, let atts = attachments else { return }
+        let snap = EmailOutbox.Snapshot(text: text, replyToId: replyTo?.id)
+        let email = outbox.provisional(threadId: key, senderId: senderId, text: text, attachments: atts.done, replyTo: replyTo)
+        hold = snap
+        text = ""
+        replyTo = nil
+        trimmed = false
+        atts.reset([])
+        outbox.enqueue(email, snapshot: snap, api: backend.api) { [weak self] in
+            guard let self else { throw CancellationError() }
+            return try await self.saver.flush()
+        }
+    }
+
+    /// Sent or cancelled: the draft is free again; what was typed meanwhile becomes the draft.
+    private func release(_ r: EmailOutbox.Resolution) async {
+        releasing = true
+        var cancelled = false
+        if case let .cancelled(ids) = r {
+            cancelled = true
+            for id in ids { try? await backend.api.deleteEmailDraftAttachment(key: key, id: id) }
+        }
+        let d = try? await backend.api.emailDraft(key: key)
+        hold = nil
+        saver.load(version: d?.version ?? saver.version, savedAt: d?.savedAt)
+        // OS6: Cancel overwrites the held text; otherwise save only what is worth keeping.
+        if cancelled || !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || replyTo != nil { saver.touch() }
+        releasing = false
+        await backend.home.load()
     }
 
     /// Q5: typing simply stops at 1024; only an overflowing paste gets the notice.
@@ -135,21 +201,21 @@ final class EmailComposer {
         trimmed = cut && normalize(raw).count - text.count > 1
         guard next != text else { return }
         text = next
-        saver.touch()
+        if hold == nil { saver.touch() }
     }
 
     /// RE6–RE8: answer this email; a new pick replaces the last.
     func pickReply(_ quote: EmailQuote) {
         guard !withSubject else { return }
         replyTo = quote
-        saver.touch()
+        if hold == nil { saver.touch() }
         focusAsk += 1
     }
 
     /// RE9: × on the strip.
     func cancelReply() {
         replyTo = nil
-        saver.touch()
+        if hold == nil { saver.touch() }
     }
 
     func changeSubject(_ raw: String) {
@@ -205,6 +271,11 @@ final class EmailComposer {
     func close() {
         saver.flushOnLeave()
         saver.dispose()
+        if let outbox, optimistic {
+            outbox.unbind(key)
+            if let listener { outbox.unlisten(listener) }
+            listener = nil
+        }
     }
 }
 
@@ -363,12 +434,20 @@ struct DockedComposerView: View {
 
     var body: some View {
         let atts = composer.attachments
-        let noCredits = (credits?.left ?? 1) <= 0
         let recording = recorder?.recording ?? false
         let hasVideo = atts?.has("video") ?? false
         let limits = atts.flatMap { stripLimits(backend.home.home?.plan, mediaOf($0.items)) }
         let videoOff = limits.map { !$0.videoRoom } ?? false
-        let canSend = !sending && !noCredits && !(atts?.uploading ?? false) && !recording && limits?.block == nil
+        // OS11: the credits line drops at once while an email is in the air.
+        let shown: EmailCredits? = {
+            guard var c = credits, composer.inAir > 0 else { return credits }
+            c.left = max(0, c.left - composer.inAir)
+            c.used += composer.inAir
+            return c
+        }()
+        let held = composer.held
+        let noCredits = (shown?.left ?? 1) <= 0
+        let canSend = !sending && !noCredits && !(atts?.uploading ?? false) && !recording && limits?.block == nil && !held
             && (!composer.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !(atts?.done.isEmpty ?? true))
         // The tray stays open while it holds something; the bar is open while it is in use.
         let tray = trayAsked || !(atts?.items.isEmpty ?? true) || recording
@@ -409,6 +488,12 @@ struct DockedComposerView: View {
             }
             if composer.trimmed { Text(trimmedLine).font(.caption).foregroundStyle(.dlError) }
             if let error { Text(error).dlText(.footnote).foregroundStyle(.dlError) }
+            // OS7: why Send waits.
+            if held, let unsent = composer.unsent, open {
+                Text(unsent.status == .sending ? t("emails.waitPrevious") : t("emails.resolveUnsent"))
+                    .dlText(.footnote).foregroundStyle(.dlInkQuiet)
+                    .accessibilityAddTraits(.updatesFrequently)
+            }
             if let q = composer.replyTo {
                 ReplyStrip(quote: q, name: quoteName(q.senderId), who: quoteWho(q.senderId)) { withAnimation(motion) { composer.cancelReply() } }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -419,7 +504,7 @@ struct DockedComposerView: View {
                         .foregroundStyle(composer.text.count >= emailMax ? Color.dlError : Color.dlInkQuiet)
                         .transition(.opacity)
                 }
-                if let line = creditsLine(credits) {
+                if let line = creditsLine(shown) {
                     Text(line).foregroundStyle(noCredits ? Color.dlError : Color.dlInkQuiet)
                 }
             }
@@ -440,6 +525,8 @@ struct DockedComposerView: View {
                         .overlay(Circle().stroke(Color.dlLine, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
+                .disabled(held)
+                .opacity(held ? 0.4 : 1)
                 .accessibilityLabel(tray && trayAsked ? t("emails.closeAttachments") : t("emails.attach"))
                 TextField(t("emails.writeAReply"), text: Binding(get: { composer.text }, set: { composer.changeText($0) }), axis: .vertical)
                     .font(.system(size: 16))
@@ -497,13 +584,22 @@ struct DockedComposerView: View {
             }
             .ignoresSafeArea()
         }
-        .alert(t("emails.aNewerVersionWasSaved"), isPresented: Binding(get: { composer.saver.status == .conflict }, set: { _ in })) {
+        // OS8: a conflict while held is reconciled by the send itself.
+        .alert(t("emails.aNewerVersionWasSaved"), isPresented: Binding(get: { composer.saver.status == .conflict && !composer.held }, set: { _ in })) {
             Button(t("emails.keepMine"), role: .cancel) { composer.saver.keepMine() }
             Button(t("emails.load")) { Task { await composer.loadServer() } }
         }
     }
 
     private func send() {
+        if composer.optimistic {
+            // OS3: the bubble appears now; the bar is free at once.
+            guard let me = backend.home.home?.me.id else { return }
+            error = nil
+            trayAsked = false
+            composer.sendOptimistic(senderId: me)
+            return
+        }
         sending = true
         error = nil
         Task {

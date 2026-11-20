@@ -327,3 +327,52 @@ struct ReactionsSheet: View {
         }
     }
 }
+
+/// Optimistic send OS4: the red ⚠ disc where ↩ goes, opening the Not sent sheet. Always visible.
+struct UnsentDisc: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "exclamationmark")
+                .font(.system(size: 13, weight: .heavy))
+                .foregroundStyle(.dlError)
+                .frame(width: 28, height: 28)
+                .background(Color.dlErrorTint, in: Circle())
+                .overlay(Circle().stroke(Color.dlError.opacity(0.5), lineWidth: 1))
+                .frame(width: 44, height: 44)
+                .contentShape(Circle())
+        }
+        .buttonStyle(DLPressStyle(scale: 0.92))
+        .accessibilityLabel(t("emails.notSentOptions"))
+    }
+}
+
+/// OS5: why it failed, Retry (only when it can help) and Cancel.
+struct UnsentSheet: View {
+    let fail: EmailOutbox.Fail
+    let reason: String
+    let onRetry: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                Text(t("emails.notSentTitle")).font(.custom(DLFontName.literataSemiBold.name, size: 19, relativeTo: .title3))
+            } icon: {
+                Image(systemName: "exclamationmark.circle").foregroundStyle(.dlError)
+            }
+            .accessibilityAddTraits(.isHeader)
+            Text(reason).dlText(.callout).foregroundStyle(.dlInkQuiet)
+            if fail.retryable {
+                Button(t("emails.retry"), action: onRetry).buttonStyle(DLButtonStyle(.filled, fullWidth: true))
+            }
+            Button(t("emails.cancelEmail"), role: .destructive, action: onCancel).buttonStyle(DLButtonStyle(.danger, fullWidth: true))
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 24)
+        .presentationDetents([.height(260)])
+        .presentationDragIndicator(.visible)
+    }
+}
