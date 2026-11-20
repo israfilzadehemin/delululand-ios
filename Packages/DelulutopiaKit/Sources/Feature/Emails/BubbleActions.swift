@@ -45,21 +45,24 @@ struct ReactionPill: View {
 
     var body: some View {
         let p = BubbleActionsSpec.pill(reactions)
-        HStack(spacing: 3) {
-            Text(p.shown.joined()).font(.system(size: 14)).tracking(1)
-            if p.total > 1 {
-                Text(formatNumber(p.total)).font(.system(size: 12, weight: .bold).monospacedDigit()).foregroundStyle(.dlInk)
+        Button(action: onOpen) {
+            HStack(spacing: 3) {
+                Text(p.shown.joined()).font(.system(size: 14)).tracking(1)
+                if p.total > 1 {
+                    Text(formatNumber(p.total)).font(.system(size: 12, weight: .bold).monospacedDigit()).foregroundStyle(.dlInk)
+                }
             }
+            .padding(.horizontal, 8)
+            .frame(height: 26)
+            .background(mine ? Color.dlSealTint : Color.dlPaperLetter, in: Capsule())
+            .overlay(Capsule().strokeBorder(mine ? Color.dlSeal.opacity(0.5) : Color.dlLine, lineWidth: 1))
+            .shadow(color: .black.opacity(0.12), radius: 1.5, y: 1)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 8)
-        .frame(height: 26)
-        .background(mine ? Color.dlSealTint : Color.dlPaperLetter, in: Capsule())
-        .overlay(Capsule().strokeBorder(mine ? Color.dlSeal.opacity(0.5) : Color.dlLine, lineWidth: 1))
-        .shadow(color: .black.opacity(0.12), radius: 1.5, y: 1)
-        .frame(minHeight: 44)
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onOpen)
-        .onLongPressGesture(minimumDuration: BubbleActionsSpec.longPress, perform: onLong)
+        .buttonStyle(.plain)
+        // A Button and a UIKit long-press: neither takes a scroll that starts on the pill.
+        .holdToReact(onLong)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(t("emails.reactionsPill", ["list": reactions.map(\.emoji).joined(separator: " "), "n": formatNumber(p.total)]))
         .accessibilityAddTraits(.isButton)

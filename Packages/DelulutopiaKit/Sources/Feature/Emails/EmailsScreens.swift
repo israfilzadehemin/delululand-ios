@@ -584,10 +584,12 @@ private struct Bubble: View {
                         .accessibilityHidden(true)
                 }
                 .offset(x: swipe)
-                .simultaneousGesture(swipeGesture)
-                .simultaneousGesture(
-                    LongPressGesture(minimumDuration: BubbleActionsSpec.longPress, maximumDistance: BubbleActionsSpec.slop)
-                        .onEnded { _ in openLayer() }
+                .bubbleGestures(
+                    rtl: layoutDirection == .rightToLeft,
+                    legacySwipe: swipeGesture,
+                    onPan: panChanged,
+                    onPanEnded: panEnded,
+                    onLong: openLayer
                 )
                 .accessibilityActions {
                     Button(t("emails.react")) { openLayer() }
@@ -783,7 +785,25 @@ private struct Bubble: View {
         }
     }
 
-    /// RE6: horizontal only (a mostly vertical start is the scroll's); toward the column's centre —
+    /// RE6 on iOS 18+ (``SidewaysPan`` already began only on a sideways move): follow the finger
+    /// toward the column's centre, arm at 64 pt with a light tap.
+    private func panChanged(_ x: CGFloat) {
+        let next = swipeOffset(x, toward: mine ? -1 : 1)
+        let nowArmed = abs(next) >= swipeArm
+        if nowArmed, !armed { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+        armed = nowArmed
+        swipe = next
+    }
+
+    /// RE6: spring back; a finished pan that was armed starts the reply.
+    private func panEnded(_ finished: Bool) {
+        let reply = finished && armed
+        armed = false
+        withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) { swipe = 0 }
+        if reply { onReply() }
+    }
+
+    /// RE6 on iOS 17: horizontal only (a mostly vertical start is the scroll's); toward the column's centre —
     /// trailing for the friend's bubble, leading for mine (SwiftUI mirrors both in Persian); arms
     /// at 64 pt with a light tap, springs back on release.
     private var swipeGesture: some Gesture {
