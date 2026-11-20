@@ -33,7 +33,21 @@ struct MainTabView: View {
                 .tag(tab)
             }
         }
-        .environment(\.dlOpen) { route in paths[selection, default: []].append(route) }
+        .environment(\.dlOpen) { route in
+            // Universe U8: alone, starting a letter, discussion or email only explains why not.
+            if alone, route.startsNew {
+                toast = DLToastItem(t("common.noFriendNotice", ["name": backend.home.home?.universe.name ?? "Delulutopia"]))
+                return
+            }
+            paths[selection, default: []].append(route)
+        }
+        .environment(\.dlAlone, alone)
+        .environment(\.dlReplace) { route in
+            var stack = paths[selection, default: []]
+            if !stack.isEmpty { stack.removeLast() }
+            stack.append(route)
+            paths[selection] = stack
+        }
         .environment(\.dlSelectTab) { tab in
             paths[tab] = []
             selection = tab
@@ -51,6 +65,12 @@ struct MainTabView: View {
         .onChange(of: unreadTotal) { _, total in
             if let total { backend.push.setBadge(total) }
         }
+    }
+
+    /// Nobody has joined yet (Home loaded, no friend).
+    private var alone: Bool {
+        guard let h = backend.home.home else { return false }
+        return h.friend == nil
     }
 
     /// Letters, discussions and emails waiting, as the server counts the badge; nil before Home loads.

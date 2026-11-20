@@ -77,7 +77,7 @@ public struct EmailsScreen: View {
                         Image(systemName: "at").font(.system(size: 44, weight: .light)).foregroundStyle(.dlInkQuiet)
                         Text(t("emails.noEmailsYet")).dlText(.headline).foregroundStyle(.dlInk)
                         Text(t("emails.startTheFirstOne")).dlText(.subheadline).foregroundStyle(.dlInkQuiet)
-                        Button(t("emails.newEmail")) { open(.newEmail) }.buttonStyle(DLButtonStyle(.filled))
+                        Button(t("emails.newEmail")) { open(.newEmail) }.buttonStyle(DLButtonStyle(.filled)).dlNewItemButton()
                         if let line = creditsLine(home?.emailCredits) { Text(line).font(.caption).foregroundStyle(.dlInkQuiet) }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -111,6 +111,7 @@ public struct EmailsScreen: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { open(.newEmail) } label: { Image(systemName: "square.and.pencil") }
                     .accessibilityLabel(t("emails.newEmail"))
+                    .dlNewItemButton()
             }
         }
         .refreshable { await model?.loadHead() }
@@ -289,8 +290,8 @@ final class ThreadModel {
     }
 
     func react(emailId: PublicID, emoji: String, mine: Bool) async {
-        _ = mine ? try? await backend.api.unreact(target: "email", id: emailId, emoji: emoji)
-            : try? await backend.api.react(target: "email", id: emailId, emoji: emoji)
+        _ = mine ? try? await backend.api.unreact(target: "emails", id: emailId, emoji: emoji)
+            : try? await backend.api.react(target: "emails", id: emailId, emoji: emoji)
         await load()
     }
 }
@@ -706,8 +707,7 @@ private struct VideoTile: View {
 /// S14 New email (canvas "new email"): Subject, text, attachments; Send opens the new thread.
 public struct NewEmailScreen: View {
     @Environment(Backend.self) private var backend
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.dlOpen) private var open
+    @Environment(\.dlReplace) private var replace
     @State private var composer: EmailComposer?
 
     public init() {}
@@ -716,8 +716,9 @@ public struct NewEmailScreen: View {
         ScrollView {
             if let composer, composer.loaded {
                 ComposerView(composer: composer, credits: backend.home.home?.emailCredits) { sent in
-                    dismiss()
-                    open(.thread(sent.thread.id))
+                    // One path change: a dismiss and a push in the same tick left a blank page
+                    // whose back button did nothing (iOS audit F3).
+                    replace(.thread(sent.thread.id))
                 }
                 .padding(16)
             } else if composer?.failed == true {

@@ -61,7 +61,7 @@ private struct WriteForm: View {
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dlSelectTab) private var selectTab
-    @Environment(\.dlOpen) private var open
+    @Environment(\.dlReplace) private var replace
     @Environment(\.scenePhase) private var scenePhase
     @State private var editor = RichEditorState()
     @State private var recorder: VoiceRecorder?
@@ -245,8 +245,7 @@ private struct WriteForm: View {
                 lateHandled = true
                 Task {
                     if await model.keepInDraft() {
-                        dismiss()
-                        open(.write())
+                        replace(.write())
                     } else {
                         error = t("common.draftNotSaved")
                     }

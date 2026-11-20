@@ -363,7 +363,7 @@ private struct ThreadView: View {
                             if arrived {
                                 ReactionRow(d.reactions, me: meId, enabled: d.archivedAt == nil) { emoji in
                                     let mine = d.reactions.first { $0.emoji == emoji }?.userIds.contains(meId) ?? false
-                                    Task { await model.react(target: "discussion", targetId: d.id, emoji: emoji, mine: mine) }
+                                    Task { await model.react(target: "discussions", targetId: d.id, emoji: emoji, mine: mine) }
                                 }
                             }
                         }
@@ -501,7 +501,7 @@ private struct ThreadView: View {
                         .foregroundStyle(.dlNoteInkQuiet)
                     ReactionRow(c.reactions, me: meId, compact: true, enabled: !archived) { emoji in
                         let reacted = c.reactions.first { $0.emoji == emoji }?.userIds.contains(meId) ?? false
-                        Task { await model.react(target: "comment", targetId: c.id, emoji: emoji, mine: reacted) }
+                        Task { await model.react(target: "comments", targetId: c.id, emoji: emoji, mine: reacted) }
                     }
                 }
             }
