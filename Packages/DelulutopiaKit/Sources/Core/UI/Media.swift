@@ -9,13 +9,23 @@ import SwiftUI
 import UIKit
 
 /// One voice note playing at a time across the app (web media/onePlayer.ts).
+///
+/// A voice-note player's play also follows doc "Delululand — Earpiece Playback": a 0.5 s wait before
+/// the start (EP6), the proximity sensor picks earpiece or loudspeaker (EP1) and turns the screen off at
+/// the ear (EP4), taking the phone off the ear pauses (EP2), and the run's next notes follow after
+/// 0.5 s each (EP7–EP9).
 @MainActor
 @Observable
 public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
     public static let shared = OnePlayer()
 
+    /// EP6/EP9: the wait before a voice note starts, and between the notes of a run. Config-only.
+    public static let voiceDelay: Duration = .milliseconds(500)
+
     public private(set) var playing: String?
     public private(set) var loading: String?
+    /// EP6: the note waiting out its 0.5 s before it starts.
+    public private(set) var pending: String?
     public private(set) var position: TimeInterval = 0
     public private(set) var duration: TimeInterval = 0
     /// Voice Note Speed VS4: the pick kept on this phone, shared by every note.
@@ -24,19 +34,41 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
     @ObservationIgnored private var player: AVAudioPlayer?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private var files: [String: URL] = [:]
+    @ObservationIgnored private var wait: Task<Void, Never>?
+    @ObservationIgnored private var queue: [String] = []
+    @ObservationIgnored private var client: APIClient?
+    @ObservationIgnored private var proximityObserver: (any NSObjectProtocol)?
+    @ObservationIgnored private var onEar = false
 
-    public func toggle(_ url: String, client: APIClient) {
-        if playing == url {
+    /// True while an earpiece session (proximity monitoring) runs.
+    public var earpieceSession: Bool { proximityObserver != nil }
+
+    /// A voice-note player's play/pause. `next` are the run's notes after `url` (EP7).
+    public func toggle(_ url: String, next: [String] = [], client: APIClient) {
+        if playing == url || pending == url {
             pause()
             return
         }
-        Task { await play(url, client: client) }
+        self.client = client
+        cancelRun()
+        queue = next
+        if playing != nil { player?.pause(); playing = nil; ticker?.cancel() }
+        guard Earpiece.usable() else {
+            endSession()
+            Task { await play(url, client: client) }
+            return
+        }
+        startSession()
+        later(url)
     }
 
+    /// Pauses and ends the run and any earpiece session; the next play waits 0.5 s again (EP2).
     public func pause() {
+        cancelRun()
         player?.pause()
         playing = nil
         ticker?.cancel()
+        endSession()
     }
 
     /// VS5: applies at once, from the current position; AVAudioPlayer's rate keeps the pitch (VS6).
@@ -50,6 +82,16 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
         guard playing == url, let player else { return }
         player.currentTime = player.duration * fraction
         position = player.currentTime
+    }
+
+    private func later(_ url: String) {
+        pending = url
+        wait = Task { [weak self] in
+            try? await Task.sleep(for: Self.voiceDelay)
+            guard !Task.isCancelled, let self, let client = self.client else { return }
+            self.pending = nil
+            await self.play(url, client: client)
+        }
     }
 
     private func play(_ url: String, client: APIClient) async {
@@ -68,8 +110,8 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
             files[url] = target
             file = target
         }
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
-        try? AVAudioSession.sharedInstance().setActive(true)
+        // EP1: the route at the start is the sensor's word; without a session, the loudspeaker.
+        route(ear: earpieceSession && UIDevice.current.proximityState, force: true)
         guard let p = try? AVAudioPlayer(contentsOf: file) else { return }
         p.delegate = self
         p.enableRate = true
@@ -89,12 +131,91 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
         }
     }
 
-    public nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        Task { @MainActor in
-            self.playing = nil
-            self.position = 0
-            self.ticker?.cancel()
+    /// EP7–EP9: the next note of the run after 0.5 s, on the same session; else the session ends.
+    private func ended() {
+        playing = nil
+        position = 0
+        ticker?.cancel()
+        guard !queue.isEmpty else {
+            endSession()
+            return
         }
+        later(queue.removeFirst())
+    }
+
+    /// EP1: raised mid-note → earpiece in place; EP2: taken off the ear → pause.
+    private func proximityChanged() {
+        let near = UIDevice.current.proximityState
+        if near, !onEar, playing != nil || pending != nil {
+            route(ear: true)
+        } else if !near, onEar {
+            pause()
+        }
+    }
+
+    /// Earpiece = `.playAndRecord` (the receiver is its default output; needs the mic grant, EP13);
+    /// loudspeaker = the app's usual `.playback` / spoken audio.
+    private func route(ear: Bool, force: Bool = false) {
+        guard force || ear != onEar else { return }
+        onEar = ear
+        let session = AVAudioSession.sharedInstance()
+        if ear {
+            try? session.setCategory(.playAndRecord, mode: .default, options: [])
+            try? session.overrideOutputAudioPort(.none)
+        } else {
+            try? session.setCategory(.playback, mode: .spokenAudio)
+        }
+        try? session.setActive(true)
+    }
+
+    /// EP4: proximity monitoring turns the screen off at the ear (no touches) and reports near/far.
+    private func startSession() {
+        guard proximityObserver == nil else { return }
+        UIDevice.current.isProximityMonitoringEnabled = true
+        proximityObserver = NotificationCenter.default.addObserver(
+            forName: UIDevice.proximityStateDidChangeNotification, object: nil, queue: .main
+        ) { _ in
+            Task { @MainActor in OnePlayer.shared.proximityChanged() }
+        }
+    }
+
+    private func endSession() {
+        if onEar { route(ear: false) }
+        guard let observer = proximityObserver else { return }
+        NotificationCenter.default.removeObserver(observer)
+        proximityObserver = nil
+        UIDevice.current.isProximityMonitoringEnabled = false
+    }
+
+    private func cancelRun() {
+        wait?.cancel()
+        wait = nil
+        pending = nil
+        queue = []
+    }
+
+    public nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor in self.ended() }
+    }
+}
+
+/// Raise-to-listen availability (EP3, EP11, EP13).
+@MainActor
+enum Earpiece {
+    /// An iPhone (earpiece + proximity sensor), the mic already granted (the earpiece route is a
+    /// record-capable session; no new prompt, EP13), and no headset (the headset wins, EP3).
+    static func usable() -> Bool {
+        guard UIDevice.current.userInterfaceIdiom == .phone else { return false }
+        guard AVAudioApplication.shared.recordPermission == .granted else { return false }
+        let headsets: Set<AVAudioSession.Port> = [.headphones, .bluetoothA2DP, .bluetoothHFP, .bluetoothLE, .usbAudio, .airPlay, .carAudio]
+        if AVAudioSession.sharedInstance().currentRoute.outputs.contains(where: { headsets.contains($0.portType) }) { return false }
+        // A device without the sensor refuses to turn monitoring on.
+        let device = UIDevice.current
+        let was = device.isProximityMonitoringEnabled
+        device.isProximityMonitoringEnabled = true
+        let has = device.isProximityMonitoringEnabled
+        device.isProximityMonitoringEnabled = was
+        return has
     }
 }
 
@@ -104,22 +225,28 @@ public struct VoicePlayer: View {
     let url: String
     let durationMs: Int?
     let label: String
+    /// EP7: the run's notes that play on after this one.
+    let next: [String]
 
     @Environment(Backend.self) private var backend
+    @Environment(\.scenePhase) private var scenePhase
     private var player: OnePlayer { OnePlayer.shared }
 
-    public init(url: String, durationMs: Int?, label: String = t("media.voiceNoteLower")) {
+    public init(url: String, durationMs: Int?, label: String = t("media.voiceNoteLower"), next: [String] = []) {
         self.url = url
         self.durationMs = durationMs
         self.label = label
+        self.next = next
     }
 
     public var body: some View {
-        let isPlaying = player.playing == url
-        let total = isPlaying && player.duration > 0 ? player.duration : Double(durationMs ?? 0) / 1000
-        let fraction = isPlaying && total > 0 ? player.position / total : 0
+        // EP6: during the 0.5 s wait the button already shows pause; a tap cancels the start.
+        let isPlaying = player.playing == url || player.pending == url
+        let active = player.playing == url
+        let total = active && player.duration > 0 ? player.duration : Double(durationMs ?? 0) / 1000
+        let fraction = active && total > 0 ? player.position / total : 0
         HStack(spacing: 12) {
-            Button { player.toggle(url, client: backend.client) } label: {
+            Button { player.toggle(url, next: next, client: backend.client) } label: {
                 ZStack {
                     Circle().fill(.dlSeal)
                     if player.loading == url {
@@ -142,7 +269,7 @@ public struct VoicePlayer: View {
                     Capsule().fill(Color.dlLetterInk.opacity(0.15)).frame(height: 4)
                     Capsule().fill(.dlSeal).frame(width: geo.size.width * fraction, height: 4)
                     Circle().fill(.dlSeal).frame(width: 12, height: 12).offset(x: geo.size.width * fraction - 6)
-                        .opacity(isPlaying ? 1 : 0)
+                        .opacity(active ? 1 : 0)
                 }
                 .frame(maxHeight: .infinity)
                 .contentShape(Rectangle())
@@ -152,7 +279,7 @@ public struct VoicePlayer: View {
             }
             .frame(height: 24)
             .accessibilityHidden(true)
-            Text(DLTime.mediaLength(ms: Int((isPlaying ? player.position : total) * 1000)))
+            Text(DLTime.mediaLength(ms: Int((active ? player.position : total) * 1000)))
                 .font(.custom(DLFontName.manropeSemiBold.name, size: 13, relativeTo: .footnote).monospacedDigit())
                 .foregroundStyle(.dlLetterInk)
             // VS3/VS8: the speed chip, always shown; a tap moves every note to the next speed.
@@ -176,6 +303,10 @@ public struct VoicePlayer: View {
         .background(Color.dlLetterInk.opacity(0.05), in: Capsule())
         // L5: a player's track runs left to right in every language, like the phone's own players.
         .environment(\.layoutDirection, .leftToRight)
+        // The earpiece session (sensor, screen-off, call route) never outlives the screen.
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active, player.earpieceSession, player.playing == url || player.pending == url { player.pause() }
+        }
     }
 }
 

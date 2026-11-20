@@ -417,7 +417,8 @@ public struct ThreadScreen: View {
                             onReply: { composer?.pickReply(quoteOf(e)) },
                             onOpenQuote: { target in openOriginal(target, model: model, proxy: proxy) },
                             pending: pendingOf(e, unsent),
-                            onUnsent: { unsentSheet = true }
+                            onUnsent: { unsentSheet = true },
+                            voiceAfter: VoiceRun.after(oldestFirst, index: i)
                         )
                         .id(e.id)
                         .transition(bubbleTransition(e, meId: meId))
@@ -611,6 +612,8 @@ private struct Bubble: View {
     /// OS3/OS4: my provisional email while it is sending or after it failed.
     var pending: EmailOutbox.Status?
     var onUnsent: () -> Void = {}
+    /// EP7: the same sender's next voice notes in the thread, which play on after this bubble's.
+    var voiceAfter: [String] = []
 
     @Environment(Backend.self) private var backend
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -814,8 +817,14 @@ private struct Bubble: View {
                     if timeAt == .photos { chip(stamp).padding(5) }
                 }
             }
-            ForEach(audios) { a in
-                if a.expired { ExpiredVoice(durationMs: a.durationMs) } else { VoicePlayer(url: a.url, durationMs: a.durationMs) }
+            // EP7: the bubble's later notes, then the same sender's next emails, play on; expired ones
+            // (AR6) keep their slot but are left out of the run.
+            ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
+                if a.expired {
+                    ExpiredVoice(durationMs: a.durationMs)
+                } else {
+                    VoicePlayer(url: a.url, durationMs: a.durationMs, next: audios.dropFirst(i + 1).filter { !$0.expired }.map(\.url) + voiceAfter)
+                }
             }
             ForEach(videos) { v in
                 if v.expired { ExpiredBlock(kind: "video", minHeight: 110).frame(minWidth: 180) } else { VideoTile(att: v) }

@@ -369,8 +369,14 @@ private struct ThreadView: View {
                                     }
                                 }
                             }
-                            ForEach(audios) { a in
-                                if a.expired { ExpiredVoice(durationMs: a.durationMs) } else { VoicePlayer(url: a.url, durationMs: a.durationMs) }
+                            // EP7: the discussion's later voice notes play on after this one; expired ones
+                            // (AR6) keep their slot but are left out of the run.
+                            ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
+                                if a.expired {
+                                    ExpiredVoice(durationMs: a.durationMs)
+                                } else {
+                                    VoicePlayer(url: a.url, durationMs: a.durationMs, next: audios.dropFirst(i + 1).filter { !$0.expired }.map(\.url))
+                                }
                             }
                             if anyExpired { RetentionCaption(days: backend.server?.retention?.otherDays) }
                             if d.mine, !arrived {

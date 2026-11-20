@@ -410,11 +410,18 @@ private struct LetterContent: View {
                                         .padding(.top, 4)
                                     }
                                     ForEach(Array(audios.enumerated()), id: \.element.id) { i, a in
+                                        // EP7: the letter's later voice notes play on after this one; expired
+                                        // ones (AR6) keep their slot but are left out of the run.
                                         if a.expired {
                                             ExpiredVoice(durationMs: a.durationMs)
                                         } else {
-                                            VoicePlayer(url: a.url, durationMs: a.durationMs, label: audios.count > 1 ? t("letters.voiceNoteN", ["n": i + 1]) : t("letters.voiceNoteLower"))
-                                                .dlEnter(.popIn, delay: mediaDelay)
+                                            VoicePlayer(
+                                                url: a.url,
+                                                durationMs: a.durationMs,
+                                                label: audios.count > 1 ? t("letters.voiceNoteN", ["n": i + 1]) : t("letters.voiceNoteLower"),
+                                                next: audios.dropFirst(i + 1).filter { !$0.expired }.map(\.url)
+                                            )
+                                            .dlEnter(.popIn, delay: mediaDelay)
                                         }
                                     }
                                     if anyExpired { RetentionCaption(days: backend.server?.retention?.letterDays) }
