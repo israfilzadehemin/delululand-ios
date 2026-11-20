@@ -169,7 +169,14 @@ private struct ThreadCard: View {
                 ]))
                     .font(.system(size: 13))
                     .foregroundStyle(.dlInkQuiet)
-                Text(snippet).font(.system(size: 14)).foregroundStyle(.dlMailInk).lineLimit(2)
+                // Read Ticks TK10: my last email's ticks before the snippet, not before a reaction notice.
+                let ticks = fromMe && !reactionWins(row.lastReaction, count: reacted, otherActivityAt: row.lastEmailAt) ? TickStatus.of(wire: row.lastStatus) : nil
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    if let ticks {
+                        ReadTicks(status: ticks, label: t(ticks.key))
+                    }
+                    Text(snippet).font(.system(size: 14)).foregroundStyle(.dlMailInk).lineLimit(2)
+                }
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -378,7 +385,6 @@ public struct ThreadScreen: View {
         let unsent = outbox.entry(id)
         let oldestFirst = Array(model.emails.reversed()) + (unsent.map { [$0.email] } ?? [])
         let first = home?.firstCitizen
-        let myNewest = model.emails.first { $0.senderId == meId }?.id
         // RE9, RE11: "You" for my own emails, else the friend's nickname.
         let quoteName: (PublicID) -> String = { id in id == meId ? t("emails.you") : (home?.friend?.id == id ? home?.friend?.nickname ?? "" : "") }
         return ScrollViewReader { proxy in
@@ -409,7 +415,7 @@ public struct ThreadScreen: View {
                             who: Who.of(e.senderId, first: first),
                             home: home,
                             meId: meId,
-                            seen: e.id == myNewest ? e.readAt : nil,
+                            ticks: e.senderId == meId && pendingOf(e, unsent) == nil ? TickStatus.of(e) : nil,
                             quoteName: quoteName,
                             quoteWho: { Who.of($0, first: first) },
                             flash: flashId == e.id,
@@ -602,7 +608,8 @@ private struct Bubble: View {
     let who: Who
     let home: Home?
     let meId: PublicID
-    let seen: String?
+    /// Read Ticks TK5: my own email's ticks; nil for the friend's and a pending one.
+    let ticks: TickStatus?
     let quoteName: (PublicID) -> String
     let quoteWho: (PublicID) -> Who
     let flash: Bool
@@ -716,6 +723,8 @@ private struct Bubble: View {
                         quick: BubbleActionsSpec.quick(recents: backend.settings.recentEmojis),
                         isMine: isMine,
                         canCopy: !email.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                        infoRows: ReadTicksSpec.rows(email, mine: mine).count,
+                        info: AnyView(DeliveryCard(email: email, mine: mine)),
                         onPick: { e in
                             closeLayer()
                             toggle(e)
@@ -777,8 +786,9 @@ private struct Bubble: View {
             bottomTrailingRadius: 16,
             topTrailingRadius: mine ? tail : 16
         )
-        let stamp = pending == .sending ? "00:00" : pending == .failed ? t("emails.notSent")
-            : DLTime.clock(email.sentAt) + (seen.map { " · " + t("emails.seen", ["time": DLTime.clock($0)]) } ?? "")
+        let stamp = pending == .sending ? "00:00" : pending == .failed ? t("emails.notSent") : DLTime.clock(email.sentAt)
+        // TK5: the clear copy also keeps room for the ticks (16 pt + 3 pt).
+        let room = ticks == nil ? stamp : stamp + "\u{2003}\u{2003}"
         // Text written the other way round from the screen ends on the other side: the time gets its own line.
         let sameWay = ContentDirection.of(email.text).map { $0 == layoutDirection } ?? true
         let timeAt: TimeAt = !videos.isEmpty || !audios.isEmpty ? .line : !allPhotos.isEmpty ? .photos : (!email.text.isEmpty && sameWay) ? .text : .line
@@ -789,7 +799,7 @@ private struct Bubble: View {
             }
             if !email.text.isEmpty {
                 if timeAt == .text {
-                    (Text(linking: email.text) + Text("\u{2002}" + stamp).font(.system(size: 11).monospacedDigit()).foregroundStyle(Color.clear))
+                    (Text(linking: email.text) + Text("\u{2002}" + room).font(.system(size: 11).monospacedDigit()).foregroundStyle(Color.clear))
                         .font(.system(size: 16)).foregroundStyle(.dlInk).tint(.dlInk).ownText(email.text)
                         .accessibilityLabel(email.text)
                         .overlay(alignment: .bottomTrailing) { time(stamp).offset(y: -2) }
@@ -851,7 +861,16 @@ private struct Bubble: View {
         case .failed:
             Text(stamp).font(.system(size: 11, weight: .semibold)).foregroundStyle(.dlError)
         case nil:
-            Text(stamp).font(.system(size: 11).monospacedDigit()).foregroundStyle(.dlInkQuiet)
+            if let ticks {
+                HStack(spacing: 3) {
+                    Text(stamp).font(.system(size: 11).monospacedDigit()).foregroundStyle(.dlInkQuiet)
+                    ReadTicks(status: ticks)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(t(ticks.labelKey, ["time": stamp]))
+            } else {
+                Text(stamp).font(.system(size: 11).monospacedDigit()).foregroundStyle(.dlInkQuiet)
+            }
         }
     }
 
@@ -859,6 +878,13 @@ private struct Bubble: View {
         Group {
             if pending == .sending {
                 Image(systemName: "clock").font(.system(size: 11)).accessibilityLabel(t("emails.sendingStatus"))
+            } else if let ticks, pending == nil {
+                HStack(spacing: 3) {
+                    Text(stamp).font(.system(size: 11).monospacedDigit())
+                    ReadTicks(status: ticks, onMedia: true)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(t(ticks.labelKey, ["time": stamp]))
             } else {
                 Text(stamp).font(.system(size: 11, weight: pending == .failed ? .semibold : .regular).monospacedDigit())
             }

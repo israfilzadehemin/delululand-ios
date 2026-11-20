@@ -79,6 +79,9 @@ struct BubbleLayer<Copy: View>: View {
     let quick: [String]
     let isMine: (String) -> Bool
     let canCopy: Bool
+    /// Read Ticks TK6, TK7: the delivery card above the quick row, ``infoRows`` rows tall.
+    let infoRows: Int
+    let info: AnyView?
     let onPick: (String) -> Void
     let onReply: () -> Void
     let onCopy: () -> Void
@@ -97,6 +100,8 @@ struct BubbleLayer<Copy: View>: View {
         quick: [String],
         isMine: @escaping (String) -> Bool,
         canCopy: Bool,
+        infoRows: Int = 0,
+        info: AnyView? = nil,
         onPick: @escaping (String) -> Void,
         onReply: @escaping () -> Void,
         onCopy: @escaping () -> Void,
@@ -108,6 +113,8 @@ struct BubbleLayer<Copy: View>: View {
         self.quick = quick
         self.isMine = isMine
         self.canCopy = canCopy
+        self.infoRows = infoRows
+        self.info = info
         self.onPick = onPick
         self.onReply = onReply
         self.onCopy = onCopy
@@ -121,7 +128,7 @@ struct BubbleLayer<Copy: View>: View {
             let screenH = geo.size.height + geo.safeAreaInsets.top + geo.safeAreaInsets.bottom
             // Line up with the bubble's outer edge: the friend's start edge, my end edge.
             let left = mine == (direction == .rightToLeft)
-            let above: CGFloat = 52 + 10
+            let above: CGFloat = 52 + 10 + (info == nil ? 0 : CGFloat(infoRows) * 28 + 12 + 2 + 8)
             let below: CGFloat = (canCopy ? 2 * 48 : 48) + 14
             let topEdge = geo.safeAreaInsets.top + 12
             let bottomEdge = screenH - geo.safeAreaInsets.bottom - 12
@@ -134,6 +141,7 @@ struct BubbleLayer<Copy: View>: View {
                     .onTapGesture(perform: onClose)
                     .accessibilityHidden(true)
                 VStack(alignment: left == (direction == .leftToRight) ? .leading : .trailing, spacing: 0) {
+                    if let info { info.padding(.bottom, 8).opacity(shown ? 1 : 0) }
                     quickRow.padding(.bottom, 10)
                     copy()
                         .frame(width: frame.width)

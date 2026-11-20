@@ -21,6 +21,7 @@ struct TokenTests {
             (DLPalette.line, 0xD9D0C5, 0x3B3F4C),
             (DLPalette.ink, 0x33323B, 0xECE6DC),
             (DLPalette.inkQuiet, 0x48536C, 0xA3ADC4),
+            (DLPalette.tickRead, 0x1F6FB2, 0x7DB8F0),
             (DLPalette.seal, 0x202B45, 0xB4C2EA),
             (DLPalette.sealTint, 0xE4DFF0, 0x2C2A40),
             (DLPalette.onSeal, 0xFFFFFF, 0x141A2C),
