@@ -486,6 +486,8 @@ public struct ThreadRow: Codable, Sendable, Hashable, Identifiable {
     public var lastReaction: ReactionNotice?
     /// The newest email answers another (doc "Delululand — Email Replies" RE13: the ↩ prefix).
     @Default<False> public var lastIsReply: Bool
+    /// Read Ticks TK10: `sent`, `delivered` or `read` when the newest email is mine; nil otherwise.
+    public var lastStatus: String?
 }
 
 /// The quote of a reply (Email Replies RE9, RE11): the answered email's first 120 characters on one
@@ -517,6 +519,8 @@ public struct Email: Codable, Sendable, Hashable, Identifiable {
     public var senderId: PublicID
     @Default<EmptyString> public var text: String
     public var sentAt: String
+    /// Read Ticks TK2: the friend's app received it; nil until then.
+    public var deliveredAt: String?
     public var readAt: String?
     @Default<EmptyList<Att>> public var attachments: [Att]
     @Default<EmptyList<Reaction>> public var reactions: [Reaction]
@@ -530,6 +534,7 @@ public struct Email: Codable, Sendable, Hashable, Identifiable {
         senderId: PublicID,
         text: String,
         sentAt: String,
+        deliveredAt: String? = nil,
         readAt: String? = nil,
         attachments: [Att] = [],
         reactions: [Reaction] = [],
@@ -540,6 +545,7 @@ public struct Email: Codable, Sendable, Hashable, Identifiable {
         self.senderId = senderId
         self.text = text
         self.sentAt = sentAt
+        self.deliveredAt = deliveredAt
         self.readAt = readAt
         self.attachments = attachments
         self.reactions = reactions

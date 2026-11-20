@@ -26,6 +26,8 @@ public enum DLPalette {
     public static let ink = DLColorToken(0x33323B, 0xECE6DC)
     /// `--dl-ink-quiet`: times, hints, section labels (secondary label).
     public static let inkQuiet = DLColorToken(0x48536C, 0xA3ADC4)
+    /// `--dl-tick-read`: read ticks on my emails (doc "Delululand — Read Ticks" TK4).
+    public static let tickRead = DLColorToken(0x1F6FB2, 0x7DB8F0)
     /// `--dl-ink-disabled`: disabled controls (non-text use only).
     public static let inkDisabled = DLColorToken(0xA3A8B6, 0x5C6273)
     /// `--dl-ink-on-scrim`: disabled controls on the lightbox / scrim.
@@ -155,6 +157,7 @@ public extension ShapeStyle where Self == Color {
     static var dlPlaceholder: Color { DLPalette.placeholder.color }
     static var dlInk: Color { DLPalette.ink.color }
     static var dlInkQuiet: Color { DLPalette.inkQuiet.color }
+    static var dlTickRead: Color { DLPalette.tickRead.color }
     static var dlInkDisabled: Color { DLPalette.inkDisabled.color }
     static var dlSeal: Color { DLPalette.seal.color }
     static var dlSealHue: Color { DLPalette.sealHue.color }
