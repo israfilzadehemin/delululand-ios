@@ -182,35 +182,46 @@ public struct AttachmentStrip: View {
     let limits: StripLimits?
     /// Attachment Retention AR13: the days the notice under the strip names; nil shows none.
     let retentionDays: Int?
+    /// Emails: the attachments grouped by type in the add buttons' order (photos, voice and audio,
+    /// video), each under a label with its count, the retention notice centred. The composer puts
+    /// the add buttons above (web layout="stacked"). False: one row (letters, discussions).
+    let stacked: Bool
 
     public init(
         _ attachments: Attachments,
         limits: StripLimits? = nil,
         retentionDays: Int? = nil,
+        stacked: Bool = false,
         onRemove: @escaping (Attachments.Item) -> Void,
         onOpen: @escaping (Attachments.Item) -> Void = { _ in }
     ) {
         self.attachments = attachments
         self.limits = limits
         self.retentionDays = retentionDays
+        self.stacked = stacked
         self.onRemove = onRemove
         self.onOpen = onOpen
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if !attachments.items.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(attachments.items) { item in
-                            tile(item).transition(.scale.combined(with: .opacity))
+            if stacked {
+                ForEach(StripGroup.allCases, id: \.self) { group in
+                    let list = attachments.items.filter { group.holds($0.kind) }
+                    if !list.isEmpty {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(t(group.label, ["n": list.count]))
+                                .dlText(.footnoteStrong)
+                                .foregroundStyle(.dlInkQuiet)
+                                .padding(.horizontal, 4)
+                            row(list)
                         }
                     }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 2)
                 }
+            } else if !attachments.items.isEmpty {
+                row(attachments.items)
             }
-            RetentionNotice(days: retentionDays)
+            RetentionNotice(days: retentionDays, centered: stacked)
             if let text = limits?.blockText {
                 // CM-7: the error banner above Send.
                 HStack(alignment: .top, spacing: 10) {
@@ -244,6 +255,18 @@ public struct AttachmentStrip: View {
             }
         }
         .animation(DLMotion.easeOut(0.2), value: attachments.items)
+    }
+
+    private func row(_ items: [Attachments.Item]) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(items) { item in
+                    tile(item).transition(.scale.combined(with: .opacity))
+                }
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 2)
+        }
     }
 
     @ViewBuilder
@@ -311,6 +334,28 @@ public struct AttachmentStrip: View {
             .buttonStyle(.plain)
             .offset(x: 14, y: -14)
             .accessibilityLabel(t(item.kind == "audio" ? "media.removeVoiceNote" : item.kind == "doodle" ? "media.removeDoodle" : item.kind == "video" ? "media.removeVideo" : "media.removeThePhoto"))
+        }
+    }
+}
+
+/// The type groups of the stacked strip, in the add buttons' order.
+private enum StripGroup: CaseIterable {
+    case photos, audio, video
+
+    var label: String {
+        switch self {
+        case .photos: "media.groupPhotos"
+        case .audio: "media.groupAudio"
+        case .video: "media.groupVideo"
+        }
+    }
+
+    /// Voice notes and audio files are one kind on the wire; anything else shows as audio, as in the row.
+    func holds(_ kind: String) -> Bool {
+        switch self {
+        case .photos: kind == "photo" || kind == "doodle"
+        case .audio: kind != "photo" && kind != "doodle" && kind != "video"
+        case .video: kind == "video"
         }
     }
 }

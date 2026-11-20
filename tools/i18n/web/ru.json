@@ -949,5 +949,8 @@
  "retention.removed_one": "Вложения удаляются через {n} день после отправки",
  "retention.removed_few": "Вложения удаляются через {n} дня после отправки",
  "retention.removed_many": "Вложения удаляются через {n} дней после отправки",
- "retention.removed_other": "Вложения удаляются через {n} дня после отправки"
+ "retention.removed_other": "Вложения удаляются через {n} дня после отправки",
+ "media.groupAudio": "Аудио · {n}",
+ "media.groupPhotos": "Фото · {n}",
+ "media.groupVideo": "Видео · {n}"
 }

@@ -326,11 +326,7 @@ struct ComposerView: View {
             }
             .font(.caption)
             if let atts {
-                AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.otherDays) { item in
-                    let index = atts.items.firstIndex(of: item) ?? 0
-                    atts.remove(item.key)
-                    if let a = item.att { composer.deleteAttachment(a.id) { atts.restore(item, at: index) } }
-                }
+                // The add buttons (and Send) first; the attachments under them, grouped by type.
                 HStack(spacing: 0) {
                     if let recorder {
                         AddBar(
@@ -361,6 +357,11 @@ struct ComposerView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(.dlMailBlue)
                         .disabled(!canSend)
+                }
+                AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.otherDays, stacked: true) { item in
+                    let index = atts.items.firstIndex(of: item) ?? 0
+                    atts.remove(item.key)
+                    if let a = item.att { composer.deleteAttachment(a.id) { atts.restore(item, at: index) } }
                 }
             }
             if let error { Text(error).dlText(.footnote).foregroundStyle(.dlError) }
@@ -458,12 +459,9 @@ struct DockedComposerView: View {
         VStack(spacing: 6) {
             if tray, let atts {
                 VStack(alignment: .leading, spacing: 6) {
-                    AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.otherDays) { item in
-                        let index = atts.items.firstIndex(of: item) ?? 0
-                        atts.remove(item.key)
-                        if let a = item.att { composer.deleteAttachment(a.id) { atts.restore(item, at: index) } }
-                    }
+                    // The add buttons first, centred; the attachments under them, grouped by type.
                     HStack(spacing: 0) {
+                        Spacer(minLength: 0)
                         if let recorder {
                             AddBar(
                                 attachments: atts,
@@ -485,6 +483,11 @@ struct DockedComposerView: View {
                         .accessibilityLabel(hasVideo ? t("media.videoAttachedOnePerEmail") : t("media.pickAVideo"))
                         Spacer(minLength: 0)
                     }
+                    AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.otherDays, stacked: true) { item in
+                        let index = atts.items.firstIndex(of: item) ?? 0
+                        atts.remove(item.key)
+                        if let a = item.att { composer.deleteAttachment(a.id) { atts.restore(item, at: index) } }
+                    }
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -500,18 +503,22 @@ struct DockedComposerView: View {
                 ReplyStrip(quote: q, name: quoteName(q.senderId), who: quoteWho(q.senderId)) { withAnimation(motion) { composer.cancelReply() } }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            HStack(spacing: 10) {
-                if open {
-                    Text("\(composer.text.count) / \(emailMax)").monospacedDigit()
-                        .foregroundStyle(composer.text.count >= emailMax ? Color.dlError : Color.dlInkQuiet)
-                        .transition(.opacity)
-                }
-                if let line = creditsLine(shown) {
-                    Text(line).foregroundStyle(noCredits ? Color.dlError : Color.dlInkQuiet)
-                }
+            // The credits, centred on their own line; open, the counter follows, start-aligned.
+            if let line = creditsLine(shown) {
+                Text(line)
+                    .font(.system(size: 12))
+                    .foregroundStyle(noCredits ? Color.dlError : Color.dlInkQuiet)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
             }
-            .font(.system(size: 12))
-            .frame(maxWidth: .infinity)
+            if open {
+                Text("\(composer.text.count) / \(emailMax)").monospacedDigit()
+                    .font(.system(size: 12))
+                    .foregroundStyle(composer.text.count >= emailMax ? Color.dlError : Color.dlInkQuiet)
+                    .padding(.horizontal, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .transition(.opacity)
+            }
             HStack(alignment: .bottom, spacing: 8) {
                 Button {
                     // Attaching is not typing (EB15): opening the tray puts the keyboard away.

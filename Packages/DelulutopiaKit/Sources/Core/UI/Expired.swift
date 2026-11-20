@@ -141,18 +141,21 @@ public struct ExpiredVoice: View {
 /// older API): nothing.
 public struct RetentionNotice: View {
     let days: Int?
+    let centered: Bool
 
-    public init(days: Int?) {
+    public init(days: Int?, centered: Bool = false) {
         self.days = days
+        self.centered = centered
     }
 
     public var body: some View {
         if let days {
             HStack(spacing: 6) {
                 Image(systemName: "hourglass").font(.system(size: 12, weight: .semibold))
-                Text(tn("retention.kept", days)).dlText(.footnoteStrong)
+                Text(tn("retention.kept", days)).dlText(.footnoteStrong).multilineTextAlignment(centered ? .center : .leading)
             }
             .foregroundStyle(.dlInkQuiet)
+            .frame(maxWidth: centered ? .infinity : nil)
         }
     }
 }

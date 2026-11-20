@@ -931,5 +931,8 @@
  "retention.kept_one": "Ekler {n} gün saklanır",
  "retention.kept_other": "Ekler {n} gün saklanır",
  "retention.removed_one": "Ekler gönderildikten {n} gün sonra silinir",
- "retention.removed_other": "Ekler gönderildikten {n} gün sonra silinir"
+ "retention.removed_other": "Ekler gönderildikten {n} gün sonra silinir",
+ "media.groupAudio": "Ses · {n}",
+ "media.groupPhotos": "Fotoğraf · {n}",
+ "media.groupVideo": "Video · {n}"
 }

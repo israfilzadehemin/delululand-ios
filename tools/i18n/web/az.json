@@ -931,5 +931,8 @@
  "retention.kept_one": "Əlavələr {n} gün saxlanır",
  "retention.kept_other": "Əlavələr {n} gün saxlanır",
  "retention.removed_one": "Əlavələr göndəriləndən {n} gün sonra silinir",
- "retention.removed_other": "Əlavələr göndəriləndən {n} gün sonra silinir"
+ "retention.removed_other": "Əlavələr göndəriləndən {n} gün sonra silinir",
+ "media.groupAudio": "Səs · {n}",
+ "media.groupPhotos": "Foto · {n}",
+ "media.groupVideo": "Video · {n}"
 }
