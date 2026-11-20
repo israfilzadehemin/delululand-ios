@@ -7,6 +7,9 @@ public struct DLField: View {
         case text
         /// Entry keys: monospaced, centred, capitals, no autocorrection.
         case key
+        /// Usernames: kept as typed — no capitalisation, no autocorrection (iOS audit F21; the
+        /// modifiers set here win over any set by the caller).
+        case username
     }
 
     let label: String
@@ -60,8 +63,8 @@ public struct DLField: View {
             .dlText(kind == .key ? .key : .input)
             .foregroundStyle(.dlInk)
             .multilineTextAlignment(kind == .key ? .center : .leading)
-            .textInputAutocapitalization(kind == .key ? .characters : .sentences)
-            .autocorrectionDisabled(kind == .key)
+            .textInputAutocapitalization(kind == .key ? .characters : kind == .username ? .never : .sentences)
+            .autocorrectionDisabled(kind != .text)
             .padding(.horizontal, 16)
             .background(.dlCell, in: RoundedRectangle(cornerRadius: DLRadius.field, style: .continuous))
             .overlay {

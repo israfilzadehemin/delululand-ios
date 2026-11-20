@@ -83,9 +83,9 @@ public struct DLStrongLink: View {
     public var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.custom(DLFontName.manropeBold.name, size: 14, relativeTo: .subheadline))
-                .underline()
-                .foregroundStyle(.dlInk)
+                // Canvas: weight 800 in seal navy, no underline (iOS audit F39).
+                .font(.custom(DLFontName.manropeExtraBold.name, size: 15, relativeTo: .subheadline))
+                .foregroundStyle(.dlSeal)
                 .frame(minHeight: 44)
                 .contentShape(Rectangle())
         }

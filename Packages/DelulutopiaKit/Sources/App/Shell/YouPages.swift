@@ -52,7 +52,7 @@ struct ProfileScreen: View {
                             Button(t("profile.keepIt"), role: .cancel) {}
                         } message: { Text(t("profile.yourInitialsShowInsteadFor", ["friend": friend])) }
                     }
-                    DLField(t("profile.username"), text: $username)
+                    DLField(t("profile.username"), text: $username, kind: .username)
                     DLField(t("settings.name"), text: $first)
                     DLField(t("profile.surname"), text: $last)
                     DLTimeZoneField(zone: zone) { zone = $0 }
