@@ -51,6 +51,7 @@ public struct LettersScreen: View {
                         }
                 }
                 .accessibilityLabel(draft ? t("letters.continueYourDraft") : t("letters.writeALetter"))
+                .dlNewItemButton()
             }
         }
         .refreshable { await store.loadHead() }
@@ -83,7 +84,9 @@ private struct LettersContent: View {
                     }
                 } else {
                     let pairs = stride(from: 0, to: rows.count, by: 2).map { Array(rows[$0 ..< min($0 + 2, rows.count)]) }
-                    ForEach(Array(pairs.enumerated()), id: \.element.first!.id) { i, pair in
+                    // Keyed by both letters: keyed by the first alone, a prepended letter shifted every
+                    // pair onto a stale row and showed a letter twice (iOS audit F5).
+                    ForEach(Array(pairs.enumerated()), id: \.element.pairKey) { i, pair in
                         HStack(alignment: .top, spacing: 12) {
                             ForEach(Array(pair.enumerated()), id: \.element.id) { j, row in
                                 Thumb(row: row, now: now, friendName: friendName, who: Who.of(senderOf(row), first: first), index: i * 2 + j)
@@ -112,6 +115,8 @@ private struct LettersContent: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
         }
+        // One scroll view per mode: switching rebuilds it instead of reusing thumbnail cells as rows.
+        .id(list)
         .environment(\.dlFirstCitizen, first)
         .task {
             try? await Task.sleep(for: .seconds(1))
@@ -422,8 +427,15 @@ private struct EmptyLetters: View {
             .dlEnter(.rise, delay: 0.08)
             Button(draft ? t("letters.continueYourDraft") : t("letters.writeALetter"), action: onWrite)
                 .buttonStyle(DLButtonStyle(.filled))
+                .dlNewItemButton()
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
+
+
+private extension Array where Element == LetterRow {
+    /// A thumbnail row's identity: both letters' ids (F5).
+    var pairKey: String { map(\.id).joined(separator: "|") }
 }

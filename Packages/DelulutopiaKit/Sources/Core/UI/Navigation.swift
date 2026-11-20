@@ -52,6 +52,9 @@ public enum AppTab: String, CaseIterable, Identifiable, Sendable {
 public extension EnvironmentValues {
     /// Opens a route on the current tab's stack.
     @Entry var dlOpen: @MainActor (AppRoute) -> Void = { _ in }
+    /// Replaces the top route of the current tab's stack in one step (pop + push together, so the
+    /// stack never animates through a half-built state — e.g. New email → its thread after Send).
+    @Entry var dlReplace: @MainActor (AppRoute) -> Void = { _ in }
     /// Switches tab (and pops it to its root when `root` is set).
     @Entry var dlSelectTab: @MainActor (AppTab) -> Void = { _ in }
     /// Shows a toast above the tab bar.
@@ -60,6 +63,36 @@ public extension EnvironmentValues {
     @Entry var dlFirstCitizen: PublicID? = nil
     /// The universe's name, wherever the web says "Delulutopia" (Universe C48).
     @Entry var dlBrand: String = "Delulutopia"
+    /// The creator is alone in the universe (Universe U8): new letters, discussions and emails are off.
+    @Entry var dlAlone: Bool = false
+}
+
+public extension AppRoute {
+    /// A route that starts something new for the friend (blocked while nobody has joined, U8).
+    var startsNew: Bool {
+        switch self {
+        case let .write(editId, replyTo): editId == nil && replyTo == nil
+        case let .composeDiscussion(editId): editId == nil
+        case .newEmail: true
+        default: false
+        }
+    }
+}
+
+public extension View {
+    /// Greys a new-item button while the creator is alone (A-Create-alone). The tap still reaches
+    /// `dlOpen`, which answers with the "Nobody to write to yet" toast instead of opening.
+    func dlNewItemButton() -> some View { modifier(DLNewItemDim()) }
+}
+
+private struct DLNewItemDim: ViewModifier {
+    @Environment(\.dlAlone) private var alone
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(alone ? 0.4 : 1)
+            .accessibilityHint(alone ? t("common.noFriend") : "")
+    }
 }
 
 public extension View {

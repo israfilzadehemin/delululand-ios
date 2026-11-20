@@ -281,6 +281,10 @@ struct ComposerView: View {
                     .accessibilityLabel(hasVideo ? t("media.videoAttachedOnePerEmail") : t("media.pickAVideo"))
                     Spacer()
                     Button(sending ? t("common.sending") : t("common.send")) { send() }
+                        // Never let the tool row squeeze the label into one letter per line (F4).
+                        .lineLimit(1)
+                        .fixedSize()
+                        .layoutPriority(1)
                         .buttonStyle(.borderedProminent)
                         .tint(.dlMailBlue)
                         .disabled(!canSend)

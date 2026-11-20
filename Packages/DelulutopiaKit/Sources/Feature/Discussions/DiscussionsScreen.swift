@@ -114,11 +114,13 @@ public struct DiscussionsScreen: View {
                         } else {
                             Text(t("discussions.noDiscussionsYet")).dlText(.headline).foregroundStyle(.dlInk)
                             Text(t("discussions.startTheFirstOne")).dlText(.subheadline).foregroundStyle(.dlInkQuiet)
-                            Button(startLabel) { open(.composeDiscussion(editId: nil)) }.buttonStyle(DLButtonStyle(.filled))
+                            Button(startLabel) { open(.composeDiscussion(editId: nil)) }.buttonStyle(DLButtonStyle(.filled)).dlNewItemButton()
                         }
                         Spacer()
                     }
                     .padding(16)
+                    // Fill the screen so the paper background reaches the edges (iOS audit F7).
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     TimelineView(.periodic(from: .now, by: 1)) { _ in
                         list(model: model, rows: rows, now: DLTime.now)
@@ -144,6 +146,7 @@ public struct DiscussionsScreen: View {
                             .overlay(alignment: .topTrailing) { if !draftEmpty { DLNewDot().offset(x: 4, y: -2) } }
                     }
                     .accessibilityLabel(startLabel)
+                    .dlNewItemButton()
                 }
             }
         }

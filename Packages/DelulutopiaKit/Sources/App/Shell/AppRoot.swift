@@ -27,10 +27,17 @@ public struct AppRoot: View {
 
     public var body: some View {
         let lang = I18n.shared.lang
-        content
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if let line = backend.testBanner { DLTestBanner(line) }
+        // The TEST line sits above the whole app rather than in a top safe-area inset, so navigation
+        // bars, back buttons and toolbar items lay out below it instead of under it.
+        VStack(spacing: 0) {
+            if let line = backend.testBanner {
+                DLTestBanner(line).background(Color.dlSeal.ignoresSafeArea(edges: .top))
             }
+            content
+                // UIKit-backed lists keep the semantic direction they were built with; rebuilding the
+                // tree when the direction flips stops a Persian → LTR switch leaving pages mirrored.
+                .id(lang.rtl)
+        }
             // L5: Persian lays out right to left; L4: system pickers and formatters follow the language.
             .environment(\.layoutDirection, lang.rtl ? .rightToLeft : .leftToRight)
             .environment(\.locale, lang.locale)
