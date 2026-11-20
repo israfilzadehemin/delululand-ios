@@ -7,6 +7,7 @@ import DLNetwork
 import Observation
 import SwiftUI
 import UIKit
+import os
 
 /// One voice note playing at a time across the app (web media/onePlayer.ts).
 ///
@@ -56,6 +57,20 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
         guard Earpiece.usable() else {
             endSession()
             Task { await play(url, client: client) }
+            return
+        }
+        // EP13 (revised 20 Nov): the receiver route is a record-capable session, so a phone that was
+        // never asked for the mic asks once, here, while the phone is still in hand. Denied still
+        // works: the route plays, the unused input just records silence.
+        if AVAudioApplication.shared.recordPermission == .undetermined {
+            pending = url
+            wait = Task { [weak self] in
+                let granted = await AVAudioApplication.requestRecordPermission()
+                Earpiece.log.info("mic asked: granted=\(granted)")
+                guard !Task.isCancelled, let self else { return }
+                self.startSession()
+                self.later(url)
+            }
             return
         }
         startSession()
@@ -146,6 +161,7 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
     /// EP1: raised mid-note → earpiece in place; EP2: taken off the ear → pause.
     private func proximityChanged() {
         let near = UIDevice.current.proximityState
+        Earpiece.log.info("proximity near=\(near) onEar=\(self.onEar) playing=\(self.playing != nil) pending=\(self.pending != nil)")
         if near, !onEar, playing != nil || pending != nil {
             route(ear: true)
         } else if !near, onEar {
@@ -159,19 +175,25 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
         guard force || ear != onEar else { return }
         onEar = ear
         let session = AVAudioSession.sharedInstance()
-        if ear {
-            try? session.setCategory(.playAndRecord, mode: .default, options: [])
-            try? session.overrideOutputAudioPort(.none)
-        } else {
-            try? session.setCategory(.playback, mode: .spokenAudio)
+        do {
+            if ear {
+                try session.setCategory(.playAndRecord, mode: .default, options: [])
+                try session.overrideOutputAudioPort(.none)
+            } else {
+                try session.setCategory(.playback, mode: .spokenAudio)
+            }
+            try session.setActive(true)
+        } catch {
+            Earpiece.log.error("route ear=\(ear) failed: \(error.localizedDescription)")
         }
-        try? session.setActive(true)
+        Earpiece.log.info("route ear=\(ear) outputs=\(session.currentRoute.outputs.map(\.portType.rawValue).joined(separator: ","))")
     }
 
     /// EP4: proximity monitoring turns the screen off at the ear (no touches) and reports near/far.
     private func startSession() {
         guard proximityObserver == nil else { return }
         UIDevice.current.isProximityMonitoringEnabled = true
+        Earpiece.log.info("session start, monitoring=\(UIDevice.current.isProximityMonitoringEnabled)")
         proximityObserver = NotificationCenter.default.addObserver(
             forName: UIDevice.proximityStateDidChangeNotification, object: nil, queue: .main
         ) { _ in
@@ -199,23 +221,26 @@ public final class OnePlayer: NSObject, AVAudioPlayerDelegate {
     }
 }
 
-/// Raise-to-listen availability (EP3, EP11, EP13).
+/// Raise-to-listen availability (EP3, EP11).
 @MainActor
 enum Earpiece {
-    /// An iPhone (earpiece + proximity sensor), the mic already granted (the earpiece route is a
-    /// record-capable session; no new prompt, EP13), and no headset (the headset wins, EP3).
+    /// Console: subsystem com.delulutopia.app, category earpiece.
+    nonisolated static let log = Logger(subsystem: "com.delulutopia.app", category: "earpiece")
+
+    /// An iPhone (every iPhone has the earpiece and the proximity sensor) with no headset connected
+    /// (the headset wins, EP3).
     static func usable() -> Bool {
-        guard UIDevice.current.userInterfaceIdiom == .phone else { return false }
-        guard AVAudioApplication.shared.recordPermission == .granted else { return false }
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            log.info("off: not a phone")
+            return false
+        }
         let headsets: Set<AVAudioSession.Port> = [.headphones, .bluetoothA2DP, .bluetoothHFP, .bluetoothLE, .usbAudio, .airPlay, .carAudio]
-        if AVAudioSession.sharedInstance().currentRoute.outputs.contains(where: { headsets.contains($0.portType) }) { return false }
-        // A device without the sensor refuses to turn monitoring on.
-        let device = UIDevice.current
-        let was = device.isProximityMonitoringEnabled
-        device.isProximityMonitoringEnabled = true
-        let has = device.isProximityMonitoringEnabled
-        device.isProximityMonitoringEnabled = was
-        return has
+        let outputs = AVAudioSession.sharedInstance().currentRoute.outputs
+        if let h = outputs.first(where: { headsets.contains($0.portType) }) {
+            log.info("off: headset \(h.portType.rawValue)")
+            return false
+        }
+        return true
     }
 }
 
