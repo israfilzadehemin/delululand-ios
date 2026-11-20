@@ -506,6 +506,29 @@ public struct Email: Codable, Sendable, Hashable, Identifiable {
     @Default<EmptyList<Reaction>> public var reactions: [Reaction]
     /// The email this one answers (RE11); nil for a plain email.
     public var replyTo: EmailQuote?
+
+    /// Optimistic send (OS3): the provisional bubble built on the device.
+    public init(
+        id: PublicID,
+        threadId: PublicID,
+        senderId: PublicID,
+        text: String,
+        sentAt: String,
+        readAt: String? = nil,
+        attachments: [Att] = [],
+        reactions: [Reaction] = [],
+        replyTo: EmailQuote? = nil
+    ) {
+        self.id = id
+        self.threadId = threadId
+        self.senderId = senderId
+        self.text = text
+        self.sentAt = sentAt
+        self.readAt = readAt
+        self.attachments = attachments
+        self.reactions = reactions
+        self.replyTo = replyTo
+    }
 }
 
 public struct EmailList: Codable, Sendable, Hashable {

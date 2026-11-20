@@ -309,6 +309,12 @@ public struct ThreadScreen: View {
     @State private var olderAnchor: PublicID?
     /// RE12: the original flashed after a jump.
     @State private var flashId: PublicID?
+    /// Optimistic send (OS3–OS6): the outbox, the Not sent sheet, and the emails that replace a
+    /// provisional bubble (they do not grow in a second time).
+    @State private var outbox = EmailOutbox.shared
+    @State private var unsentSheet = false
+    @State private var quiet: Set<PublicID> = []
+    @State private var listener: UUID?
 
     public init(id: PublicID) {
         self.id = id
@@ -342,23 +348,35 @@ public struct ThreadScreen: View {
             if model == nil {
                 model = ThreadModel(backend: backend, id: id)
                 model?.start()
-                let c = EmailComposer(key: String(id), backend: backend)
+                let c = EmailComposer(key: String(id), backend: backend, outbox: outbox)
                 composer = c
                 await c.load()
             } else {
                 model?.start()
             }
+            if listener == nil {
+                listener = outbox.listen { threadId, r in
+                    guard threadId == id, case let .sent(email, _) = r else { return }
+                    quiet.insert(email.id)
+                    sentId = email.id
+                    model?.sent(email)
+                }
+            }
         }
         .onDisappear {
             model?.stop()
             composer?.close()
+            if let listener { outbox.unlisten(listener) }
+            listener = nil
         }
     }
 
     /// The emails as chat bubbles (doc "Delululand — Email Bubbles"; web ThreadView): oldest at the
     /// top (EB3), opening at the newest, with the reply bar docked at the bottom (EB8).
     private func thread(_ model: ThreadModel, home: Home?, meId: PublicID) -> some View {
-        let oldestFirst = Array(model.emails.reversed())
+        // OS3: my email in the air or failed is the newest, drawn before the server has it.
+        let unsent = outbox.entry(id)
+        let oldestFirst = Array(model.emails.reversed()) + (unsent.map { [$0.email] } ?? [])
         let first = home?.firstCitizen
         let myNewest = model.emails.first { $0.senderId == meId }?.id
         // RE9, RE11: "You" for my own emails, else the friend's nickname.
@@ -397,6 +415,8 @@ public struct ThreadScreen: View {
                             flash: flashId == e.id,
                             onReact: { emoji, mine in Task { await model.react(emailId: e.id, emoji: emoji, mine: mine) } },
                             onReply: { composer?.pickReply(quoteOf(e)) },
+                            pending: unsent?.email.id == e.id ? unsent?.status : nil,
+                            onUnsent: { unsentSheet = true },
                             onOpenQuote: { target in
                                 Task {
                                     guard await model.ensureLoaded(target) else { return }
@@ -409,9 +429,10 @@ public struct ThreadScreen: View {
                             }
                         )
                         .id(e.id)
-                        .transition(.asymmetric(
+                        .transition(quiet.contains(e.id) ? .identity : .asymmetric(
                             insertion: .scale(scale: 0.92, anchor: e.senderId == meId ? .bottomTrailing : .bottomLeading).combined(with: .opacity),
-                            removal: .opacity
+                            // OS6: a cancelled bubble collapses away.
+                            removal: e.id.hasPrefix("local-") ? .scale(scale: 0.92, anchor: .bottomTrailing).combined(with: .opacity) : .opacity
                         ))
                     }
                     Color.clear.frame(height: 1).id("bottom")
@@ -421,6 +442,7 @@ public struct ThreadScreen: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .animation(reduceMotion ? nil : .snappy(duration: 0.26), value: model.emails.first?.id)
+                .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: unsent?.email.id)
             }
             .defaultScrollAnchor(.bottom)
             .scrollDismissesKeyboard(.interactively)
@@ -475,6 +497,27 @@ public struct ThreadScreen: View {
                     proxy.scrollTo(a, anchor: .top)
                 }
             }
+            .onChange(of: unsent?.email.id) { _, local in
+                // EB10: my own send always scrolls to it.
+                guard local != nil else { return }
+                withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo("bottom", anchor: .bottom) }
+            }
+            .sheet(isPresented: Binding(get: { unsentSheet && unsent?.status == .failed }, set: { unsentSheet = $0 })) {
+                if let unsent, let fail = unsent.fail {
+                    UnsentSheet(
+                        fail: fail,
+                        reason: unsentReason(fail, credits: home?.emailCredits),
+                        onRetry: {
+                            unsentSheet = false
+                            outbox.retry(id)
+                        },
+                        onCancel: {
+                            unsentSheet = false
+                            outbox.cancel(id)
+                        }
+                    )
+                }
+            }
             .onChange(of: model.emails.first?.id) { _, newest in
                 guard let newest else { return }
                 // EB10: at the bottom (or my own send) follow the newest; scrolled up, the pill says so.
@@ -484,6 +527,20 @@ public struct ThreadScreen: View {
                     withAnimation(reduceMotion ? nil : .snappy) { newBelow = true }
                 }
             }
+        }
+    }
+
+    /// OS5: the sheet's reason line.
+    private func unsentReason(_ fail: EmailOutbox.Fail, credits: EmailCredits?) -> String {
+        switch fail.kind {
+        case .offline: return t("emails.noConnection")
+        case .timeout: return t("emails.noAnswer")
+        case .server: return t("emails.serverError")
+        case .credits:
+            var c = credits
+            c?.left = 0
+            return creditsLine(c) ?? t("emails.serverError")
+        case .refused: return fail.message.isEmpty ? t("common.newerVersion") : fail.message
         }
     }
 
@@ -537,6 +594,9 @@ private struct Bubble: View {
     let onReact: (String, Bool) -> Void
     let onReply: () -> Void
     let onOpenQuote: (PublicID) -> Void
+    /// OS3/OS4: my provisional email while it is sending or after it failed.
+    var pending: EmailOutbox.Status?
+    var onUnsent: () -> Void = {}
 
     @Environment(Backend.self) private var backend
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -584,18 +644,23 @@ private struct Bubble: View {
                         .accessibilityHidden(true)
                 }
                 .offset(x: swipe)
+                // OS3: nothing to reply to or react on until the server has it.
                 .bubbleGestures(
                     rtl: layoutDirection == .rightToLeft,
                     legacySwipe: swipeGesture,
-                    onPan: panChanged,
-                    onPanEnded: panEnded,
-                    onLong: openLayer
+                    onPan: { if pending == nil { panChanged($0) } },
+                    onPanEnded: { if pending == nil { panEnded($0) } },
+                    onLong: { if pending == nil { openLayer() } }
                 )
                 .accessibilityActions {
-                    Button(t("emails.react")) { openLayer() }
-                    Button(t("emails.reply")) { onReply() }
-                    if !email.text.isEmpty {
-                        Button(t("emails.copyText")) { copyText() }
+                    if pending == nil {
+                        Button(t("emails.react")) { openLayer() }
+                        Button(t("emails.reply")) { onReply() }
+                        if !email.text.isEmpty {
+                            Button(t("emails.copyText")) { copyText() }
+                        }
+                    } else if pending == .failed {
+                        Button(t("emails.notSentOptions")) { onUnsent() }
                     }
                 }
                 // BA7: the pill hangs 15 pt below the outer edge, 10 pt in.
@@ -609,7 +674,11 @@ private struct Bubble: View {
                 .animation(reduceMotion ? nil : .spring(response: 0.26, dampingFraction: 0.6), value: reacted)
                 // BA2: the ↩ disc on the free side, 4 pt from the bubble, bottom-aligned.
                 .overlay(alignment: mine ? .bottomLeading : .bottomTrailing) {
-                    ReplyDisc(action: onReply).offset(x: mine ? -40 : 40)
+                    switch pending {
+                    case .failed: UnsentDisc(action: onUnsent).offset(x: mine ? -40 : 40)
+                    case .sending: EmptyView()
+                    case nil: ReplyDisc(action: onReply).offset(x: mine ? -40 : 40)
+                    }
                 }
                 .overlay(alignment: .top) {
                     if copied {
@@ -689,7 +758,8 @@ private struct Bubble: View {
             bottomTrailingRadius: 16,
             topTrailingRadius: mine ? tail : 16
         )
-        let stamp = DLTime.clock(email.sentAt) + (seen.map { " · " + t("emails.seen", ["time": DLTime.clock($0)]) } ?? "")
+        let stamp = pending == .sending ? "00:00" : pending == .failed ? t("emails.notSent")
+            : DLTime.clock(email.sentAt) + (seen.map { " · " + t("emails.seen", ["time": DLTime.clock($0)]) } ?? "")
         // Text written the other way round from the screen ends on the other side: the time gets its own line.
         let sameWay = ContentDirection.of(email.text).map { $0 == layoutDirection } ?? true
         let timeAt: TimeAt = !videos.isEmpty || !audios.isEmpty ? .line : !photos.isEmpty ? .photos : (!email.text.isEmpty && sameWay) ? .text : .line
@@ -738,16 +808,30 @@ private struct Bubble: View {
         .contentShape(shape)
     }
 
-    private func time(_ stamp: String) -> some View {
-        Text(stamp).font(.system(size: 11).monospacedDigit()).foregroundStyle(.dlInkQuiet)
+    /// BA1, and OS3/OS4: a clock while sending, "Not sent" in red after a failure.
+    @ViewBuilder private func time(_ stamp: String) -> some View {
+        switch pending {
+        case .sending:
+            Image(systemName: "clock").font(.system(size: 11)).foregroundStyle(.dlInkQuiet)
+                .accessibilityLabel(t("emails.sendingStatus"))
+        case .failed:
+            Text(stamp).font(.system(size: 11, weight: .semibold)).foregroundStyle(.dlError)
+        case nil:
+            Text(stamp).font(.system(size: 11).monospacedDigit()).foregroundStyle(.dlInkQuiet)
+        }
     }
 
     private func chip(_ stamp: String) -> some View {
-        Text(stamp)
-            .font(.system(size: 11).monospacedDigit())
-            .foregroundStyle(.white)
-            .padding(.horizontal, 6).padding(.vertical, 1)
-            .background(Color(red: 20 / 255, green: 22 / 255, blue: 30 / 255).opacity(0.58), in: Capsule())
+        Group {
+            if pending == .sending {
+                Image(systemName: "clock").font(.system(size: 11)).accessibilityLabel(t("emails.sendingStatus"))
+            } else {
+                Text(stamp).font(.system(size: 11, weight: pending == .failed ? .semibold : .regular).monospacedDigit())
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 6).padding(.vertical, 1)
+        .background(pending == .failed ? Color.dlError : Color(red: 20 / 255, green: 22 / 255, blue: 30 / 255).opacity(0.58), in: Capsule())
     }
 
     private func isMine(_ emoji: String) -> Bool {
@@ -809,6 +893,7 @@ private struct Bubble: View {
     private var swipeGesture: some Gesture {
         DragGesture(minimumDistance: 10)
             .onChanged { v in
+                guard pending == nil else { return }
                 if dragging == nil { dragging = abs(v.translation.width) > abs(v.translation.height) }
                 guard dragging == true else { return }
                 let next = swipeOffset(v.translation.width, toward: mine ? -1 : 1)

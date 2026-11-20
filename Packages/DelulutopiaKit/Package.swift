@@ -117,7 +117,7 @@ let package = Package(
         ),
         .testTarget(
             name: "AppShellTests",
-            dependencies: ["DLI18n", "AppShell", "DLData", "DLDesignSystem", "DLNetwork", "DLUI"],
+            dependencies: ["DLI18n", "AppShell", "DLData", "DLDesignSystem", "DLNetwork", "DLUI", "FeatureEmails"],
             path: "Tests/AppShell"
         ),
     ]
