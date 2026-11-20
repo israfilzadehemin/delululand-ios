@@ -86,7 +86,7 @@ private struct LettersContent: View {
                     let pairs = stride(from: 0, to: rows.count, by: 2).map { Array(rows[$0 ..< min($0 + 2, rows.count)]) }
                     // Keyed by both letters: keyed by the first alone, a prepended letter shifted every
                     // pair onto a stale row and showed a letter twice (iOS audit F5).
-                    ForEach(Array(pairs.enumerated()), id: \.element.map(\.id)) { i, pair in
+                    ForEach(Array(pairs.enumerated()), id: \.element.pairKey) { i, pair in
                         HStack(alignment: .top, spacing: 12) {
                             ForEach(Array(pair.enumerated()), id: \.element.id) { j, row in
                                 Thumb(row: row, now: now, friendName: friendName, who: Who.of(senderOf(row), first: first), index: i * 2 + j)
@@ -432,4 +432,10 @@ private struct EmptyLetters: View {
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
+
+
+private extension Array where Element == LetterRow {
+    /// A thumbnail row's identity: both letters' ids (F5).
+    var pairKey: String { map(\.id).joined(separator: "|") }
 }
