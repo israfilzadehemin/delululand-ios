@@ -26,6 +26,9 @@ struct MainTabView: View {
             ForEach(AppTab.allCases) { tab in
                 NavigationStack(path: path(tab)) {
                     root(for: tab)
+                        // Tabs slide in from the side they sit on (Android PR #8 parity, 20 Nov).
+                        .modifier(TabSlide(index: AppTab.allCases.firstIndex(of: tab) ?? 0,
+                                           selected: AppTab.allCases.firstIndex(of: selection) ?? 0))
                         .overlay { if tab != .you { LeafLayer() } }
                         .navigationDestination(for: AppRoute.self) { route in
                             RouteScreen(route: route)
@@ -213,6 +216,8 @@ struct MainTabView: View {
             .accessibilityLabel(t("tabs.titleNew", ["title": tab.title]))
         } else {
             Label(tab.title, systemImage: tab.symbol)
+                // Canvas tab bar: outline icons; iOS fills tab symbols by default (user report 20 Nov).
+                .environment(\.symbolVariants, .none)
         }
     }
 }
@@ -327,5 +332,36 @@ enum YouTabIcon {
             }
         }
         return image.withRenderingMode(.alwaysOriginal)
+    }
+}
+
+
+/// A tab's root slides in by position when it becomes the selected tab: from the right when it sits
+/// to the right of the tab that was showing, from the left otherwise (Design Consistency, Nov 2026).
+private struct TabSlide: ViewModifier {
+    let index: Int
+    let selected: Int
+    @State private var shift: CGFloat = 0
+    @State private var fade: Double = 1
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dlMotionEnabled) private var motionEnabled
+
+    func body(content: Content) -> some View {
+        content
+            .offset(x: shift)
+            .opacity(fade)
+            .onChange(of: selected) { old, new in
+                guard new == index, old != new, motionEnabled, !reduceMotion else { return }
+                var jump = Transaction()
+                jump.disablesAnimations = true
+                withTransaction(jump) {
+                    shift = new > old ? 56 : -56
+                    fade = 0.35
+                }
+                withAnimation(.spring(duration: 0.34, bounce: 0)) {
+                    shift = 0
+                    fade = 1
+                }
+            }
     }
 }
