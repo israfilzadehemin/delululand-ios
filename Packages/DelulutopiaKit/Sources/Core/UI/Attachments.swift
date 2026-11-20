@@ -180,15 +180,19 @@ public struct AttachmentStrip: View {
     let onOpen: (Attachments.Item) -> Void
     /// Subscription Tiers CM-1–CM-7: the footer line and the over-limit banner; nil limits nothing.
     let limits: StripLimits?
+    /// Attachment Retention AR13: the days the notice under the strip names; nil shows none.
+    let retentionDays: Int?
 
     public init(
         _ attachments: Attachments,
         limits: StripLimits? = nil,
+        retentionDays: Int? = nil,
         onRemove: @escaping (Attachments.Item) -> Void,
         onOpen: @escaping (Attachments.Item) -> Void = { _ in }
     ) {
         self.attachments = attachments
         self.limits = limits
+        self.retentionDays = retentionDays
         self.onRemove = onRemove
         self.onOpen = onOpen
     }
@@ -206,6 +210,7 @@ public struct AttachmentStrip: View {
                     .padding(.horizontal, 2)
                 }
             }
+            RetentionNotice(days: retentionDays)
             if let text = limits?.blockText {
                 // CM-7: the error banner above Send.
                 HStack(alignment: .top, spacing: 10) {

@@ -225,7 +225,7 @@ public struct ComposeDiscussionScreen: View {
             }
             .scrollDismissesKeyboard(.interactively)
             VStack(alignment: .leading, spacing: 4) {
-                AttachmentStrip(atts, limits: limits) { item in
+                AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.otherDays) { item in
                     let index = atts.items.firstIndex(of: item) ?? 0
                     atts.remove(item.key)
                     if !editing, let a = item.att { model.deleteDraftAttachment(a.id) { atts.restore(item, at: index) } }

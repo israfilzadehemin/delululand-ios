@@ -126,3 +126,24 @@ struct URLTests {
         #expect(client.url("/api/board/reaction", query: ["version": "4"]).absoluteString == "https://test.delulutopia.com/api/board/reaction?version=4")
     }
 }
+
+@Suite("Attachment retention")
+struct RetentionDecodingTests {
+    @Test("An expired file, a quote's expired thumb and the config's days decode; older payloads default to live (AR7, AR9, AR14)")
+    func decodes() throws {
+        let att = try JSONDecoder().decode(Att.self, from: Data(#"{"id":"a","kind":"photo","url":"/api/attachments/a","position":0,"expired":true}"#.utf8))
+        #expect(att.expired)
+        let old = try JSONDecoder().decode(Att.self, from: Data(#"{"id":"b","kind":"audio","url":"/api/attachments/b","position":1}"#.utf8))
+        #expect(!old.expired)
+        let quote = try JSONDecoder().decode(
+            EmailQuote.self,
+            from: Data(#"{"id":"q","senderId":"s","thumbUrl":null,"thumbExpired":true,"sentAt":"2026-11-20T10:00:00.000Z"}"#.utf8)
+        )
+        #expect(quote.thumbExpired && quote.thumbUrl == nil)
+        let settings = try JSONDecoder().decode(
+            ServerSettings.self,
+            from: Data(#"{"delay":"PT1H","window":"PT5M","env":"prod","serverNow":"x","retention":{"letterDays":90,"otherDays":30}}"#.utf8)
+        )
+        #expect(settings.retention?.letterDays == 90 && settings.retention?.otherDays == 30)
+    }
+}

@@ -917,5 +917,13 @@
  "emails.cancelReply": "Cancel reply",
  "emails.you": "You",
  "emails.goToOriginal": "Go to the email from {name}",
- "emails.findingOriginal": "Loading…"
+ "emails.findingOriginal": "Loading…",
+ "media.photoExpired": "Photo expired",
+ "media.videoExpired": "Video expired",
+ "media.doodleExpired": "Doodle expired",
+ "media.voiceExpired": "Voice note expired · {time}",
+ "retention.kept_one": "Attachments are kept for {n} day",
+ "retention.kept_other": "Attachments are kept for {n} days",
+ "retention.removed_one": "Attachments are removed {n} day after sending",
+ "retention.removed_other": "Attachments are removed {n} days after sending"
 }
