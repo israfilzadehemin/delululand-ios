@@ -163,6 +163,10 @@ public struct API: Sendable {
         try await client.call("GET", "api/emails/threads/\(threadId)/emails", query: ["cursor": cursor, "limit": String(limit)])
     }
     public func threadSeen(id: PublicID) async throws { try await client.run("POST", "api/emails/threads/\(id)/seen") }
+    /// Read Ticks TK2: the push ack, sent by the Notification Service Extension when an email arrives.
+    public func emailsDelivered(ids: [PublicID]) async throws {
+        try await client.run("POST", "api/emails/delivered", body: IdsBody(ids: ids))
+    }
     public func credits() async throws -> EmailCredits { try await client.call("GET", "api/emails/credits") }
     public func emailDraft(key: String) async throws -> EmailDraft { try await client.call("GET", "api/emails/drafts/\(key)") }
     public func saveEmailDraft(key: String, subject: String, text: String, version: Int, replyToId: String? = nil) async throws -> Saved {

@@ -90,13 +90,49 @@ public final class CookieStore: Sendable {
 
     private let service: String
     private let accessGroup: String?
+    private let readOnly: Bool
     private let cookies: OSAllocatedUnfairLock<[Stored]>
 
-    /// `accessGroup` shares the jar with the widgets and the share extension (PR #5).
-    public init(service: String = "com.delulutopia.cookies", accessGroup: String? = nil, inMemory: Bool = false) {
+    /// `accessGroup` shares the jar with the app's extensions (the Notification Service Extension
+    /// acks email deliveries with it, Read Ticks TK2). When the build cannot use the group (no signed
+    /// entitlement, as in the simulator's tests) the jar stays in the app's own keychain group. The
+    /// first launch with a group moves the old jar into it, so nobody is signed out.
+    /// `readOnly` (the extension) reads the jar and never writes it back: the app owns the session.
+    public init(service: String = "com.delulutopia.cookies", accessGroup: String? = nil, inMemory: Bool = false, readOnly: Bool = false) {
         self.service = service
-        self.accessGroup = accessGroup
-        self.cookies = OSAllocatedUnfairLock(initialState: inMemory ? [] : Self.load(service: service, accessGroup: accessGroup))
+        self.readOnly = readOnly
+        let group = inMemory ? nil : accessGroup.flatMap { Self.usable(group: $0) ? $0 : nil }
+        self.accessGroup = group
+        var initial = inMemory ? [] : Self.load(service: service, accessGroup: group)
+        var migrated = false
+        if group != nil, initial.isEmpty, !readOnly {
+            // Before the shared group: the jar sat in the app's default group. Move it once.
+            let legacy = Self.load(service: service, accessGroup: nil)
+            if !legacy.isEmpty {
+                SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: "jar"] as CFDictionary)
+                initial = legacy
+                migrated = true
+            }
+        }
+        self.cookies = OSAllocatedUnfairLock(initialState: initial)
+        if migrated { persist() }
+    }
+
+    /// Whether this process holds the keychain entitlement for `group`.
+    private static func usable(group: String) -> Bool {
+        let probe: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.delulutopia.keychain-probe",
+            kSecAttrAccount as String: "probe",
+            kSecAttrAccessGroup as String: group,
+        ]
+        var add = probe
+        add[kSecValueData as String] = Data([1])
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        let status = SecItemAdd(add as CFDictionary, nil)
+        guard status == errSecSuccess || status == errSecDuplicateItem else { return false }
+        SecItemDelete(probe as CFDictionary)
+        return true
     }
 
     /// The `Cookie` header for a request to `url`, or nil.
@@ -193,6 +229,7 @@ public final class CookieStore: Sendable {
     }
 
     private func persist() {
+        guard !readOnly else { return }
         let persistent = cookies.withLock { $0.filter { $0.expires != nil } }
         guard let data = try? JSONEncoder().encode(persistent) else { return }
         let q = query()

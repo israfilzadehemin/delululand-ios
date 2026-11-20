@@ -5,6 +5,7 @@ import Foundation
 
 struct CodeBody: Encodable { let code: String }
 struct LoginBody: Encodable { let userId: PublicID; let pin: String }
+struct IdsBody: Encodable { let ids: [PublicID] }
 struct InviteBody: Encodable { let invite: String }
 struct VersionBody: Encodable { let version: Int }
 struct ReactionVersionBody: Encodable { let version: Int; let reaction: String }
