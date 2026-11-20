@@ -20,8 +20,21 @@ public struct Att: Codable, Sendable, Hashable, Identifiable {
     public var height: Int?
     public var durationMs: Int?
     @Default<Zero> public var position: Int
+    /// Its files are gone (doc "Delululand — Attachment Retention" AR7): the URLs answer 410; show a placeholder.
+    @Default<False> public var expired: Bool
 
-    public init(id: String, kind: String, url: String, thumbUrl: String? = nil, width: Int? = nil, height: Int? = nil, durationMs: Int? = nil, position: Int = 0) {
+    public init(
+        id: String,
+        kind: String,
+        url: String,
+        thumbUrl: String? = nil,
+        width: Int? = nil,
+        height: Int? = nil,
+        durationMs: Int? = nil,
+        position: Int = 0,
+        expired: Bool = false
+    ) {
+        self.expired = expired
         self.id = id
         self.kind = kind
         self.url = url
@@ -483,9 +496,12 @@ public struct EmailQuote: Codable, Sendable, Hashable {
     public var text: String?
     public var media: ThreadMedia?
     public var thumbUrl: String?
+    /// The photo or video it would show has expired (Attachment Retention AR9): the crossed-out icon.
+    @Default<False> public var thumbExpired: Bool
     public var sentAt: String
 
-    public init(id: PublicID, senderId: PublicID, text: String?, media: ThreadMedia?, thumbUrl: String?, sentAt: String) {
+    public init(id: PublicID, senderId: PublicID, text: String?, media: ThreadMedia?, thumbUrl: String?, thumbExpired: Bool = false, sentAt: String) {
+        self.thumbExpired = thumbExpired
         self.id = id
         self.senderId = senderId
         self.text = text
@@ -653,6 +669,13 @@ public struct ServerSettings: Codable, Sendable, Hashable {
     public var env: String
     @Default<False> public var testTiming: Bool
     public var serverNow: String
+    /// Attachment Retention AR14: days the files of letters / others are kept; absent from an older API.
+    public var retention: RetentionDays?
+}
+
+public struct RetentionDays: Codable, Sendable, Hashable {
+    public var letterDays: Int
+    public var otherDays: Int
 }
 
 // MARK: - Entry, auth and universe (Android `Account.kt`)

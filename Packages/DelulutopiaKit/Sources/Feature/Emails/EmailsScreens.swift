@@ -657,7 +657,7 @@ private struct Bubble: View {
         .padding(.bottom, reacted ? 15 : 0)
         .frame(maxWidth: .infinity, alignment: mine ? .trailing : .leading)
         .fullScreenCover(item: Binding(get: { lightbox.map { LightboxIndex(i: $0) } }, set: { lightbox = $0?.i })) { l in
-            Lightbox(items: email.attachments.filter { $0.kind == "photo" }, index: l.i) { lightbox = nil }.environment(backend)
+            Lightbox(items: email.attachments.filter { $0.kind == "photo" && !$0.expired }, index: l.i) { lightbox = nil }.environment(backend)
         }
         .sheet(isPresented: $sheet) {
             ReactionsSheet(
@@ -678,7 +678,9 @@ private struct Bubble: View {
     /// come last, on its own line after a voice note or a video. Drawn in the thread and, lifted, in
     /// the long-press layer.
     private func surface(interactive: Bool) -> some View {
-        let photos = email.attachments.filter { $0.kind == "photo" }
+        // Attachment Retention AR6: expired files keep their slots; only live photos open in the lightbox.
+        let allPhotos = email.attachments.filter { $0.kind == "photo" }
+        let photos = allPhotos.filter { !$0.expired }
         let audios = email.attachments.filter { $0.kind == "audio" }
         let videos = email.attachments.filter { $0.kind == "video" }
         let reacted = !email.reactions.isEmpty
@@ -692,7 +694,7 @@ private struct Bubble: View {
         let stamp = DLTime.clock(email.sentAt) + (seen.map { " · " + t("emails.seen", ["time": DLTime.clock($0)]) } ?? "")
         // Text written the other way round from the screen ends on the other side: the time gets its own line.
         let sameWay = ContentDirection.of(email.text).map { $0 == layoutDirection } ?? true
-        let timeAt: TimeAt = !videos.isEmpty || !audios.isEmpty ? .line : !photos.isEmpty ? .photos : (!email.text.isEmpty && sameWay) ? .text : .line
+        let timeAt: TimeAt = !videos.isEmpty || !audios.isEmpty ? .line : !allPhotos.isEmpty ? .photos : (!email.text.isEmpty && sameWay) ? .text : .line
         return VStack(alignment: .leading, spacing: 8) {
             // RE11: the quote at the top inside the bubble.
             if let q = email.replyTo {
@@ -708,23 +710,32 @@ private struct Bubble: View {
                     Text(linking: email.text).font(.system(size: 16)).foregroundStyle(.dlInk).tint(.dlInk).ownText(email.text)
                 }
             }
-            if !photos.isEmpty {
+            if !allPhotos.isEmpty {
                 HStack(spacing: 6) {
-                    ForEach(Array(photos.enumerated()), id: \.element.id) { i, p in
-                        Button { lightbox = i } label: {
-                            RemoteImage(p.thumbUrl ?? p.url, contentMode: .fill, maxPixel: 320) { Color.dlPaperLetter }
-                                .frame(width: 72, height: 72)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                    ForEach(allPhotos) { p in
+                        if p.expired {
+                            ExpiredThumb(size: 72)
+                        } else {
+                            let i = photos.firstIndex(of: p) ?? 0
+                            Button { lightbox = i } label: {
+                                RemoteImage(p.thumbUrl ?? p.url, contentMode: .fill, maxPixel: 320) { Color.dlPaperLetter }
+                                    .frame(width: 72, height: 72)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                            .accessibilityLabel(t("emails.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
                         }
-                        .accessibilityLabel(t("emails.photoOfOpenFullSize", ["n": i + 1, "count": photos.count]))
                     }
                 }
                 .overlay(alignment: .bottomTrailing) {
                     if timeAt == .photos { chip(stamp).padding(5) }
                 }
             }
-            ForEach(audios) { a in VoicePlayer(url: a.url, durationMs: a.durationMs) }
-            ForEach(videos) { v in VideoTile(att: v) }
+            ForEach(audios) { a in
+                if a.expired { ExpiredVoice(durationMs: a.durationMs) } else { VoicePlayer(url: a.url, durationMs: a.durationMs) }
+            }
+            ForEach(videos) { v in
+                if v.expired { ExpiredBlock(kind: "video", minHeight: 110).frame(minWidth: 180) } else { VideoTile(att: v) }
+            }
             if timeAt == .line {
                 time(stamp).frame(maxWidth: .infinity, alignment: .trailing)
             }

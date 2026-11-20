@@ -45,13 +45,15 @@ func quoteOf(_ e: Email) -> EmailQuote {
     let photos = e.attachments.filter { $0.kind == "photo" }.count
     let audios = e.attachments.filter { $0.kind == "audio" }.count
     let videos = e.attachments.filter { $0.kind == "video" }.count
-    let thumb = e.attachments.first { ($0.kind == "photo" || $0.kind == "video") && $0.thumbUrl != nil }?.thumbUrl
+    let visual = e.attachments.first { ($0.kind == "photo" || $0.kind == "video") && $0.thumbUrl != nil }
+    let thumb = visual?.expired == true ? nil : visual?.thumbUrl
     return EmailQuote(
         id: e.id,
         senderId: e.senderId,
         text: oneLine.isEmpty ? nil : String(oneLine.unicodeScalars.prefix(120)),
         media: ThreadMedia(photos: photos, audios: audios, videos: videos),
         thumbUrl: thumb,
+        thumbExpired: visual?.expired == true,
         sentAt: e.sentAt
     )
 }
@@ -253,7 +255,7 @@ struct ComposerView: View {
             }
             .font(.caption)
             if let atts {
-                AttachmentStrip(atts, limits: limits) { item in
+                AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.otherDays) { item in
                     let index = atts.items.firstIndex(of: item) ?? 0
                     atts.remove(item.key)
                     if let a = item.att { composer.deleteAttachment(a.id) { atts.restore(item, at: index) } }
@@ -377,7 +379,7 @@ struct DockedComposerView: View {
         VStack(spacing: 6) {
             if tray, let atts {
                 VStack(alignment: .leading, spacing: 6) {
-                    AttachmentStrip(atts, limits: limits) { item in
+                    AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.otherDays) { item in
                         let index = atts.items.firstIndex(of: item) ?? 0
                         atts.remove(item.key)
                         if let a = item.att { composer.deleteAttachment(a.id) { atts.restore(item, at: index) } }

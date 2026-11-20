@@ -166,7 +166,7 @@ private struct WriteForm: View {
             }
             if !late {
                 VStack(alignment: .leading, spacing: 4) {
-                    AttachmentStrip(atts, limits: limits) { item in
+                    AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.letterDays) { item in
                         let index = atts.items.firstIndex(of: item) ?? 0
                         atts.remove(item.key)
                         if !editing, let att = item.att {
