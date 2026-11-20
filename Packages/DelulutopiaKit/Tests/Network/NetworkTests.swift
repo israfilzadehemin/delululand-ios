@@ -104,3 +104,25 @@ struct CookieTests {
         #expect(APIClient.refusal(status: 502, data: Data()).isOffline)
     }
 }
+
+@Suite("URLs")
+struct URLTests {
+    private let client = APIClient(
+        baseURL: URL(string: "https://test.delulutopia.com")!,
+        cookies: CookieStore(service: "dl.tests.\(UUID().uuidString)", inMemory: true)
+    )
+
+    @Test("A path's own query stays a query (board image ?u=)")
+    func pathQuery() {
+        let url = client.url("/api/board/image/3?u=0b6c1a52-7d4e-4f0a-9a51-3f2f1c0e9d11")
+        #expect(url.absoluteString == "https://test.delulutopia.com/api/board/image/3?u=0b6c1a52-7d4e-4f0a-9a51-3f2f1c0e9d11")
+        #expect(url.path() == "/api/board/image/3")
+    }
+
+    @Test("A path's query comes before the extra query; plain paths are unchanged")
+    func merged() {
+        #expect(client.url("/api/x?u=1", query: ["version": "2"]).absoluteString == "https://test.delulutopia.com/api/x?u=1&version=2")
+        #expect(client.url("api/attachments/abc").absoluteString == "https://test.delulutopia.com/api/attachments/abc")
+        #expect(client.url("/api/board/reaction", query: ["version": "4"]).absoluteString == "https://test.delulutopia.com/api/board/reaction?version=4")
+    }
+}
