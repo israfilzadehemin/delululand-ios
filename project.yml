@@ -72,6 +72,30 @@ targets:
         product: DLDesignSystem
       - package: DelulutopiaKit
         product: DLData
+      - target: DelulutopiaNotify
+
+  # Read Ticks TK2: the Notification Service Extension. New-email pushes carry mutable-content, so
+  # iOS runs it even while the app is closed; it acks the delivery with the app's session (shared
+  # keychain group) and shows the notification unchanged.
+  DelulutopiaNotify:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Notify
+        excludes:
+          - "*.entitlements"
+    settings:
+      base:
+        INFOPLIST_FILE: Notify/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_NAME: DelulutopiaNotify
+        PRODUCT_BUNDLE_IDENTIFIER: $(DL_BUNDLE_ID).notify
+        CODE_SIGN_ENTITLEMENTS: Notify/DelulutopiaNotify.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+    dependencies:
+      - package: DelulutopiaKit
+        product: DLNetwork
 
   # Screenshot tests hosted by the app, so screens draw through a real key window and system glass
   # renders as on a device (decision D5). Unit tests live in the package.

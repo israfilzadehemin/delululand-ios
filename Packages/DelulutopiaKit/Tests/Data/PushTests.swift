@@ -32,6 +32,21 @@ struct PushLinkTests {
         #expect(AppConfig(info: [:]).apnsEnvironment == "production")
         #expect(AppConfig(info: ["DLApnsEnvironment": "$(DL_APNS_ENVIRONMENT)"]).apnsEnvironment == "production")
     }
+
+    @Test("The shared keychain group comes from the Info.plist; unset or unexpanded means none (Read Ticks TK2)")
+    func keychainGroup() {
+        #expect(AppConfig(info: ["DLKeychainGroup": "NM3GZ4M68M.com.delulutopia.shared"]).keychainGroup == "NM3GZ4M68M.com.delulutopia.shared")
+        #expect(AppConfig(info: [:]).keychainGroup == nil)
+        #expect(AppConfig(info: ["DLKeychainGroup": "$(DL_KEYCHAIN_GROUP)"]).keychainGroup == nil)
+        #expect(AppConfig.cookieService(.prod) == "com.delulutopia.cookies.prod")
+    }
+
+    @Test("Without the group's entitlement (simulator tests) the jar stays usable in the app's own group")
+    func jarWithoutEntitlement() {
+        let jar = CookieStore(service: "com.delulutopia.cookies.test-\(UUID().uuidString)", accessGroup: "NM3GZ4M68M.com.delulutopia.shared")
+        #expect(jar.names.isEmpty)
+        jar.clear()
+    }
 }
 
 /// Answers every request 204 and keeps what was sent.

@@ -26,6 +26,8 @@
 	<string>$(DL_ENVIRONMENT)</string>
 	<key>DLApnsEnvironment</key>
 	<string>$(DL_APNS_ENVIRONMENT)</string>
+	<key>DLKeychainGroup</key>
+	<string>$(DL_KEYCHAIN_GROUP)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

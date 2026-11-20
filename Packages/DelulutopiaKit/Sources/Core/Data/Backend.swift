@@ -38,7 +38,7 @@ public final class Backend {
         self.settings = settings
         let client = APIClient(
             baseURL: config.apiBaseURL,
-            cookies: cookies ?? CookieStore(service: "com.delulutopia.cookies.\(config.environment.rawValue)"),
+            cookies: cookies ?? CookieStore(service: AppConfig.cookieService(config.environment), accessGroup: config.keychainGroup),
             userAgent: "Delulutopia-iOS/\(config.version) (\(config.build))",
             protocolClasses: protocolClasses
         )

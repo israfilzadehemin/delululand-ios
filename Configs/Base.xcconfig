@@ -8,3 +8,8 @@ CURRENT_PROJECT_VERSION = 1
 // Xcode creates the App IDs and profiles for com.delulutopia.app(.test) on first device build.
 CODE_SIGN_STYLE = Automatic
 DEVELOPMENT_TEAM = NM3GZ4M68M
+
+// Read Ticks TK2: the keychain group the app shares with its Notification Service Extension (the
+// extension acks email deliveries with the app's session). Literal in the .entitlements files too,
+// because tools/release/release.sh signs the archive with them as they are.
+DL_KEYCHAIN_GROUP = $(DEVELOPMENT_TEAM).com.delulutopia.shared

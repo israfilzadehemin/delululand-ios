@@ -49,7 +49,15 @@ if [ -f "$entitlements" ]; then
   echo "::group::Embed entitlements in the archive"
   archived_app="$(find "$archive/Products/Applications" -maxdepth 1 -name '*.app' | head -1)"
   find "$archived_app" -depth \( -name '*.framework' -o -name '*.dylib' -o -name '*.appex' \) -print0 |
-    while IFS= read -r -d '' nested; do codesign --force --sign - --timestamp=none "$nested"; done
+    while IFS= read -r -d '' nested; do
+      # An extension keeps its own entitlements (the Notification Service Extension's keychain group).
+      ext_entitlements="$root/Notify/DelulutopiaNotify.entitlements"
+      if [ "$(basename "$nested")" = "DelulutopiaNotify.appex" ] && [ -f "$ext_entitlements" ]; then
+        codesign --force --sign - --timestamp=none --entitlements "$ext_entitlements" "$nested"
+      else
+        codesign --force --sign - --timestamp=none "$nested"
+      fi
+    done
   codesign --force --sign - --timestamp=none --entitlements "$entitlements" "$archived_app"
   codesign -d --entitlements - --xml "$archived_app" 2>/dev/null | grep -o 'aps-environment' || true
   echo "::endgroup::"
