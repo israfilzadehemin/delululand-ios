@@ -520,6 +520,8 @@ public struct ThreadRow: Codable, Sendable, Hashable, Identifiable {
     @Default<False> public var lastIsReply: Bool
     /// Read Ticks TK10: `sent`, `delivered` or `read` when the newest email is mine; nil otherwise.
     public var lastStatus: String?
+    /// Stickers: the newest email is a sticker ("Sticker" in the snippet).
+    @Default<False> public var lastSticker: Bool
 }
 
 /// The quote of a reply (Email Replies RE9, RE11): the answered email's first 120 characters on one
@@ -533,9 +535,21 @@ public struct EmailQuote: Codable, Sendable, Hashable {
     /// The photo or video it would show has expired (Attachment Retention AR9): the crossed-out icon.
     @Default<False> public var thumbExpired: Bool
     public var sentAt: String
+    /// Stickers FS-SK15: the quoted email is this sticker (256 px image URL).
+    public var sticker: String?
 
-    public init(id: PublicID, senderId: PublicID, text: String?, media: ThreadMedia?, thumbUrl: String?, thumbExpired: Bool = false, sentAt: String) {
+    public init(
+        id: PublicID,
+        senderId: PublicID,
+        text: String?,
+        media: ThreadMedia?,
+        thumbUrl: String?,
+        thumbExpired: Bool = false,
+        sentAt: String,
+        sticker: String? = nil
+    ) {
         self.thumbExpired = thumbExpired
+        self.sticker = sticker
         self.id = id
         self.senderId = senderId
         self.text = text
@@ -558,6 +572,8 @@ public struct Email: Codable, Sendable, Hashable, Identifiable {
     @Default<EmptyList<Reaction>> public var reactions: [Reaction]
     /// The email this one answers (RE11); nil for a plain email.
     public var replyTo: EmailQuote?
+    /// Stickers SK3: a sticker-only email; nil for others.
+    public var sticker: StickerRef?
 
     /// Optimistic send (OS3): the provisional bubble built on the device.
     public init(
@@ -570,8 +586,10 @@ public struct Email: Codable, Sendable, Hashable, Identifiable {
         readAt: String? = nil,
         attachments: [Att] = [],
         reactions: [Reaction] = [],
-        replyTo: EmailQuote? = nil
+        replyTo: EmailQuote? = nil,
+        sticker: StickerRef? = nil
     ) {
+        self.sticker = sticker
         self.id = id
         self.threadId = threadId
         self.senderId = senderId
@@ -582,6 +600,89 @@ public struct Email: Codable, Sendable, Hashable, Identifiable {
         self.attachments = attachments
         self.reactions = reactions
         self.replyTo = replyTo
+    }
+}
+
+// MARK: - Stickers (doc "Delululand — Stickers")
+
+public struct StickerRef: Codable, Sendable, Hashable {
+    public var id: PublicID
+    public var url256: String
+    public var url512: String
+
+    public init(id: PublicID, url256: String, url512: String) {
+        self.id = id
+        self.url256 = url256
+        self.url512 = url512
+    }
+}
+
+public struct StickerPack: Codable, Sendable, Hashable {
+    public var slug: String
+    public var name: String
+    @Default<Zero> public var sort: Int
+
+    public init(slug: String, name: String, sort: Int = 0) {
+        self.slug = slug
+        self.name = name
+        self.sort = sort
+    }
+}
+
+public struct StickerCustom: Codable, Sendable, Hashable {
+    public var by: PublicID?
+
+    public init(by: PublicID?) { self.by = by }
+}
+
+public struct Sticker: Codable, Sendable, Hashable, Identifiable {
+    public var id: PublicID
+    /// The pack's slug; nil for the universe's own stickers.
+    public var pack: String?
+    /// Hidden search words in every language (SK5).
+    @Default<EmptyList<String>> public var keywords: [String]
+    @Default<EmptyList<String>> public var emojis: [String]
+    public var url256: String
+    public var url512: String
+    /// One of Ours: who added it (SK8).
+    public var custom: StickerCustom?
+
+    public init(id: PublicID, pack: String?, keywords: [String] = [], emojis: [String] = [], url256: String, url512: String, custom: StickerCustom? = nil) {
+        self.id = id
+        self.pack = pack
+        self.keywords = keywords
+        self.emojis = emojis
+        self.url256 = url256
+        self.url512 = url512
+        self.custom = custom
+    }
+
+    public var ref: StickerRef { StickerRef(id: id, url256: url256, url512: url512) }
+}
+
+public struct StickerCount: Codable, Sendable, Hashable {
+    @Default<Zero> public var used: Int
+    @Default<Zero> public var cap: Int
+
+    public init(used: Int = 0, cap: Int = 0) {
+        self.used = used
+        self.cap = cap
+    }
+}
+
+public struct StickerCatalogue: Codable, Sendable, Hashable {
+    @Default<EmptyList<StickerPack>> public var packs: [StickerPack]
+    @Default<EmptyList<Sticker>> public var stickers: [Sticker]
+    @Default<EmptyList<String>> public var recent: [PublicID]
+    @Default<EmptyList<String>> public var favourites: [PublicID]
+    public var custom: StickerCount
+
+    public init(packs: [StickerPack] = [], stickers: [Sticker] = [], recent: [PublicID] = [], favourites: [PublicID] = [], custom: StickerCount = StickerCount()) {
+        self.packs = packs
+        self.stickers = stickers
+        self.recent = recent
+        self.favourites = favourites
+        self.custom = custom
     }
 }
 
@@ -675,6 +776,8 @@ public struct PlanLimits: Codable, Sendable, Hashable {
     public var videosDaily: Int
     /// nil is unlimited (Premium, ST1).
     public var boardDoodlesDaily: Int?
+    /// Stickers SK9: the universe's own stickers (Free 10, Premium 100).
+    public var customStickers: Int?
 
     public init(emailsDaily: Int, photosPerMessage: Int, photosDaily: Int, videoSeconds: Int, videoMb: Int, videosDaily: Int, boardDoodlesDaily: Int?) {
         self.emailsDaily = emailsDaily

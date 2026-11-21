@@ -16,11 +16,15 @@ public struct DoodleSurface: Sendable, Equatable {
     public let width: CGFloat
     public let height: CGFloat
     public let paper: UInt32
+    /// Stickers FS-SK19: no paper; the eraser cuts to transparent and the PNG keeps its alpha.
+    public var clear = false
 
     /// D3, D4: a 1024 px square of paper, so a doodle looks the same in both themes.
     public static let letter = DoodleSurface(width: 1024, height: 1024, paper: 0xF5F0E8)
     /// Board B5, B6: 1024 × 768 (4:3) on the whiteboard.
     public static let board = DoodleSurface(width: 1024, height: 768, paper: 0xFBFBF8)
+    /// Stickers FS-SK19: a clear 1024 px square, shown on a checkerboard.
+    public static let sticker = DoodleSurface(width: 1024, height: 1024, paper: 0xFFFFFF, clear: true)
 
     var paperColor: UIColor { UIColor(rgb: paper) }
 }
@@ -119,9 +123,13 @@ enum DoodleRender {
         return path
     }
 
-    static func draw(_ s: DoodleStroke, paper: UInt32, in context: inout GraphicsContext) {
+    static func draw(_ s: DoodleStroke, paper: UInt32, clear: Bool = false, in context: inout GraphicsContext) {
         let color = Color(uiColor: UIColor(rgb: s.erase ? paper : s.rgb))
         let path = path(s)
+        // FS-SK19: on a clear surface the eraser cuts to transparent.
+        let mode = context.blendMode
+        if clear, s.erase { context.blendMode = .clear }
+        defer { context.blendMode = mode }
         if s.points.count == 1 {
             context.fill(path, with: .color(color))
         } else {
@@ -132,13 +140,13 @@ enum DoodleRender {
     /// Paper, then the backdrop unless a clear wiped it, then every visible stroke, at `scale`.
     static func render(_ history: DoodleHistory, surface: DoodleSurface, backdrop: UIImage?, scale: CGFloat, in context: inout GraphicsContext) {
         let rect = CGRect(x: 0, y: 0, width: surface.width * scale, height: surface.height * scale)
-        context.fill(Path(rect), with: .color(Color(uiColor: surface.paperColor)))
+        if !surface.clear { context.fill(Path(rect), with: .color(Color(uiColor: surface.paperColor))) }
         if let backdrop, !history.cleared {
             context.draw(Image(uiImage: backdrop), in: rect)
         }
         context.scaleBy(x: scale, y: scale)
         for s in history.visible {
-            draw(s, paper: surface.paper, in: &context)
+            draw(s, paper: surface.paper, clear: surface.clear, in: &context)
         }
     }
 
@@ -151,7 +159,7 @@ enum DoodleRender {
         .frame(width: surface.width, height: surface.height)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 1
-        renderer.isOpaque = true
+        renderer.isOpaque = !surface.clear
         return renderer.uiImage?.pngData()
     }
 }
@@ -376,6 +384,8 @@ public struct DoodlePad: View {
             BoardFrame { canvas }
         } else {
             canvas
+                // Stickers FS-SK19: a clear square shows a checkerboard, as image editors do.
+                .background { if surface.clear { Checkerboard() } }
                 .clipShape(RoundedRectangle(cornerRadius: 4))
                 .shadow(color: .dlShade.opacity(0.12), radius: 3, y: 1)
         }
@@ -450,5 +460,29 @@ public struct DoodlePad: View {
         .disabled(!enabled)
         .accessibilityLabel(label)
         .accessibilityAddTraits(on ? .isSelected : [])
+    }
+}
+
+/// A 12 pt checkerboard under a clear surface (Stickers FS-SK19).
+public struct Checkerboard: View {
+    public init() {}
+
+    public var body: some View {
+        Canvas { context, size in
+            let cell: CGFloat = 12
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.dlSheet))
+            var y: CGFloat = 0
+            var row = 0
+            while y < size.height {
+                var x: CGFloat = row % 2 == 0 ? 0 : cell
+                while x < size.width {
+                    context.fill(Path(CGRect(x: x, y: y, width: cell, height: cell)), with: .color(.dlPaperLetter))
+                    x += cell * 2
+                }
+                y += cell
+                row += 1
+            }
+        }
+        .accessibilityHidden(true)
     }
 }

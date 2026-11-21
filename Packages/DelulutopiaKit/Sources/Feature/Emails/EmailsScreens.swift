@@ -139,7 +139,7 @@ private struct ThreadCard: View {
         let who = Who.of(row.startedBy, first: home?.firstCitizen)
         let snippet = reactionWins(row.lastReaction, count: reacted, otherActivityAt: row.lastEmailAt)
             ? noticeLine(row.lastReaction!, count: reacted, reactorName: friend?.nickname ?? t("common.friend"))
-            : replyMarked(row, row.lastText?.isEmpty == false ? row.lastText! : mediaWords(photos: row.lastMedia?.photos ?? 0, audios: row.lastMedia?.audios ?? 0, videos: row.lastMedia?.videos ?? 0) ?? "")
+            : replyMarked(row, snippetWords(row))
         Button { open(.thread(row.id)) } label: {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -185,6 +185,13 @@ private struct ThreadCard: View {
         }
         .buttonStyle(DLPressStyle(scale: 0.99))
     }
+}
+
+/// The newest email's text, else "Sticker" (Stickers), else its media words (FS-E3).
+private func snippetWords(_ row: ThreadRow) -> String {
+    if let text = row.lastText, !text.isEmpty { return text }
+    if row.lastSticker { return t("stickers.sticker") }
+    return mediaWords(photos: row.lastMedia?.photos ?? 0, audios: row.lastMedia?.audios ?? 0, videos: row.lastMedia?.videos ?? 0) ?? ""
 }
 
 /// Email Replies RE13: ↩ before a reply's snippet, as Letters B2.
@@ -322,6 +329,12 @@ public struct ThreadScreen: View {
     @State private var unsentSheet = false
     @State private var quiet: Set<PublicID> = []
     @State private var listener: UUID?
+    /// Stickers FS-SK6: stickers in the air or failed, drawn like OS3's email; the catalogue; the sheets.
+    @State private var stickerOutbox = StickerOutbox.shared
+    @State private var stickers = StickerStore.shared
+    @State private var stickerListener: UUID?
+    @State private var unsentSticker: PublicID?
+    @State private var stickerOf: Email?
 
     public init(id: PublicID) {
         self.id = id
@@ -369,12 +382,23 @@ public struct ThreadScreen: View {
                     model?.sent(email)
                 }
             }
+            if stickerListener == nil {
+                stickerListener = stickerOutbox.listen { threadId, email, _ in
+                    guard threadId == id else { return }
+                    quiet.insert(email.id)
+                    sentId = email.id
+                    model?.sent(email)
+                    backend.home.refreshSoon()
+                }
+            }
         }
         .onDisappear {
             model?.stop()
             composer?.close()
             if let listener { outbox.unlisten(listener) }
             listener = nil
+            if let stickerListener { stickerOutbox.unlisten(stickerListener) }
+            stickerListener = nil
         }
     }
 
@@ -383,7 +407,11 @@ public struct ThreadScreen: View {
     private func thread(_ model: ThreadModel, home: Home?, meId: PublicID) -> some View {
         // OS3: my email in the air or failed is the newest, drawn before the server has it.
         let unsent = outbox.entry(id)
-        let oldestFirst = Array(model.emails.reversed()) + (unsent.map { [$0.email] } ?? [])
+        let stickersOut = stickerOutbox.of(id)
+        let provisional = ((unsent.map { [$0.email] } ?? []) + stickersOut.map(\.email))
+            .sorted { $0.sentAt == $1.sentAt ? $0.id < $1.id : $0.sentAt < $1.sentAt }
+        let oldestFirst = Array(model.emails.reversed()) + provisional
+        let favourites = stickers.catalogue?.favourites
         let first = home?.firstCitizen
         // RE9, RE11: "You" for my own emails, else the friend's nickname.
         let quoteName: (PublicID) -> String = { id in id == meId ? t("emails.you") : (home?.friend?.id == id ? home?.friend?.nickname ?? "" : "") }
@@ -415,16 +443,22 @@ public struct ThreadScreen: View {
                             who: Who.of(e.senderId, first: first),
                             home: home,
                             meId: meId,
-                            ticks: e.senderId == meId && pendingOf(e, unsent) == nil ? TickStatus.of(e) : nil,
+                            ticks: e.senderId == meId && pendingOf(e, unsent, stickersOut) == nil ? TickStatus.of(e) : nil,
                             quoteName: quoteName,
                             quoteWho: { Who.of($0, first: first) },
                             flash: flashId == e.id,
                             onReact: { emoji, mine in Task { await model.react(emailId: e.id, emoji: emoji, mine: mine) } },
                             onReply: { composer?.pickReply(quoteOf(e)) },
                             onOpenQuote: { target in openOriginal(target, model: model, proxy: proxy) },
-                            pending: pendingOf(e, unsent),
-                            onUnsent: { unsentSheet = true },
-                            voiceAfter: VoiceRun.after(oldestFirst, index: i)
+                            pending: pendingOf(e, unsent, stickersOut),
+                            onUnsent: {
+                                if stickersOut.contains(where: { $0.email.id == e.id }) { unsentSticker = e.id } else { unsentSheet = true }
+                            },
+                            voiceAfter: VoiceRun.after(oldestFirst, index: i),
+                            onSticker: { stickerOf = e },
+                            favourite: e.sticker.flatMap { st in
+                                favourites.map { f in StickerFavourite(on: f.contains(st.id)) { stickers.toggleFavourite(st.id) } }
+                            }
                         )
                         .id(e.id)
                         .transition(bubbleTransition(e, meId: meId))
@@ -437,6 +471,7 @@ public struct ThreadScreen: View {
                 .padding(.vertical, 8)
                 .animation(reduceMotion ? nil : .snappy(duration: 0.26), value: model.emails.first?.id)
                 .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: unsent?.email.id)
+                .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: stickersOut.map(\.email.id))
             }
             .defaultScrollAnchor(.bottom)
             .scrollDismissesKeyboard(.interactively)
@@ -474,7 +509,9 @@ public struct ThreadScreen: View {
                         composer: composer,
                         credits: home?.emailCredits,
                         quoteName: quoteName,
-                        quoteWho: { Who.of($0, first: first) }
+                        quoteWho: { Who.of($0, first: first) },
+                        stickers: stickers,
+                        onSticker: { sendSticker($0, meId: meId) }
                     ) { sent in
                         sentId = sent.email.id
                         model.sent(sent.email)
@@ -495,6 +532,42 @@ public struct ThreadScreen: View {
                 // EB10: my own send always scrolls to it.
                 guard local != nil else { return }
                 withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo("bottom", anchor: .bottom) }
+            }
+            .onChange(of: stickersOut.last?.email.id) { _, local in
+                guard local != nil else { return }
+                withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo("bottom", anchor: .bottom) }
+            }
+            .sheet(isPresented: Binding(get: { failedSticker(stickersOut) != nil }, set: { if !$0 { unsentSticker = nil } })) {
+                if let e = failedSticker(stickersOut), let fail = e.fail {
+                    UnsentSheet(
+                        fail: fail,
+                        reason: unsentReason(fail, credits: home?.emailCredits),
+                        onRetry: {
+                            unsentSticker = nil
+                            stickerOutbox.retry(e.email.id)
+                        },
+                        onCancel: {
+                            unsentSticker = nil
+                            stickerOutbox.cancel(e.email.id)
+                        }
+                    )
+                }
+            }
+            // SK10: the sticker's sheet; "More from this pack" sends from here.
+            .sheet(item: $stickerOf) { em in
+                if let st = em.sticker {
+                    let who = { (u: PublicID?) in u == meId ? t("emails.you") : (home?.friend?.nickname ?? "") }
+                    StickerSheet(
+                        store: stickers,
+                        sticker: st,
+                        caption: t("stickers.sentAt", ["name": who(em.senderId), "time": DLTime.clock(em.sentAt)]),
+                        canSend: (home?.emailCredits?.left ?? 0) > 0,
+                        addedBy: { s in t("stickers.customBy", ["name": who(s.custom?.by)]) },
+                        onSend: { sendSticker($0, meId: meId) },
+                        onClose: { stickerOf = nil }
+                    )
+                    .environment(backend)
+                }
             }
             .sheet(isPresented: Binding(get: { unsentSheet && unsent?.status == .failed }, set: { unsentSheet = $0 })) {
                 if let unsent, let fail = unsent.fail {
@@ -536,10 +609,22 @@ public struct ThreadScreen: View {
         }
     }
 
-    /// OS3/OS4: the status of the provisional bubble, nil for every email the server has.
-    private func pendingOf(_ e: Email, _ unsent: EmailOutbox.Entry?) -> EmailOutbox.Status? {
+    /// OS3/OS4: the status of the provisional bubble (an email or a sticker), nil for every email the server has.
+    private func pendingOf(_ e: Email, _ unsent: EmailOutbox.Entry?, _ stickersOut: [StickerOutbox.Entry]) -> EmailOutbox.Status? {
+        if let s = stickersOut.first(where: { $0.email.id == e.id }) { return s.status }
         guard let unsent, unsent.email.id == e.id else { return nil }
         return unsent.status
+    }
+
+    private func failedSticker(_ out: [StickerOutbox.Entry]) -> StickerOutbox.Entry? {
+        out.first { $0.email.id == unsentSticker && $0.status == .failed }
+    }
+
+    /// Stickers FS-SK6: one tap sends; the reply target goes with it and the strip closes.
+    private func sendSticker(_ s: Sticker, meId: PublicID) {
+        guard !meId.isEmpty else { return }
+        stickerOutbox.send(threadId: id, senderId: meId, sticker: s.ref, replyTo: composer?.replyTo, api: backend.api)
+        composer?.cancelReply()
     }
 
     /// EB11 grow-in; OS3 none for the email that replaces a provisional one; OS6 Cancel collapses it.
@@ -621,6 +706,10 @@ private struct Bubble: View {
     var onUnsent: () -> Void = {}
     /// EP7: the same sender's next voice notes in the thread, which play on after this bubble's.
     var voiceAfter: [String] = []
+    /// Stickers SK10: a tap on a sticker opens its sheet.
+    var onSticker: () -> Void = {}
+    /// Stickers SK7: the layer's ★ item for a sticker.
+    var favourite: StickerFavourite?
 
     @Environment(Backend.self) private var backend
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -737,7 +826,13 @@ private struct Bubble: View {
                             closeLayer()
                             copyText()
                         },
-                        onClose: closeLayer
+                        onClose: closeLayer,
+                        favourite: favourite.map { f in
+                            StickerFavourite(on: f.on) {
+                                closeLayer()
+                                f.toggle()
+                            }
+                        }
                     ) {
                         surface(interactive: false)
                     }
@@ -768,11 +863,56 @@ private struct Bubble: View {
         }
     }
 
+    /// A sticker (Stickers SK11) or the bubble; drawn in the thread and, lifted, in the long-press layer.
+    @ViewBuilder private func surface(interactive: Bool) -> some View {
+        if let st = email.sticker {
+            stickerSurface(st, interactive: interactive)
+        } else {
+            bubbleSurface(interactive: interactive)
+        }
+    }
+
+    /// Stickers SK11: 140 pt with no bubble fill or border, the time as a chip on it; a reply's quote
+    /// rides above in a small bubble of the sender's colour (web .dl-bubble--sticker).
+    private func stickerSurface(_ st: StickerRef, interactive: Bool) -> some View {
+        let stamp = pending == .sending ? "00:00" : pending == .failed ? t("emails.notSent") : DLTime.clock(email.sentAt)
+        let tail: CGFloat = first ? 4 : 16
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: mine ? 16 : tail,
+            bottomLeadingRadius: 16,
+            bottomTrailingRadius: 16,
+            topTrailingRadius: mine ? tail : 16
+        )
+        let sender: Citizen? = mine ? home?.me : home?.friend
+        let label = mine ? t("stickers.label") : t("stickers.labelFrom", ["name": sender?.nickname ?? ""])
+        return VStack(alignment: mine ? .trailing : .leading, spacing: 4) {
+            if let q = email.replyTo {
+                BubbleQuote(quote: q, name: quoteName(q.senderId), who: quoteWho(q.senderId)) { onOpenQuote(q.id) }
+                    .padding(8)
+                    .frame(maxWidth: 240)
+                    .background(who.tint, in: shape)
+                    .overlay(shape.stroke(who.signature.opacity(0.75), lineWidth: 1))
+            }
+            RemoteImage(st.url512, contentMode: .fit, maxPixel: 420) { Color.clear }
+                .frame(width: 140, height: 140)
+                .overlay(alignment: .bottomTrailing) { chip(stamp).padding(4) }
+                .contentShape(Rectangle())
+                .onTapGesture { if interactive, pending == nil { onSticker() } }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(label)
+                .accessibilityAddTraits(interactive ? .isButton : [])
+                .padding(.bottom, email.reactions.isEmpty ? 0 : 8)
+        }
+        // RE12: a ring around the original after a jump.
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.dlMailBlue.opacity(flash && interactive ? 0.55 : 0), lineWidth: 3))
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: flash)
+    }
+
     /// The bubble itself (EB1, EB5, RE11) with the time inside (BA1): after the text on its last line
     /// (a clear copy of the time at the end of the text keeps that room), as a chip on photos that
     /// come last, on its own line after a voice note or a video. Drawn in the thread and, lifted, in
     /// the long-press layer.
-    private func surface(interactive: Bool) -> some View {
+    private func bubbleSurface(interactive: Bool) -> some View {
         // Attachment Retention AR6: expired files keep their slots; only live photos open in the lightbox.
         let allPhotos = email.attachments.filter { $0.kind == "photo" }
         let photos = allPhotos.filter { !$0.expired }
@@ -796,6 +936,10 @@ private struct Bubble: View {
             // RE11: the quote at the top inside the bubble.
             if let q = email.replyTo {
                 BubbleQuote(quote: q, name: quoteName(q.senderId), who: quoteWho(q.senderId)) { onOpenQuote(q.id) }
+            }
+            // Stickers: an email that was only a sticker no longer there.
+            if email.text.isEmpty, email.attachments.isEmpty {
+                Text(t("stickers.removed")).font(.system(size: 16)).italic().foregroundStyle(.dlInkQuiet)
             }
             if !email.text.isEmpty {
                 if timeAt == .text {
