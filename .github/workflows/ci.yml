@@ -125,7 +125,8 @@ jobs:
           fi
           udid="$(xcrun simctl create "iPhone Duo" com.apple.CoreSimulator.SimDeviceType.iPhone-Duo "$runtime")"
           xcrun simctl boot "$udid" && xcrun simctl bootstatus "$udid" -b >/dev/null
-          xcrun simctl io "$udid" screenshot "$SNAPSHOT_DIR/zz.duo-boot.png" || true
+          xcrun simctl io "$udid" screenshot --display=3 "$SNAPSHOT_DIR/zz.duo-inner.png" || true
+          xcrun simctl io "$udid" screenshot --display=1 "$SNAPSHOT_DIR/zz.duo-cover.png" || true
           xcrun simctl shutdown "$udid" || true
 
       - name: Home Screen label (staging build)

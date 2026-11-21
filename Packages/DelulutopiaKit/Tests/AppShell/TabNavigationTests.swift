@@ -253,11 +253,14 @@ struct TabNavigationTests {
             CGSize(width: 393, height: 852), CGSize(width: 402, height: 874), CGSize(width: 414, height: 896),
             CGSize(width: 428, height: 926), CGSize(width: 430, height: 932), CGSize(width: 440, height: 956),
             CGSize(width: 420, height: 912), .zero,
+            CGSize(width: 466, height: 678), // the Duo's cover display
+
         ]
         for size in iphones {
             #expect(OrientationRule.allowed(pad: false, screen: size) == .portrait)
             #expect(OrientationRule.allowed(pad: false, screen: CGSize(width: size.height, height: size.width)) == .portrait)
         }
+        #expect(OrientationRule.allowed(pad: false, screen: CGSize(width: 669, height: 951)) == .allButUpsideDown)
         #expect(OrientationRule.allowed(pad: false, screen: CGSize(width: 1010, height: 716)) == .allButUpsideDown)
         #expect(OrientationRule.allowed(pad: false, screen: CGSize(width: 716, height: 1010)) == .allButUpsideDown)
         #expect(OrientationRule.allowed(pad: true, screen: CGSize(width: 1032, height: 1376)) == .all)

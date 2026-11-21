@@ -103,8 +103,10 @@ public final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotif
 /// Which way the app may turn (iPad Layout IP11): a pure rule, so the unit tests can check every
 /// standard iPhone size stays portrait.
 public enum OrientationRule {
-    /// The Duo's inner display is ≈ 1010 × 716 pt; the largest standard iPhone is 440 pt wide.
-    public static let wideShortSide: CGFloat = 700
+    /// The Duo simulator's inner display is 2007 × 2853 px (≈ 669 × 951 pt at 3×, 1.42 : 1) and its cover
+    /// display 1398 × 2034 px (466 × 678 pt); the largest standard iPhone is 440 pt wide. Only the
+    /// inner display turns.
+    public static let wideShortSide: CGFloat = 600
 
     public static func allowed(pad: Bool, screen: CGSize) -> UIInterfaceOrientationMask {
         if pad { return .all }

@@ -62,12 +62,13 @@ struct IPadScreenshots {
 }
 
 /// The iPhone Duo's unfolded display (iPad Layout IP10, IP12): iPhone navigation with wide layouts.
-/// The runner's Duo simulator reports a 678 × 466 pt screen (not the unfolded display), so the shots are
-/// drawn at the canvas size (1010 × 716 pt) on the iPhone run.
+/// The runner's iPhone Duo simulator has two displays: the inner one is 2007 × 2853 px (≈ 951 × 669 pt
+/// turned, at 3×; the canvas assumed ≈ 1010 × 716) and the cover 1398 × 2034 px. The shots are drawn at
+/// the inner display's size on the iPhone run.
 @MainActor
 @Suite("Duo screenshots", .serialized, .enabled(if: !Shoot.onIPad))
 struct DuoScreenshots {
-    static let canvas = CGSize(width: 1010, height: 716)
+    static let canvas = CGSize(width: 951, height: 669)
 
     private func app(_ tab: AppTab, link: AppLink? = nil, theme: ThemeMode = .match) -> some View {
         let backend = FixtureBackend.make(theme: theme)
