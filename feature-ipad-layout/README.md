@@ -1,6 +1,6 @@
 # feature/ipad-layout
 
-Commit `4af4dea`, run 44934478806.
+Commit `0581d31`, run 44937598802.
 
 ## appearanceDark.appearance-dark
 
@@ -153,54 +153,6 @@ Commit `4af4dea`, run 44934478806.
 ## newEmail.email-new-light
 
 ![newEmail.email-new-light.png](newEmail.email-new-light.png)
-
-## shoot-_-link-_.duo-home-dark
-
-![shoot-_-link-_.duo-home-dark.png](shoot-_-link-_.duo-home-dark.png)
-
-## shoot-_-link-_.duo-home-fa-light
-
-![shoot-_-link-_.duo-home-fa-light.png](shoot-_-link-_.duo-home-fa-light.png)
-
-## shoot-_-link-_.duo-home-light
-
-![shoot-_-link-_.duo-home-light.png](shoot-_-link-_.duo-home-light.png)
-
-## shoot-_-link-_.duo-letter-dark
-
-![shoot-_-link-_.duo-letter-dark.png](shoot-_-link-_.duo-letter-dark.png)
-
-## shoot-_-link-_.duo-letter-fa-light
-
-![shoot-_-link-_.duo-letter-fa-light.png](shoot-_-link-_.duo-letter-fa-light.png)
-
-## shoot-_-link-_.duo-letter-light
-
-![shoot-_-link-_.duo-letter-light.png](shoot-_-link-_.duo-letter-light.png)
-
-## shoot-_-link-_.duo-letters-dark
-
-![shoot-_-link-_.duo-letters-dark.png](shoot-_-link-_.duo-letters-dark.png)
-
-## shoot-_-link-_.duo-letters-fa-light
-
-![shoot-_-link-_.duo-letters-fa-light.png](shoot-_-link-_.duo-letters-fa-light.png)
-
-## shoot-_-link-_.duo-letters-light
-
-![shoot-_-link-_.duo-letters-light.png](shoot-_-link-_.duo-letters-light.png)
-
-## shoot-_-link-_.duo-thread-dark
-
-![shoot-_-link-_.duo-thread-dark.png](shoot-_-link-_.duo-thread-dark.png)
-
-## shoot-_-link-_.duo-thread-fa-light
-
-![shoot-_-link-_.duo-thread-fa-light.png](shoot-_-link-_.duo-thread-fa-light.png)
-
-## shoot-_-link-_.duo-thread-light
-
-![shoot-_-link-_.duo-thread-light.png](shoot-_-link-_.duo-thread-light.png)
 
 ## shoot-_-link-_.ipad-discussion-landscape-dark
 
