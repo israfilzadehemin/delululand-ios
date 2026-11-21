@@ -59,7 +59,8 @@ struct MainTabView: View {
             .environment(\.dlBrand, backend.home.home?.universe.name ?? "Delulutopia")
             .environment(\.dlFirstCitizen, backend.home.home?.firstCitizen)
             .dlToast($toast, bottom: nav.layout == .split ? 24 : 96)
-            .background { shortcuts }
+            // Keyboard shortcuts for the iPad and the Duo (IP8); the iPhone's tree stays as it was.
+            .background { if nav.layout != .phone { shortcuts } }
             .task(id: backend.home.home?.me.avatarUrl) {
                 guard let url = backend.home.home?.me.avatarUrl else {
                     youPhoto = nil
@@ -88,30 +89,35 @@ struct MainTabView: View {
 
     @ViewBuilder
     private var tabs: some View {
-        if nav.layout == .split, #available(iOS 18.0, *) {
-            // iPad Layout IP1: the tab bar sits on top and can turn into a sidebar.
-            TabView(selection: tabSelection) {
-                ForEach(AppTab.allCases) { tab in
-                    Tab(value: tab) {
+        if nav.layout == .split {
+            if #available(iOS 18.0, *) {
+                // iPad Layout IP1: the tab bar sits on top and can turn into a sidebar.
+                TabView(selection: tabSelection) {
+                    ForEach(AppTab.allCases) { tab in
+                        Tab(value: tab) {
+                            splitTab(tab)
+                        } label: {
+                            tabLabel(tab)
+                        }
+                    }
+                }
+                .tabViewStyle(.sidebarAdaptable)
+            } else {
+                TabView(selection: tabSelection) {
+                    ForEach(AppTab.allCases) { tab in
                         splitTab(tab)
-                    } label: {
-                        tabLabel(tab)
+                            .tabItem { tabLabel(tab) }
+                            .tag(tab)
                     }
                 }
             }
-            .tabViewStyle(.sidebarAdaptable)
         } else {
+            // The iPhone and the Duo: each tab's stack is the TabView's direct child, as before.
             TabView(selection: tabSelection) {
                 ForEach(AppTab.allCases) { tab in
-                    Group {
-                        if nav.layout == .split {
-                            splitTab(tab)
-                        } else {
-                            stackTab(tab)
-                        }
-                    }
-                    .tabItem { tabLabel(tab) }
-                    .tag(tab)
+                    stackTab(tab)
+                        .tabItem { tabLabel(tab) }
+                        .tag(tab)
                 }
             }
         }
@@ -132,36 +138,48 @@ struct MainTabView: View {
         }
     }
 
-    /// The iPad tab (IP2, IP3): Home in two columns; the others a list beside a detail column.
+    /// The iPad tab (IP2, IP3): Home in two columns; the others a list beside a detail column. The
+    /// columns are two stacks side by side rather than a NavigationSplitView, which hides the
+    /// floating tab bar; the widths are the canvas's (T-Letters 390 pt, T-Emails and T-You 420 pt,
+    /// 340 pt in portrait).
     @ViewBuilder
     private func splitTab(_ tab: AppTab) -> some View {
         if TabNavigation.hasDetail(tab) {
-            NavigationSplitView {
-                NavigationStack(path: listPath(tab)) {
-                    root(for: tab)
-                        .navigationDestination(for: AppRoute.self) { route in
-                            RouteScreen(route: route)
-                        }
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    NavigationStack(path: listPath(tab)) {
+                        root(for: tab)
+                            .navigationDestination(for: AppRoute.self) { route in
+                                RouteScreen(route: route)
+                            }
+                    }
+                    .environment(\.dlSelected, nav.selection(tab))
+                    .frame(width: Self.listWidth(tab, size: geo.size))
+                    Rectangle()
+                        .fill(Color.dlLine)
+                        .frame(width: 0.5)
+                        .ignoresSafeArea(edges: .bottom)
+                    NavigationStack(path: path(tab)) {
+                        detailRoot(tab)
+                            .navigationDestination(for: AppRoute.self) { route in
+                                RouteScreen(route: route)
+                                    .dlReadable(nav.layout)
+                            }
+                    }
+                    .overlay { if tab != .you { LeafLayer() } }
                 }
-                .environment(\.dlSelected, nav.selection(tab))
-                .navigationSplitViewColumnWidth(min: 320, ideal: 390, max: 420)
-            } detail: {
-                NavigationStack(path: path(tab)) {
-                    detailRoot(tab)
-                        .navigationDestination(for: AppRoute.self) { route in
-                            RouteScreen(route: route)
-                                .dlReadable(nav.layout)
-                        }
-                }
-                .overlay { if tab != .you { LeafLayer() } }
             }
-            .navigationSplitViewStyle(.balanced)
         } else {
             NavigationStack {
                 root(for: tab)
                     .overlay { LeafLayer() }
             }
         }
+    }
+
+    static func listWidth(_ tab: AppTab, size: CGSize) -> CGFloat {
+        guard size.width > size.height else { return 340 }
+        return tab == .emails || tab == .you ? 420 : 390
     }
 
     @ViewBuilder

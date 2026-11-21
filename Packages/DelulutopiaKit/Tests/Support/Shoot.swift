@@ -110,6 +110,8 @@ public enum Shoot {
     /// True when the screenshot run is on an iPad simulator: the iPhone suites skip, the iPad suite
     /// runs (iPad Layout §7). Read from the simulator's environment, so traits can use it.
     nonisolated public static let onIPad: Bool = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"]?.hasPrefix("iPad") ?? false
+    /// True on the iPhone Duo simulator CI creates (iPad Layout IP12): only the Duo suite runs there.
+    nonisolated public static let onDuo: Bool = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"]?.contains("Duo") ?? false
 
     /// Shoots `view` at the device's own size (the iPad run), turned to `landscape` first, after it
     /// has run in the key window for `wait` seconds.
@@ -128,12 +130,17 @@ public enum Shoot {
             try? await Task.sleep(for: .seconds(1))
         }
         guard let window = keyWindow else { return }
+        // An iPad app that supports multitasking cannot turn itself; if the window stayed upright,
+        // the shot is laid out at the turned size inside it instead.
+        var size = window.bounds.size
+        if landscape != (size.width > size.height) {
+            size = CGSize(width: size.height, height: size.width)
+        }
         let controller = host(view, style: style, topUpSafeArea: false)
         window.rootViewController = controller
-        controller.view.frame = window.bounds
+        controller.view.frame = CGRect(origin: .zero, size: size)
         window.layoutIfNeeded()
         try? await Task.sleep(for: .seconds(wait))
-        let size = window.bounds.size
         record(
             controller,
             named: name,

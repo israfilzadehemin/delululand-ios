@@ -105,6 +105,33 @@ jobs:
             -destination "id=${{ steps.ipad.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath "$GITHUB_WORKSPACE/build/ScreenshotsIPad.xcresult" | xcbeautify
 
+      - name: Create an iPhone Duo simulator (iPad Layout IP12)
+        id: duo
+        if: steps.sync.outputs.regenerated != 'true'
+        continue-on-error: true
+        run: |
+          profile="$(find /Library/Developer/CoreSimulator "$(xcode-select -p)/.." -path '*iPhone Duo.simdevicetype/Contents/Resources/profile.plist' 2>/dev/null | head -1)"
+          if [ -n "$profile" ]; then
+            echo "::group::iPhone Duo profile"
+            plutil -p "$profile" | grep -iE "screen|display|fold|scale|width|height" || plutil -p "$profile"
+            echo "::endgroup::"
+          fi
+          runtime="$(xcrun simctl list runtimes available -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x["platform"]=="iOS"]; print(sorted(r,key=lambda x: x["version"])[-1]["identifier"])')"
+          udid="$(xcrun simctl create "iPhone Duo" com.apple.CoreSimulator.SimDeviceType.iPhone-Duo "$runtime")"
+          echo "udid=$udid" >> "$GITHUB_OUTPUT"
+
+      - name: Screenshots (iPhone Duo)
+        if: steps.sync.outputs.regenerated != 'true' && steps.duo.outputs.udid != ''
+        continue-on-error: true
+        env:
+          TEST_RUNNER_DL_SNAPSHOT_DIR: ${{ env.SNAPSHOT_DIR }}
+        run: |
+          set -o pipefail
+          xcodebuild test -project Delulutopia.xcodeproj -scheme "Delulutopia Staging" -configuration Debug-Staging \
+            -destination "id=${{ steps.duo.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath "$GITHUB_WORKSPACE/build/ScreenshotsDuo.xcresult" | tee "$RUNNER_TEMP/duo.log" | xcbeautify
+          grep -o "DUO-SCREEN.*" "$RUNNER_TEMP/duo.log" || true
+
       - name: Home Screen label (staging build)
         if: steps.sync.outputs.regenerated != 'true'
         continue-on-error: true

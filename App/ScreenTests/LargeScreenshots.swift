@@ -8,6 +8,7 @@ import FeatureLetters
 import Foundation
 import SwiftUI
 import Testing
+import UIKit
 
 /// The iPad split on a 13″ iPad simulator, landscape and portrait (doc "Delululand — iPad Layout"
 /// §7, IP15: the App Store's 13″ set comes from these). Runs only in the iPad screenshot run.
@@ -55,14 +56,11 @@ struct IPadScreenshots {
     }
 }
 
-/// The iPhone Duo's unfolded display (≈ 1010 × 716 pt, iPad Layout IP10, IP12): iPhone navigation
-/// with wide layouts. Drawn off screen at that size on the iPhone run, since CI has no Duo simulator
-/// unless `simctl list devicetypes` says otherwise.
+/// The iPhone Duo's unfolded display (iPad Layout IP10, IP12): iPhone navigation with wide layouts,
+/// shot on the iPhone Duo simulator CI creates from the runner's `iPhone-Duo` device type.
 @MainActor
-@Suite("Duo screenshots", .serialized, .enabled(if: !Shoot.onIPad))
+@Suite("Duo screenshots", .serialized, .enabled(if: Shoot.onDuo))
 struct DuoScreenshots {
-    static let size = CGSize(width: 1010, height: 716)
-
     private func app(_ tab: AppTab, link: AppLink? = nil, theme: ThemeMode = .match) -> some View {
         let backend = FixtureBackend.make(theme: theme)
         backend.push.pendingLink = link
@@ -70,11 +68,17 @@ struct DuoScreenshots {
     }
 
     private func shoot(_ tab: AppTab, link: AppLink? = nil, _ name: String) async {
-        await Shoot.sized(app(tab, link: link), named: "duo-\(name)-light", style: .light, size: Self.size, wait: 2.5)
-        await Shoot.sized(app(tab, link: link, theme: .dark), named: "duo-\(name)-dark", style: .dark, size: Self.size, wait: 2.5)
+        await Shoot.device(app(tab, link: link), named: "duo-\(name)-light", style: .light, wait: 2.5, landscape: true)
+        await Shoot.device(app(tab, link: link, theme: .dark), named: "duo-\(name)-dark", style: .dark, wait: 2.5, landscape: true)
         I18n.shared.set(.fa)
-        await Shoot.sized(app(tab, link: link), named: "duo-\(name)-fa-light", style: .light, size: Self.size, wait: 2.5)
+        await Shoot.device(app(tab, link: link), named: "duo-\(name)-fa-light", style: .light, wait: 2.5, landscape: true)
         I18n.shared.set(.en)
+    }
+
+    /// The screen the device reports, for the doc (IP12).
+    @Test func screenSize() {
+        let bounds = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.screen.bounds ?? .zero
+        print("DUO-SCREEN \(bounds.width) x \(bounds.height) pt")
     }
 
     @Test func home() async { await shoot(.home, "home") }
