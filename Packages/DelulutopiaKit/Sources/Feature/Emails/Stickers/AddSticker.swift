@@ -86,13 +86,13 @@ struct AddSticker: View {
         NavigationStack {
             List {
                 Button { drawing = true } label: {
-                    row(t("stickers.draw"), t("stickers.drawHint"), symbol: "scribble")
+                    menuRow(t("stickers.draw"), t("stickers.drawHint"), symbol: "scribble")
                 }
                 PhotosPicker(selection: $photoPick, matching: .images) {
-                    row(t("stickers.fromPhoto"), nil, symbol: "person.crop.square")
+                    menuRow(t("stickers.fromPhoto"), nil, symbol: "person.crop.square")
                 }
                 PhotosPicker(selection: $filePick, matching: .images, preferredItemEncoding: .current) {
-                    row(t("stickers.import"), t("stickers.importHint"), symbol: "square.and.arrow.down")
+                    menuRow(t("stickers.import"), t("stickers.importHint"), symbol: "square.and.arrow.down")
                 }
                 if let error {
                     Text(error).dlText(.footnote).foregroundStyle(.dlError)
@@ -110,16 +110,6 @@ struct AddSticker: View {
         }
     }
 
-    private func row(_ title: String, _ hint: String?, symbol: String) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: symbol).font(.system(size: 20)).foregroundStyle(.dlSeal).frame(width: 28)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(.dlInk)
-                if let hint { Text(hint).font(.system(size: 13)).foregroundStyle(.dlInkQuiet) }
-            }
-        }
-        .padding(.vertical, 4)
-    }
 }
 
 /// SK13, FS-SK19, FS-SK24: the sticker on a checkerboard, keywords, the count after adding, Add.
@@ -267,4 +257,16 @@ private extension UIImage {
         format.scale = 1
         return UIGraphicsImageRenderer(size: size, format: format).image { _ in draw(at: .zero) }
     }
+}
+
+/// One way in, with its hint (FS-SK18).
+private func menuRow(_ title: String, _ hint: String?, symbol: String) -> some View {
+    HStack(spacing: 14) {
+        Image(systemName: symbol).font(.system(size: 20)).foregroundStyle(.dlSeal).frame(width: 28)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(.dlInk)
+            if let hint { Text(hint).font(.system(size: 13)).foregroundStyle(.dlInkQuiet) }
+        }
+    }
+    .padding(.vertical, 4)
 }

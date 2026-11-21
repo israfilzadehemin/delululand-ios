@@ -407,11 +407,9 @@ public struct ThreadScreen: View {
     private func thread(_ model: ThreadModel, home: Home?, meId: PublicID) -> some View {
         // OS3: my email in the air or failed is the newest, drawn before the server has it.
         let unsent = outbox.entry(id)
-        let stickersOut = stickerOutbox.of(id)
-        let provisional = ((unsent.map { [$0.email] } ?? []) + stickersOut.map(\.email))
-            .sorted { $0.sentAt == $1.sentAt ? $0.id < $1.id : $0.sentAt < $1.sentAt }
-        let oldestFirst = Array(model.emails.reversed()) + provisional
-        let favourites = stickers.catalogue?.favourites
+        let stickersOut: [StickerOutbox.Entry] = stickerOutbox.of(id)
+        let oldestFirst: [Email] = Array(model.emails.reversed()) + provisionalEmails(unsent, stickersOut)
+        let stickerIds: [PublicID] = stickersOut.map(\.email.id)
         let first = home?.firstCitizen
         // RE9, RE11: "You" for my own emails, else the friend's nickname.
         let quoteName: (PublicID) -> String = { id in id == meId ? t("emails.you") : (home?.friend?.id == id ? home?.friend?.nickname ?? "" : "") }
@@ -451,14 +449,10 @@ public struct ThreadScreen: View {
                             onReply: { composer?.pickReply(quoteOf(e)) },
                             onOpenQuote: { target in openOriginal(target, model: model, proxy: proxy) },
                             pending: pendingOf(e, unsent, stickersOut),
-                            onUnsent: {
-                                if stickersOut.contains(where: { $0.email.id == e.id }) { unsentSticker = e.id } else { unsentSheet = true }
-                            },
+                            onUnsent: { openUnsent(e, stickersOut) },
                             voiceAfter: VoiceRun.after(oldestFirst, index: i),
                             onSticker: { stickerOf = e },
-                            favourite: e.sticker.flatMap { st in
-                                favourites.map { f in StickerFavourite(on: f.contains(st.id)) { stickers.toggleFavourite(st.id) } }
-                            }
+                            favourite: favouriteOf(e)
                         )
                         .id(e.id)
                         .transition(bubbleTransition(e, meId: meId))
@@ -471,7 +465,7 @@ public struct ThreadScreen: View {
                 .padding(.vertical, 8)
                 .animation(reduceMotion ? nil : .snappy(duration: 0.26), value: model.emails.first?.id)
                 .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: unsent?.email.id)
-                .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: stickersOut.map(\.email.id))
+                .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: stickerIds)
             }
             .defaultScrollAnchor(.bottom)
             .scrollDismissesKeyboard(.interactively)
@@ -533,42 +527,21 @@ public struct ThreadScreen: View {
                 guard local != nil else { return }
                 withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo("bottom", anchor: .bottom) }
             }
-            .onChange(of: stickersOut.last?.email.id) { _, local in
+            .onChange(of: stickerIds.last) { _, local in
                 guard local != nil else { return }
                 withAnimation(reduceMotion ? nil : .snappy) { proxy.scrollTo("bottom", anchor: .bottom) }
             }
-            .sheet(isPresented: Binding(get: { failedSticker(stickersOut) != nil }, set: { if !$0 { unsentSticker = nil } })) {
-                if let e = failedSticker(stickersOut), let fail = e.fail {
-                    UnsentSheet(
-                        fail: fail,
-                        reason: unsentReason(fail, credits: home?.emailCredits),
-                        onRetry: {
-                            unsentSticker = nil
-                            stickerOutbox.retry(e.email.id)
-                        },
-                        onCancel: {
-                            unsentSticker = nil
-                            stickerOutbox.cancel(e.email.id)
-                        }
-                    )
-                }
-            }
-            // SK10: the sticker's sheet; "More from this pack" sends from here.
-            .sheet(item: $stickerOf) { em in
-                if let st = em.sticker {
-                    let who = { (u: PublicID?) in u == meId ? t("emails.you") : (home?.friend?.nickname ?? "") }
-                    StickerSheet(
-                        store: stickers,
-                        sticker: st,
-                        caption: t("stickers.sentAt", ["name": who(em.senderId), "time": DLTime.clock(em.sentAt)]),
-                        canSend: (home?.emailCredits?.left ?? 0) > 0,
-                        addedBy: { s in t("stickers.customBy", ["name": who(s.custom?.by)]) },
-                        onSend: { sendSticker($0, meId: meId) },
-                        onClose: { stickerOf = nil }
-                    )
-                    .environment(backend)
-                }
-            }
+            .modifier(StickerSheets(
+                failed: failedSticker(stickersOut),
+                unsentSticker: $unsentSticker,
+                stickerOf: $stickerOf,
+                outbox: stickerOutbox,
+                store: stickers,
+                home: home,
+                meId: meId,
+                reason: { unsentReason($0, credits: home?.emailCredits) },
+                send: { sendSticker($0, meId: meId) }
+            ))
             .sheet(isPresented: Binding(get: { unsentSheet && unsent?.status == .failed }, set: { unsentSheet = $0 })) {
                 if let unsent, let fail = unsent.fail {
                     UnsentSheet(
@@ -614,6 +587,23 @@ public struct ThreadScreen: View {
         if let s = stickersOut.first(where: { $0.email.id == e.id }) { return s.status }
         guard let unsent, unsent.email.id == e.id else { return nil }
         return unsent.status
+    }
+
+    /// OS3: my email and stickers in the air or failed, oldest first, after the server's emails.
+    private func provisionalEmails(_ unsent: EmailOutbox.Entry?, _ out: [StickerOutbox.Entry]) -> [Email] {
+        let all: [Email] = (unsent.map { [$0.email] } ?? []) + out.map(\.email)
+        return all.sorted { $0.sentAt == $1.sentAt ? $0.id < $1.id : $0.sentAt < $1.sentAt }
+    }
+
+    /// OS5: the Not sent sheet of an email or of a sticker.
+    private func openUnsent(_ e: Email, _ out: [StickerOutbox.Entry]) {
+        if out.contains(where: { $0.email.id == e.id }) { unsentSticker = e.id } else { unsentSheet = true }
+    }
+
+    /// SK7: the layer's ★ for a sticker, once the catalogue is in.
+    private func favouriteOf(_ e: Email) -> StickerFavourite? {
+        guard let st = e.sticker, let favourites = stickers.catalogue?.favourites else { return nil }
+        return StickerFavourite(on: favourites.contains(st.id)) { stickers.toggleFavourite(st.id) }
     }
 
     private func failedSticker(_ out: [StickerOutbox.Entry]) -> StickerOutbox.Entry? {
@@ -1185,5 +1175,59 @@ public struct NewEmailScreen: View {
             }
         }
         .onDisappear { composer?.close() }
+    }
+}
+
+/// Stickers: the Not sent sheet of a failed sticker (OS5) and the sticker's own sheet (SK10).
+private struct StickerSheets: ViewModifier {
+    let failed: StickerOutbox.Entry?
+    @Binding var unsentSticker: PublicID?
+    @Binding var stickerOf: Email?
+    let outbox: StickerOutbox
+    let store: StickerStore
+    let home: Home?
+    let meId: PublicID
+    let reason: (EmailOutbox.Fail) -> String
+    let send: (Sticker) -> Void
+
+    @Environment(Backend.self) private var backend
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(isPresented: Binding(get: { failed != nil }, set: { if !$0 { unsentSticker = nil } })) {
+                if let e = failed, let fail = e.fail {
+                    UnsentSheet(
+                        fail: fail,
+                        reason: reason(fail),
+                        onRetry: {
+                            unsentSticker = nil
+                            outbox.retry(e.email.id)
+                        },
+                        onCancel: {
+                            unsentSticker = nil
+                            outbox.cancel(e.email.id)
+                        }
+                    )
+                }
+            }
+            // "More from this pack" sends from here.
+            .sheet(item: $stickerOf) { em in
+                if let st = em.sticker {
+                    StickerSheet(
+                        store: store,
+                        sticker: st,
+                        caption: t("stickers.sentAt", ["name": who(em.senderId), "time": DLTime.clock(em.sentAt)]),
+                        canSend: (home?.emailCredits?.left ?? 0) > 0,
+                        addedBy: { s in t("stickers.customBy", ["name": who(s.custom?.by)]) },
+                        onSend: send,
+                        onClose: { stickerOf = nil }
+                    )
+                    .environment(backend)
+                }
+            }
+    }
+
+    private func who(_ u: PublicID?) -> String {
+        u == meId ? t("emails.you") : (home?.friend?.nickname ?? "")
     }
 }
