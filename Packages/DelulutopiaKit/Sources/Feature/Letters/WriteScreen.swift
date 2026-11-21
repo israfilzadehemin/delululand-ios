@@ -44,7 +44,7 @@ public struct WriteScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .task {
             if model == nil {
                 let m = WriteModel(backend: backend, editId: editId, replyTo: replyTo)

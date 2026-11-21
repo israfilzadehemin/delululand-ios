@@ -170,7 +170,7 @@ public struct ComposeDiscussionScreen: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.dlPaper.ignoresSafeArea())
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .task {
             if model == nil {
                 let m = ComposeModel(backend: backend, editId: editId)

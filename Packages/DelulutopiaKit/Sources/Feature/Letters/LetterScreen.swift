@@ -170,7 +170,7 @@ public struct LetterScreen: View {
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(shown.map { t($0.isMine ? "letters.to" : "letters.from", ["friend": friend]) } ?? "")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .toolbar {
             if let shown, !shown.isMine {
                 ToolbarItemGroup(placement: .bottomBar) {

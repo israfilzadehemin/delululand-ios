@@ -365,7 +365,7 @@ public struct ThreadScreen: View {
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(model?.thread?.subject ?? t("emails.email"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .task {
             if model == nil {
                 model = ThreadModel(backend: backend, id: id)
@@ -1168,7 +1168,7 @@ public struct NewEmailScreen: View {
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(t("emails.newEmail"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .task {
             if composer == nil {
                 let c = EmailComposer(key: "new", backend: backend)

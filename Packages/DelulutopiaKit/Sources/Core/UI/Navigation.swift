@@ -212,3 +212,23 @@ public extension AppRoute {
         }
     }
 }
+
+public extension View {
+    /// Reading and writing pages hide the iPhone's tab bar; on the iPad the tab bar stays over both
+    /// columns (iPad Layout IP1), so a page in the detail column leaves it alone.
+    func dlHidesTabBar() -> some View {
+        modifier(DLHidesTabBar())
+    }
+}
+
+private struct DLHidesTabBar: ViewModifier {
+    @Environment(\.dlLayout) private var layout
+
+    func body(content: Content) -> some View {
+        if layout == .split {
+            content
+        } else {
+            content.toolbar(.hidden, for: .tabBar)
+        }
+    }
+}

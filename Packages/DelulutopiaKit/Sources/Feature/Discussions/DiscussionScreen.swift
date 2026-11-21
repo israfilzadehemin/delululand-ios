@@ -259,7 +259,7 @@ public struct DiscussionScreen: View {
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(t("discussions.discussion"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .onAppear {
             if model == nil { model = DiscussionModel(backend: backend, id: id) }
             model?.start()
