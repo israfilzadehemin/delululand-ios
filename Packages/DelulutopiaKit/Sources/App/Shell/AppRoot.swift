@@ -87,6 +87,9 @@ public struct AppRoot: View {
         case .signedIn:
             SignedInShell(initialTab: initialTab)
                 .transition(.opacity)
+        case let .gone(reason, brand):
+            GoodbyeScreen(reason: reason, brand: brand) { backend.session.leaveGoodbye() }
+                .transition(.opacity)
         }
     }
 }

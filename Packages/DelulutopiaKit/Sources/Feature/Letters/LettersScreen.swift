@@ -210,7 +210,7 @@ private struct ListRow: View {
             LetterTile(tileShapeOf(row, state: state), who: who) {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Direction(text: to ? t("letters.toFriend", ["friend": friendName]) : t("letters.fromFriend", ["friend": friendName]), who: who)
+                        Direction(text: to ? toLabel(row, friendName) : t("letters.fromFriend", ["friend": friendName]), who: who)
                         HStack(spacing: 4) {
                             if !incoming, row.replyToId != nil { ReplyMark() }
                             Text(incoming ? t("letters.onItsWay") : firstLineOf(row))
@@ -260,7 +260,7 @@ private struct Thumb: View {
             if incoming { notice(.text(t("letters.arrivesAt", ["time": DLTime.clock(row.arrivesAt, now: now)]))) } else { open(.letter(row.id)) }
         } label: {
             VStack(alignment: .leading, spacing: 6) {
-                Direction(text: to ? t("letters.toFriend", ["friend": friendName]) : t("letters.fromFriend", ["friend": friendName]), who: who)
+                Direction(text: to ? toLabel(row, friendName) : t("letters.fromFriend", ["friend": friendName]), who: who)
                     .padding(.trailing, envelope ? 0 : 30)
                 (Text(!incoming && row.replyToId != nil ? "↰ " : "").foregroundColor(.dlInkQuiet)
                     + Text(incoming ? t("letters.onItsWay") : firstLineOf(row)))
@@ -438,4 +438,9 @@ private struct EmptyLetters: View {
 private extension Array where Element == LetterRow {
     /// A thumbnail row's identity: both letters' ids (F5).
     var pairKey: String { map(\.id).joined(separator: "|") }
+}
+
+/// DL-5: my letters to a citizen who has since left say so instead of naming the new friend.
+private func toLabel(_ row: LetterRow, _ friendName: String) -> String {
+    row.toFormer == true ? t("letters.toFormer") : t("letters.toFriend", ["friend": friendName])
 }

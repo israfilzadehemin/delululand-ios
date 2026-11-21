@@ -87,6 +87,18 @@ public final class DeviceSettings {
         set { defaults.set(newValue, forKey: Keys.faceIDOffered) }
     }
 
+    /// Data deletion (DD9): every device-only key goes except the theme and the language (`dl-lang`):
+    /// views, recent emojis, asks already answered, Face ID offers, voice speed.
+    public func forgetDeviceState() {
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix("dl.") && key != Keys.theme {
+            defaults.removeObject(forKey: key)
+        }
+        boardMini = false
+        lettersList = false
+        leaves = true
+        recentEmojis = []
+    }
+
     /// Match device forgets the stored choice (web: "Match device forgets the stored choice").
     public func setThemeMode(_ mode: ThemeMode) {
         themeMode = mode

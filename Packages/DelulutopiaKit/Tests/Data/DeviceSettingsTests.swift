@@ -40,6 +40,28 @@ struct DeviceSettingsTests {
         defaults.set("sepia", forKey: DeviceSettings.Keys.theme)
         #expect(DeviceSettings(defaults: defaults).themeMode == .match)
     }
+
+    @Test("A deletion forgets device state but keeps the theme and the language (DD9)")
+    func forgetDeviceState() {
+        let name = "dl.tests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        let settings = DeviceSettings(defaults: defaults)
+        settings.setThemeMode(ThemeMode.dark)
+        settings.setBoardMini(true)
+        settings.notifyAsked = true
+        defaults.set(1.5, forKey: "dl.voiceSpeed")
+        defaults.set(true, forKey: "dl.faceIDOffered.abc")
+        defaults.set("az", forKey: "dl-lang")
+        settings.forgetDeviceState()
+        #expect(settings.themeMode == ThemeMode.dark)
+        #expect(!settings.boardMini)
+        #expect(!settings.notifyAsked)
+        #expect(defaults.object(forKey: "dl.voiceSpeed") == nil)
+        #expect(defaults.object(forKey: "dl.faceIDOffered.abc") == nil)
+        #expect(defaults.string(forKey: "dl-lang") == "az")
+        #expect(DeviceSettings(defaults: defaults).themeMode == ThemeMode.dark)
+    }
 }
 
 @Suite("App config")

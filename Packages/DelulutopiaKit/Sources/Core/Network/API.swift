@@ -29,6 +29,14 @@ public struct API: Sendable {
     public func login(userId: PublicID, pin: String) async throws { try await client.run("POST", "api/auth/login", body: LoginBody(userId: userId, pin: pin)) }
     public func createPin(userId: PublicID, pin: String) async throws { try await client.run("POST", "api/auth/pin", body: LoginBody(userId: userId, pin: pin)) }
     public func logout() async throws { try await client.run("POST", "api/auth/logout") }
+    // Data deletion (doc "Delululand — Data Deletion" §5.1)
+    public func deletionPreview() async throws -> DeletionPreview { try await client.call("GET", "api/me/deletion-preview") }
+    public func deleteMe(pin: String) async throws {
+        try await client.run("DELETE", "api/me", body: DeleteMeBody(pin: pin, platform: "ios"))
+    }
+    public func deleteUniverse(pin: String, name: String) async throws {
+        try await client.run("DELETE", "api/universe", body: DeleteUniverseBody(pin: pin, name: name, platform: "ios"))
+    }
     public func changePin(current: String, new: String) async throws {
         try await client.run("POST", "api/me/pin", body: ChangePinBody(currentPin: current, newPin: new))
     }

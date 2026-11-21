@@ -109,6 +109,8 @@ public struct LetterRow: Codable, Sendable, Hashable, Identifiable {
     public var moodLabel: String?
     public var stamp: StampMark?
     public var replyToId: PublicID?
+    /// Doc "Delululand — Data Deletion" DL-5: my letter to a citizen who has since left.
+    public var toFormer: Bool?
 
     public var isMine: Bool { direction == "to" }
 }
@@ -875,6 +877,40 @@ public struct CreatedUniverse: Codable, Sendable, Hashable {
 }
 
 /// The parts of `GET /api/home` the session needs.
+/// `GET /api/me/deletion-preview`: what a deletion takes. `scope` USER (second citizen) | UNIVERSE (creator).
+public struct DeletionPreview: Codable, Sendable, Hashable {
+    public struct Counts: Codable, Sendable, Hashable {
+        @Default<Zero> public var letters: Int
+        @Default<Zero> public var emails: Int
+        @Default<Zero> public var discussions: Int
+        @Default<Zero> public var comments: Int
+        @Default<Zero> public var photos: Int
+        @Default<Zero> public var voice: Int
+        @Default<Zero> public var videos: Int
+        @Default<Zero> public var doodles: Int
+
+        public static let keys = ["letters", "emails", "discussions", "comments", "photos", "voice", "videos", "doodles"]
+
+        public func of(_ key: String) -> Int {
+            switch key {
+            case "letters": letters
+            case "emails": emails
+            case "discussions": discussions
+            case "comments": comments
+            case "photos": photos
+            case "voice": voice
+            case "videos": videos
+            default: doodles
+            }
+        }
+    }
+
+    public var scope: String
+    public var universe: String
+    public var friend: String?
+    public var counts: Counts
+}
+
 public struct HomeSession: Codable, Sendable, Hashable {
     public var me: Person
     public var friend: Person?
