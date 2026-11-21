@@ -1,6 +1,7 @@
 import DLNetwork
 import Foundation
 import UserNotifications
+import WidgetKit
 
 /// Read Ticks TK2 on iOS: the server marks new-email pushes `mutable-content`, so iOS wakes this
 /// extension even while the app is closed. It tells the API the email reached this phone
@@ -31,6 +32,8 @@ final class NotificationService: UNNotificationServiceExtension, @unchecked Send
     }
 
     private func finish() {
+        // A new email may come with a new mood, doodle or selfie on Home: the widgets look again (WG3).
+        WidgetCenter.shared.reloadAllTimelines()
         guard let deliver, let content else { return }
         self.deliver = nil
         deliver(content)

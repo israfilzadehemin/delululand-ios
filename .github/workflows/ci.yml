@@ -81,6 +81,54 @@ jobs:
             -destination "id=${{ steps.sim.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath "$GITHUB_WORKSPACE/build/Screenshots.xcresult" | xcbeautify
 
+      - name: Device types (iPhone Duo check, iPad Layout IP12)
+        if: steps.sync.outputs.regenerated != 'true'
+        continue-on-error: true
+        run: |
+          xcrun simctl list devicetypes | tee "$SNAPSHOT_DIR/zz.devicetypes.txt"
+          echo "::group::Foldable / Duo device types"
+          grep -iE "duo|fold" "$SNAPSHOT_DIR/zz.devicetypes.txt" || echo "No iPhone Duo device type on this runner"
+          echo "::endgroup::"
+
+      - name: Pick an iPad simulator
+        id: ipad
+        if: steps.sync.outputs.regenerated != 'true'
+        run: echo "udid=$(tools/ci/pick-simulator.sh --ipad)" >> "$GITHUB_OUTPUT"
+
+      - name: Screenshots (iPad 13-inch, landscape + portrait)
+        if: steps.sync.outputs.regenerated != 'true'
+        env:
+          TEST_RUNNER_DL_SNAPSHOT_DIR: ${{ env.SNAPSHOT_DIR }}
+        run: |
+          set -o pipefail
+          xcodebuild test -project Delulutopia.xcodeproj -scheme "Delulutopia Staging" -configuration Debug-Staging \
+            -destination "id=${{ steps.ipad.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath "$GITHUB_WORKSPACE/build/ScreenshotsIPad.xcresult" | xcbeautify
+
+      - name: Boot an iPhone Duo simulator (iPad Layout IP12, log only)
+        if: steps.sync.outputs.regenerated != 'true'
+        continue-on-error: true
+        run: |
+          profile="$(find /Library/Developer/CoreSimulator "$(xcode-select -p)/.." -path '*iPhone Duo.simdevicetype/Contents/Resources/profile.plist' 2>/dev/null | head -1)"
+          if [ -n "$profile" ]; then
+            echo "::group::iPhone Duo profile"
+            plutil -p "$profile" | grep -iE "screen|display|fold|scale|width|height" || plutil -p "$profile"
+            echo "::endgroup::"
+          fi
+          # Only a runtime that lists the Duo among its device types can create one.
+          runtime="$(xcrun simctl list runtimes available -j | python3 -c 'import json,sys
+          rs=[r for r in json.load(sys.stdin)["runtimes"] if r["platform"]=="iOS" and any("iPhone-Duo" in d.get("identifier","") for d in r.get("supportedDeviceTypes",[]))]
+          print(sorted(rs,key=lambda r: r["version"])[-1]["identifier"] if rs else "")')"
+          if [ -z "$runtime" ]; then
+            echo "No installed iOS runtime supports the iPhone Duo; the Duo shots run on the iPhone at 1010 x 716 pt."
+            exit 0
+          fi
+          udid="$(xcrun simctl create "iPhone Duo" com.apple.CoreSimulator.SimDeviceType.iPhone-Duo "$runtime")"
+          xcrun simctl boot "$udid" && xcrun simctl bootstatus "$udid" -b >/dev/null
+          xcrun simctl io "$udid" screenshot --display=3 "$SNAPSHOT_DIR/zz.duo-inner.png" || true
+          xcrun simctl io "$udid" screenshot --display=1 "$SNAPSHOT_DIR/zz.duo-cover.png" || true
+          xcrun simctl shutdown "$udid" || true
+
       - name: Home Screen label (staging build)
         if: steps.sync.outputs.regenerated != 'true'
         continue-on-error: true

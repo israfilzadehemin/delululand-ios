@@ -107,6 +107,81 @@ public enum Shoot {
         )
     }
 
+    /// True when the screenshot run is on an iPad simulator: the iPhone suites skip, the iPad suite
+    /// runs (iPad Layout §7). Read from the simulator's environment, so traits can use it.
+    nonisolated public static let onIPad: Bool = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"]?.hasPrefix("iPad") ?? false
+    /// True on the iPhone Duo simulator CI creates (iPad Layout IP12): only the Duo suite runs there.
+    nonisolated public static let onDuo: Bool = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"]?.contains("Duo") ?? false
+
+    /// Shoots `view` at the device's own size (the iPad run), upright or turned, or at `size` (the
+    /// iPhone Duo's inner display drawn on the iPhone run), after it has run in the key window for
+    /// `wait` seconds. An iPad app that supports multitasking cannot turn itself, so a turned shot is
+    /// laid out at the turned size inside the upright window; system glass still draws there.
+    public static func device<V: View>(
+        _ view: V,
+        named name: String,
+        style: UIUserInterfaceStyle,
+        wait: TimeInterval,
+        landscape: Bool,
+        size fixed: CGSize? = nil,
+        file: StaticString = #filePath,
+        testName: String = #function,
+        line: UInt = #line
+    ) async {
+        guard let window = keyWindow else { return }
+        let screen = window.windowScene?.screen.bounds.size ?? window.bounds.size
+        let short = min(screen.width, screen.height)
+        let long = max(screen.width, screen.height)
+        let size = fixed ?? (landscape ? CGSize(width: long, height: short) : CGSize(width: short, height: long))
+        // Drawing the hierarchy needs the window to hold the whole shot: the window takes the shot's
+        // size for the moment (turned iPad, the Duo's inner display), then goes back.
+        let original = window.frame
+        window.frame = CGRect(origin: .zero, size: size)
+        let controller = host(view, style: style, topUpSafeArea: false)
+        window.rootViewController = controller
+        controller.view.frame = CGRect(origin: .zero, size: size)
+        window.layoutIfNeeded()
+        try? await Task.sleep(for: .seconds(wait))
+        record(
+            controller,
+            named: name,
+            as: .image(drawHierarchyInKeyWindow: true, precision: 1, size: size, traits: makeTraits(style)),
+            file: file,
+            testName: testName,
+            line: line
+        )
+        window.frame = original
+    }
+
+    /// Shoots `view` at `size` with regular size classes, off screen (the iPhone Duo's inner display,
+    /// iPad Layout IP12), after it has run for `wait` seconds.
+    public static func sized<V: View>(
+        _ view: V,
+        named name: String,
+        style: UIUserInterfaceStyle,
+        size: CGSize,
+        wait: TimeInterval,
+        file: StaticString = #filePath,
+        testName: String = #function,
+        line: UInt = #line
+    ) async {
+        let controller = host(view, style: style, topUpSafeArea: false)
+        if let window = keyWindow {
+            window.rootViewController = controller
+            controller.view.frame = CGRect(origin: .zero, size: size)
+            window.layoutIfNeeded()
+        }
+        try? await Task.sleep(for: .seconds(wait))
+        let traits = UITraitCollection { traits in
+            traits.userInterfaceStyle = style
+            traits.displayScale = 2
+            traits.horizontalSizeClass = .regular
+            traits.verticalSizeClass = .regular
+        }
+        let config = ViewImageConfig(safeArea: UIEdgeInsets(top: 24, left: 0, bottom: 20, right: 0), size: size, traits: traits)
+        record(controller, named: name, as: .image(on: config, precision: 1, traits: traits), file: file, testName: testName, line: line)
+    }
+
     private static func host<V: View>(_ view: V, style: UIUserInterfaceStyle, topUpSafeArea: Bool) -> UIViewController {
         DLFonts.register()
         DLAppearance.apply()

@@ -69,6 +69,7 @@ private struct HomeContent: View {
     @Environment(Backend.self) private var backend
     @Environment(\.dlOpen) private var open
     @Environment(\.dlNotice) private var notice
+    @Environment(\.dlLayout) private var layout
     @State private var moodOpen = false
     @State private var cancelId: PublicID?
     @State private var cancelling = false
@@ -81,41 +82,37 @@ private struct HomeContent: View {
         let rows = home.from + home.to
         let flipped = rows.contains { LetterState.of($0, now: now) != $0.state }
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                HomeTitle(text: home.universe.name)
-                if stale { OfflineBanner() }
-                NotificationHint()
-                BoardTile(home: home, now: now, actions: actions)
-                if home.selfies != nil { SelfieBoardView(home: home, now: now, actions: actions) }
-                VStack(alignment: .leading, spacing: 8) {
-                    MyMood(me: home.me, now: now) { moodOpen = true }
-                        .dlEnter(.rise)
-                    if let friend {
-                        FriendCard(friend: friend, now: now) { open(.friend) }
-                            .dlEnter(.rise, delay: 0.05)
+            Group {
+                if layout == .phone {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HomeTitle(text: home.universe.name)
+                        if stale { OfflineBanner() }
+                        NotificationHint()
+                        BoardTile(home: home, now: now, actions: actions)
+                        if home.selfies != nil { SelfieBoardView(home: home, now: now, actions: actions) }
+                        people
+                        post
                     }
-                }
-                if friend == nil {
-                    WaitingCard(name: home.universe.name, isCreator: home.universe.isCreator) { open(.universe) }
-                }
-                HomeClocks(me: home.me, friend: friend, now: now)
-                if home.from.isEmpty, home.to.isEmpty {
-                    EmptyPost()
-                } else if let friend {
-                    if !home.from.isEmpty {
-                        GroupHeading(text: t("home.from", ["nickname": friend.nickname]), who: Who.of(friend.id, first: first))
-                        ForEach(Array(home.from.enumerated()), id: \.element.id) { i, row in
-                            FromRow(row: row, now: now, who: Who.of(friend.id, first: first))
-                                .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i))
+                } else {
+                    // iPad and Duo (canvas T-Home, O-Home; iPad Layout IP3): board and selfies on the left,
+                    // moods, clocks and the post on the right.
+                    HStack(alignment: .top, spacing: 32) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HomeTitle(text: home.universe.name)
+                            if stale { OfflineBanner() }
+                            BoardTile(home: home, now: now, actions: actions)
+                            if home.selfies != nil { SelfieBoardView(home: home, now: now, actions: actions) }
                         }
-                    }
-                    if !home.to.isEmpty {
-                        GroupHeading(text: t("home.to", ["nickname": friend.nickname]), who: Who.of(home.me.id, first: first))
-                        ForEach(Array(home.to.enumerated()), id: \.element.id) { i, row in
-                            ToRow(row: row, now: now, who: Who.of(home.me.id, first: first)) { cancelId = row.id }
-                                .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i + home.from.count))
+                        .frame(width: layout == .split ? 420 : 400)
+                        VStack(alignment: .leading, spacing: 12) {
+                            people
+                            NotificationHint()
+                            post
                         }
+                        .padding(.top, 52)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .padding(.horizontal, 12)
                 }
             }
             .padding(.horizontal, 16)
@@ -153,6 +150,44 @@ private struct HomeContent: View {
                 case .done: open(.write(editId: nil))
                 case .tooLate: notice(.text(LetterActions.tooLate))
                 case .failed: notice(.text(LetterActions.notCancelled))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var people: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MyMood(me: home.me, now: now) { moodOpen = true }
+                .dlEnter(.rise)
+            if let friend {
+                FriendCard(friend: friend, now: now) { open(.friend) }
+                    .dlEnter(.rise, delay: 0.05)
+            }
+        }
+        if friend == nil {
+            WaitingCard(name: home.universe.name, isCreator: home.universe.isCreator) { open(.universe) }
+        }
+    }
+
+    @ViewBuilder
+    private var post: some View {
+        HomeClocks(me: home.me, friend: friend, now: now)
+        if home.from.isEmpty, home.to.isEmpty {
+            EmptyPost()
+        } else if let friend {
+            if !home.from.isEmpty {
+                GroupHeading(text: t("home.from", ["nickname": friend.nickname]), who: Who.of(friend.id, first: first))
+                ForEach(Array(home.from.enumerated()), id: \.element.id) { i, row in
+                    FromRow(row: row, now: now, who: Who.of(friend.id, first: first))
+                        .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i))
+                }
+            }
+            if !home.to.isEmpty {
+                GroupHeading(text: t("home.to", ["nickname": friend.nickname]), who: Who.of(home.me.id, first: first))
+                ForEach(Array(home.to.enumerated()), id: \.element.id) { i, row in
+                    ToRow(row: row, now: now, who: Who.of(home.me.id, first: first)) { cancelId = row.id }
+                        .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i + home.from.count))
                 }
             }
         }

@@ -136,6 +136,7 @@ public struct LetterScreen: View {
     @Environment(Backend.self) private var backend
     @Environment(\.dlOpen) private var open
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dlClose) private var close
     @State private var reader: LetterReader?
     @State private var current: PublicID
 
@@ -169,7 +170,7 @@ public struct LetterScreen: View {
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(shown.map { t($0.isMine ? "letters.to" : "letters.from", ["friend": friend]) } ?? "")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .toolbar {
             if let shown, !shown.isMine {
                 ToolbarItemGroup(placement: .bottomBar) {
@@ -215,11 +216,11 @@ public struct LetterScreen: View {
         case let .shown(letter):
             LetterContent(letter: letter, swiped: letterId != id, reader: reader)
         case let .notArrived(at):
-            Gone(text: t("letters.arrivesAt", ["time": DLTime.clock(at)])) { dismiss() }
+            Gone(text: t("letters.arrivesAt", ["time": DLTime.clock(at)])) { dlLeave(close, dismiss) }
         case .gone:
-            Gone(text: t("letters.thisLetterIsntHereAnymore")) { dismiss() }
+            Gone(text: t("letters.thisLetterIsntHereAnymore")) { dlLeave(close, dismiss) }
         case .unreachable:
-            Gone(text: t("letters.cantReachTryAgain", ["brand": backend.home.home?.universe.name ?? "Delulutopia"])) { dismiss() }
+            Gone(text: t("letters.cantReachTryAgain", ["brand": backend.home.home?.universe.name ?? "Delulutopia"])) { dlLeave(close, dismiss) }
         default:
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         }

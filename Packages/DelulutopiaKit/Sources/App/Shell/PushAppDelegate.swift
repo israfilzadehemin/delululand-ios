@@ -28,6 +28,13 @@ public final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotif
         return true
     }
 
+    /// Standard iPhones stay portrait; the iPad and the iPhone Duo's unfolded display turn any way
+    /// (iPad Layout IP11, iOS Build D17). The plist lists landscape for the iPhone only for the Duo.
+    public func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        let screen = window?.windowScene?.screen.bounds.size ?? .zero
+        return OrientationRule.allowed(pad: UIDevice.current.userInterfaceIdiom == .pad, screen: screen)
+    }
+
     public func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         if let backend {
             backend.push.didRegister(tokenData: deviceToken)
@@ -90,5 +97,20 @@ public final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotif
             backend.push.pendingLink = .notificationSettings
             pendingSettings = false
         }
+    }
+}
+
+/// Which way the app may turn (iPad Layout IP11): a pure rule, so the unit tests can check every
+/// standard iPhone size stays portrait.
+public enum OrientationRule {
+    /// The Duo simulator's inner display is 2007 × 2853 px (≈ 669 × 951 pt at 3×, 1.42 : 1) and its cover
+    /// display 1398 × 2034 px (466 × 678 pt); the largest standard iPhone is 440 pt wide. Only the
+    /// inner display turns.
+    public static let wideShortSide: CGFloat = 600
+
+    public static func allowed(pad: Bool, screen: CGSize) -> UIInterfaceOrientationMask {
+        if pad { return .all }
+        // A zero size (no scene yet) stays portrait.
+        return min(screen.width, screen.height) >= wideShortSide ? .allButUpsideDown : .portrait
     }
 }

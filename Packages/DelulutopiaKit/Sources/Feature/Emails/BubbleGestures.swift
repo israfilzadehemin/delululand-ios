@@ -80,6 +80,38 @@ struct HoldPress: UIGestureRecognizerRepresentable {
     }
 }
 
+/// iPad Layout IP8: a secondary click (right click, two-finger trackpad click) opens the same
+/// actions as the long-press. Touches never match `buttonMaskRequired = .secondary`, so the iPhone
+/// is untouched.
+@available(iOS 18.0, *)
+struct SecondaryClick: UIGestureRecognizerRepresentable {
+    let onClick: () -> Void
+
+    func makeUIGestureRecognizer(context: Context) -> UITapGestureRecognizer {
+        let tap = UITapGestureRecognizer()
+        tap.buttonMaskRequired = .secondary
+        // Taps on photos and pills inside the bubble must not wait for this one to fail.
+        tap.delaysTouchesEnded = false
+        tap.cancelsTouchesInView = false
+        tap.delegate = context.coordinator
+        return tap
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UITapGestureRecognizer, context: Context) {
+        if recognizer.state == .ended { onClick() }
+    }
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
+        Coordinator()
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        func gestureRecognizer(_: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith _: UIGestureRecognizer) -> Bool {
+            true
+        }
+    }
+}
+
 extension View {
     /// The bubble's swipe-to-reply and long-press, scroll-friendly on every iOS version.
     @ViewBuilder
@@ -93,6 +125,7 @@ extension View {
         if #available(iOS 18.0, *) {
             gesture(SidewaysPan(rtl: rtl, onChanged: onPan, onEnded: onPanEnded))
                 .gesture(HoldPress(onLong: onLong))
+                .gesture(SecondaryClick(onClick: onLong))
         } else {
             simultaneousGesture(legacySwipe)
                 .simultaneousGesture(
@@ -107,6 +140,7 @@ extension View {
     func holdToReact(_ onLong: @escaping () -> Void) -> some View {
         if #available(iOS 18.0, *) {
             gesture(HoldPress(onLong: onLong))
+                .gesture(SecondaryClick(onClick: onLong))
         } else {
             simultaneousGesture(
                 LongPressGesture(minimumDuration: BubbleActionsSpec.longPress, maximumDistance: BubbleActionsSpec.slop)

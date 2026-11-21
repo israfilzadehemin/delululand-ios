@@ -8,80 +8,249 @@ import DLDesignSystem
 import DLUI
 import SwiftUI
 import UIKit
+import WidgetKit
 
 /// The floating glass tab bar on iOS 26+ (the system draws it), the classic bar before. Each tab
 /// keeps its own navigation stack; `dlOpen` pushes on the current one, `dlNotice` shows a toast
-/// above the bar.
+/// above the bar. On the iPad (regular width) Letters, Discussions, Emails and You become a list
+/// beside a detail column and the tab bar can turn into a sidebar (doc "Delululand — iPad Layout").
 struct MainTabView: View {
     @Binding var selection: AppTab
+    /// Screenshots pin a layout; the app reads it from the device and the window's width.
+    let forcedLayout: AppLayout?
     @Environment(Backend.self) var backend
     @Environment(\.colorScheme) var colorScheme
-    @State private var paths: [AppTab: [AppRoute]] = [:]
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var nav: TabNavigation
     @State private var toast: DLToastItem?
     /// Your picture for the You tab (iOS design §3: 26 pt, accent ring when selected).
     @State private var youPhoto: UIImage?
 
+    init(selection: Binding<AppTab>, forcedLayout: AppLayout? = nil) {
+        _selection = selection
+        self.forcedLayout = forcedLayout
+        _nav = State(initialValue: TabNavigation(layout: forcedLayout ?? .phone, selected: selection.wrappedValue))
+    }
+
+    private var layout: AppLayout {
+        forcedLayout ?? .resolve(pad: UIDevice.current.userInterfaceIdiom == .pad, regularWidth: horizontalSizeClass == .regular)
+    }
+
     var body: some View {
-        TabView(selection: tabSelection) {
-            ForEach(AppTab.allCases) { tab in
-                NavigationStack(path: path(tab)) {
-                    root(for: tab)
-                        // Tabs slide in from the side they sit on (Android PR #8 parity, 20 Nov).
-                        .modifier(TabSlide(index: AppTab.allCases.firstIndex(of: tab) ?? 0,
-                                           selected: AppTab.allCases.firstIndex(of: selection) ?? 0))
-                        .overlay { if tab != .you { LeafLayer() } }
-                        .navigationDestination(for: AppRoute.self) { route in
-                            RouteScreen(route: route)
-                        }
+        tabs
+            .fullScreenCover(item: coverBinding) { route in
+                NavigationStack {
+                    RouteScreen(route: route)
                 }
-                .tabItem { tabLabel(tab) }
-                .tag(tab)
+                .environment(\.dlClose) { nav.cover = nil }
+            }
+            .environment(\.dlLayout, nav.layout)
+            .environment(\.dlOpen) { route in
+                // Universe U8: alone, starting a letter, discussion or email only explains why not.
+                if alone, route.startsNew {
+                    toast = DLToastItem(t("common.noFriendNotice", ["name": backend.home.home?.universe.name ?? "Delulutopia"]))
+                    return
+                }
+                nav.open(route)
+            }
+            .environment(\.dlAlone, alone)
+            .environment(\.dlReplace) { route in nav.replace(route) }
+            .environment(\.dlSelectTab) { tab in nav.selectTab(tab) }
+            .environment(\.dlNotice) { item in toast = item }
+            .environment(\.dlBrand, backend.home.home?.universe.name ?? "Delulutopia")
+            .environment(\.dlFirstCitizen, backend.home.home?.firstCitizen)
+            .dlToast($toast, bottom: nav.layout == .split ? 24 : 96)
+            // Keyboard shortcuts for the iPad and the Duo (IP8); the iPhone's tree stays as it was.
+            .background { if nav.layout != .phone { shortcuts } }
+            .task(id: backend.home.home?.me.avatarUrl) {
+                guard let url = backend.home.home?.me.avatarUrl else {
+                    youPhoto = nil
+                    return
+                }
+                youPhoto = await ImageCache.shared.load(url, client: backend.client, maxPixel: 96)
+            }
+            .onChange(of: layout, initial: true) { _, new in
+                if nav.layout != new { nav.relayout(new) }
+            }
+            .onChange(of: nav.selected) { _, tab in
+                if selection != tab { selection = tab }
+            }
+            .onChange(of: arrivals) { old, new in announce(old: old, new: new) }
+            // A tapped notification (iOS design I-5); logged out, it waited here for the PIN.
+            .onChange(of: backend.push.pendingLink, initial: true) { _, link in
+                if let link { open(link) }
+            }
+            // Widgets show the board, the selfies, the clocks and moods (WG3): what they show changed.
+            .onChange(of: widgetSignature) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
+            // The icon badge follows the tab dots as items are read (Q7).
+            .onChange(of: unreadTotal) { _, total in
+                if let total { backend.push.setBadge(total) }
+            }
+    }
+
+    // MARK: Tabs
+
+    @ViewBuilder
+    private var tabs: some View {
+        if nav.layout == .split {
+            if #available(iOS 18.0, *) {
+                // iPad Layout IP1: the tab bar sits on top and can turn into a sidebar.
+                TabView(selection: tabSelection) {
+                    ForEach(AppTab.allCases) { tab in
+                        Tab(value: tab) {
+                            splitTab(tab)
+                        } label: {
+                            tabLabel(tab)
+                        }
+                    }
+                }
+                .tabViewStyle(.sidebarAdaptable)
+                // The canvas's tab bar on top, with the "Show sidebar" button to switch.
+                .defaultAdaptableTabBarPlacement(.tabBar)
+            } else {
+                TabView(selection: tabSelection) {
+                    ForEach(AppTab.allCases) { tab in
+                        splitTab(tab)
+                            .tabItem { tabLabel(tab) }
+                            .tag(tab)
+                    }
+                }
+            }
+        } else {
+            // The iPhone and the Duo: each tab's stack is the TabView's direct child, as before.
+            TabView(selection: tabSelection) {
+                ForEach(AppTab.allCases) { tab in
+                    stackTab(tab)
+                        .tabItem { tabLabel(tab) }
+                        .tag(tab)
+                }
             }
         }
-        .environment(\.dlOpen) { route in
-            // Universe U8: alone, starting a letter, discussion or email only explains why not.
-            if alone, route.startsNew {
-                toast = DLToastItem(t("common.noFriendNotice", ["name": backend.home.home?.universe.name ?? "Delulutopia"]))
-                return
+    }
+
+    /// The iPhone (and Duo) tab: one stack.
+    private func stackTab(_ tab: AppTab) -> some View {
+        NavigationStack(path: path(tab)) {
+            root(for: tab)
+                // Tabs slide in from the side they sit on (Android PR #8 parity, 20 Nov).
+                .modifier(TabSlide(index: AppTab.allCases.firstIndex(of: tab) ?? 0,
+                                   selected: AppTab.allCases.firstIndex(of: nav.selected) ?? 0))
+                .overlay { if tab != .you { LeafLayer() } }
+                .navigationDestination(for: AppRoute.self) { route in
+                    RouteScreen(route: route)
+                        .dlReadable(nav.layout)
+                }
+        }
+    }
+
+    /// The iPad tab (IP2, IP3): Home in two columns; the others a list beside a detail column. The
+    /// columns are two stacks side by side rather than a NavigationSplitView, which hides the
+    /// floating tab bar; the widths are the canvas's (T-Letters 390 pt, T-Emails and T-You 420 pt,
+    /// 340 pt in portrait).
+    @ViewBuilder
+    private func splitTab(_ tab: AppTab) -> some View {
+        if TabNavigation.hasDetail(tab) {
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    NavigationStack(path: listPath(tab)) {
+                        root(for: tab)
+                            .navigationDestination(for: AppRoute.self) { route in
+                                RouteScreen(route: route)
+                            }
+                    }
+                    .environment(\.dlSelected, nav.selection(tab))
+                    .frame(width: Self.listWidth(tab, size: geo.size))
+                    Rectangle()
+                        .fill(Color.dlLine)
+                        .frame(width: 0.5)
+                        .ignoresSafeArea(edges: .bottom)
+                    NavigationStack(path: path(tab)) {
+                        detailRoot(tab)
+                            .navigationDestination(for: AppRoute.self) { route in
+                                RouteScreen(route: route)
+                                    .dlReadable(nav.layout)
+                            }
+                    }
+                    .overlay { if tab != .you { LeafLayer() } }
+                }
             }
-            paths[selection, default: []].append(route)
-        }
-        .environment(\.dlAlone, alone)
-        .environment(\.dlReplace) { route in
-            var stack = paths[selection, default: []]
-            if !stack.isEmpty { stack.removeLast() }
-            stack.append(route)
-            paths[selection] = stack
-        }
-        .environment(\.dlSelectTab) { tab in
-            paths[tab] = []
-            selection = tab
-        }
-        .environment(\.dlNotice) { item in toast = item }
-        .environment(\.dlBrand, backend.home.home?.universe.name ?? "Delulutopia")
-        .environment(\.dlFirstCitizen, backend.home.home?.firstCitizen)
-        .dlToast($toast, bottom: 96)
-        .task(id: backend.home.home?.me.avatarUrl) {
-            guard let url = backend.home.home?.me.avatarUrl else {
-                youPhoto = nil
-                return
+        } else {
+            NavigationStack {
+                root(for: tab)
+                    .overlay { LeafLayer() }
             }
-            youPhoto = await ImageCache.shared.load(url, client: backend.client, maxPixel: 96)
         }
-        .onChange(of: arrivals) { old, new in announce(old: old, new: new) }
-        // A tapped notification (iOS design I-5); logged out, it waited here for the PIN.
-        .onChange(of: backend.push.pendingLink, initial: true) { _, link in
-            if let link { open(link) }
+    }
+
+    static func listWidth(_ tab: AppTab, size: CGSize) -> CGFloat {
+        guard size.width > size.height else { return 340 }
+        return tab == .emails || tab == .you ? 420 : 390
+    }
+
+    @ViewBuilder
+    private func detailRoot(_ tab: AppTab) -> some View {
+        if let route = nav.selection(tab) {
+            RouteScreen(route: route)
+                .id(route)
+                .dlReadable(nav.layout)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.dlPaper.ignoresSafeArea())
+                .environment(\.dlClose) { nav.closeDetail(tab) }
+        } else {
+            SplitHint(tab: tab)
         }
-        // The icon badge follows the tab dots as items are read (Q7).
-        .onChange(of: unreadTotal) { _, total in
-            if let total { backend.push.setBadge(total) }
+    }
+
+    // MARK: Keyboard (IP8)
+
+    /// ⌘1–⌘5 switch tabs; ⌘N starts a new item on Letters, Discussions and Emails. Hidden buttons
+    /// carry the shortcuts so the system lists them when ⌘ is held.
+    private var shortcuts: some View {
+        ZStack {
+            ForEach(Array(AppTab.allCases.enumerated()), id: \.element) { i, tab in
+                Button(tab.title) { nav.tapTab(tab) }
+                    .keyboardShortcut(KeyEquivalent(Character("\(i + 1)")), modifiers: .command)
+            }
+            if let route = newItemRoute {
+                Button(route.newItemTitle) {
+                    if alone {
+                        toast = DLToastItem(t("common.noFriendNotice", ["name": backend.home.home?.universe.name ?? "Delulutopia"]))
+                    } else {
+                        nav.open(route)
+                    }
+                }
+                .keyboardShortcut("n", modifiers: .command)
+            }
+        }
+        .opacity(0)
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
+    }
+
+    private var newItemRoute: AppRoute? {
+        switch nav.selected {
+        case .letters: .write(editId: nil)
+        case .discussions: .composeDiscussion(editId: nil)
+        case .emails: .newEmail
+        default: nil
         }
     }
 
     /// This iPhone shows no notifications: the red dot on You (iOS design §3).
     private var notificationsOff: Bool {
         backend.push.permission == .blocked || backend.push.permission == .notAsked
+    }
+
+    /// Everything the widgets show; a change reloads their timelines (WG3).
+    private var widgetSignature: String {
+        guard let h = backend.home.home else { return "" }
+        let selfies = [h.selfies?.mine, h.selfies?.theirs].map { s in s.map { "\($0.id):\($0.locked)" } ?? "-" }
+        return [
+            "\(h.board?.version ?? 0)", h.board?.authorId ?? "", "\(h.boardNew)",
+            selfies.joined(separator: ","),
+            h.me.nickname, h.me.mood ?? "", h.me.timezone ?? "", h.me.language ?? "",
+            h.friend?.nickname ?? "", h.friend?.mood ?? "", h.friend?.timezone ?? "", h.universe.name,
+        ].joined(separator: "|")
     }
 
     /// Nobody has joined yet (Home loaded, no friend).
@@ -99,19 +268,9 @@ struct MainTabView: View {
     /// Opens a notification's screen on its own tab, over that tab's root.
     private func open(_ link: AppLink) {
         backend.push.pendingLink = nil
-        let target: (AppTab, [AppRoute]) =
-            switch link {
-            case .home: (.home, [])
-            case .letters: (.letters, [])
-            case let .letter(id): (.letters, [.letter(id)])
-            case .discussions: (.discussions, [])
-            case let .discussion(id): (.discussions, [.discussion(id)])
-            case .emails: (.emails, [])
-            case let .thread(id): (.emails, [.thread(id)])
-            case .notificationSettings: (.you, [.notifications])
-            }
-        paths[target.0] = target.1
-        selection = target.0
+        nav.open(link: link)
+        // A widget tap that lands on Home names what to open there (WG4).
+        if let intent = link.homeIntent { backend.push.homeIntent = intent }
         backend.home.refreshSoon()
     }
 
@@ -134,33 +293,39 @@ struct MainTabView: View {
         switch key.first {
         case "l":
             toast = DLToastItem(t("notify.inTab.letter", ["name": friend]), symbol: "envelope", actionTitle: t("common.open")) {
-                selection = .letters
-                paths[.letters] = [.letter(id)]
+                nav.show(.letters, .letter(id))
             }
         case "d":
             toast = DLToastItem(t("notify.inTab.discussion", ["name": friend]), symbol: "note.text", actionTitle: t("common.open")) {
-                selection = .discussions
-                paths[.discussions] = [.discussion(id)]
+                nav.show(.discussions, .discussion(id))
             }
         default:
             let thread = h.newEmails.first { $0.id == id }?.threadId ?? id
             toast = DLToastItem(t("notify.inTab.email", ["name": friend]), symbol: "at", actionTitle: t("common.open")) {
-                selection = .emails
-                paths[.emails] = [.thread(thread)]
+                nav.show(.emails, .thread(thread))
             }
         }
     }
 
     /// Tapping the current tab again pops it to its root (iOS convention).
     private var tabSelection: Binding<AppTab> {
-        Binding(get: { selection }, set: { tab in
-            if tab == selection { paths[tab] = [] }
-            selection = tab
-        })
+        Binding(get: { nav.selected }, set: { nav.tapTab($0) })
     }
 
     private func path(_ tab: AppTab) -> Binding<[AppRoute]> {
-        Binding(get: { paths[tab] ?? [] }, set: { paths[tab] = $0 })
+        Binding(get: { nav.path(tab) }, set: { nav.paths[tab] = $0 })
+    }
+
+    /// The list column's own stack: Discussions' Archived list (split only).
+    private func listPath(_ tab: AppTab) -> Binding<[AppRoute]> {
+        Binding(
+            get: { tab == .discussions && nav.archivedList ? [.archived] : [] },
+            set: { if tab == .discussions { nav.archivedList = !$0.isEmpty } }
+        )
+    }
+
+    private var coverBinding: Binding<AppRoute?> {
+        Binding(get: { nav.cover }, set: { nav.cover = $0 })
     }
 
     @ViewBuilder
@@ -199,7 +364,7 @@ struct MainTabView: View {
                 Text(tab.title)
             } icon: {
                 Image(uiImage: YouTabIcon.image(
-                    selected: selection == .you,
+                    selected: nav.selected == .you,
                     style: style,
                     photo: youPhoto,
                     initial: backend.home.home.map { String($0.me.nickname.prefix(1)).uppercased() },
@@ -211,7 +376,7 @@ struct MainTabView: View {
             Label {
                 Text(tab.title)
             } icon: {
-                Image(uiImage: DotTabIcon.image(symbol: tab.symbol, selected: selection == tab, style: style))
+                Image(uiImage: DotTabIcon.image(symbol: tab.symbol, selected: nav.selected == tab, style: style))
             }
             .accessibilityLabel(t("tabs.titleNew", ["title": tab.title]))
         } else {

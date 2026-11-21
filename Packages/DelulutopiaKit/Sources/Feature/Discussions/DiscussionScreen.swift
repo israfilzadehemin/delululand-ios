@@ -234,6 +234,7 @@ public struct DiscussionScreen: View {
     let id: PublicID
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dlClose) private var close
     @State private var model: DiscussionModel?
 
     public init(id: PublicID) {
@@ -258,7 +259,7 @@ public struct DiscussionScreen: View {
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(t("discussions.discussion"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .onAppear {
             if model == nil { model = DiscussionModel(backend: backend, id: id) }
             model?.start()
@@ -269,7 +270,7 @@ public struct DiscussionScreen: View {
     private func gone(_ text: String) -> some View {
         VStack(spacing: 16) {
             Text(text).dlText(.callout).foregroundStyle(.dlInkQuiet).multilineTextAlignment(.center)
-            Button(t("discussions.back")) { dismiss() }.buttonStyle(DLButtonStyle(.outline))
+            Button(t("discussions.back")) { dlLeave(close, dismiss) }.buttonStyle(DLButtonStyle(.outline))
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -293,6 +294,7 @@ private struct ThreadView: View {
 
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dlClose) private var close
     @Environment(\.dlOpen) private var open
     @Environment(\.dlNotice) private var notice
     @State private var photo: Int?
@@ -435,7 +437,7 @@ private struct ThreadView: View {
             if let failed = await model.remove(takeBack: takeBack) {
                 notice(.text(failed))
             } else {
-                dismiss()
+                dlLeave(close, dismiss)
             }
         }
     }

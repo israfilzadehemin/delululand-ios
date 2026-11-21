@@ -182,6 +182,7 @@ public struct DiscussionsScreen: View {
                             authorName: r.mine ? (home?.me.nickname ?? t("common.me")) : (home?.friend?.nickname ?? t("common.friend")),
                             friendName: home?.friend?.nickname ?? t("common.friend"),
                             tilt: i % 2 == 0 ? -0.6 : 0.5)
+                        .dlSelectedRow(.discussion(r.id))
                         .padding(.top, 8)
                         .dlEnter(.rise, delay: DLMotion.stagger(i))
                         .onAppear { if i >= rows.count - 3 { model.loadMore() } }

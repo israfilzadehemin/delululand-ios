@@ -6,3 +6,7 @@ DL_BUNDLE_ID = com.delulutopia.app.test
 DL_DISPLAY_NAME = Delulutopia TST
 DL_API_BASE_URL = https:/$()/test.delulutopia.com
 DL_APP_ICON = AppIcon-Staging
+
+// Widget taps open the app (doc "Delululand — iPad Layout" WG4); staging has its own scheme so
+// both apps can sit on one device.
+DL_URL_SCHEME = delulutopia-tst

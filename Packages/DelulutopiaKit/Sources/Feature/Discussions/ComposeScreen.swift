@@ -140,6 +140,7 @@ public struct ComposeDiscussionScreen: View {
     let editId: PublicID?
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dlClose) private var close
     @Environment(\.dlNotice) private var notice
     @State private var model: ComposeModel?
     @State private var editor = RichEditorState()
@@ -160,7 +161,7 @@ public struct ComposeDiscussionScreen: View {
             } else if let model, case .failed = model.load {
                 VStack(spacing: 16) {
                     Text(t("discussions.couldntLoadYourDraftCheck")).dlText(.callout).foregroundStyle(.dlError)
-                    Button(t("discussions.back")) { dismiss() }.buttonStyle(DLButtonStyle(.outline))
+                    Button(t("discussions.back")) { dlLeave(close, dismiss) }.buttonStyle(DLButtonStyle(.outline))
                 }
                 .padding(24)
             } else {
@@ -169,7 +170,7 @@ public struct ComposeDiscussionScreen: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.dlPaper.ignoresSafeArea())
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .task {
             if model == nil {
                 let m = ComposeModel(backend: backend, editId: editId)
@@ -250,7 +251,7 @@ public struct ComposeDiscussionScreen: View {
                             Button(t("doodle.discard"), role: .destructive) {
                                 Task {
                                     await model.discardEdit()
-                                    dismiss()
+                                    dlLeave(close, dismiss)
                                 }
                             }
                             Button(t("discussions.no"), role: .cancel) {}
@@ -262,7 +263,7 @@ public struct ComposeDiscussionScreen: View {
                     if editing {
                         busy = true
                         Task {
-                            if let failed = await model.save() { error = failed } else { dismiss() }
+                            if let failed = await model.save() { error = failed } else { dlLeave(close, dismiss) }
                             busy = false
                         }
                     } else {
@@ -272,6 +273,8 @@ public struct ComposeDiscussionScreen: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.dlSeal)
                 .disabled(!canAct)
+                // iPad Layout IP8: ⌘↩ posts or saves.
+                .keyboardShortcut(.return, modifiers: .command)
             }
         }
         .sheet(isPresented: $postOpen) {
@@ -282,7 +285,7 @@ public struct ComposeDiscussionScreen: View {
                 if let failed = await model.post() { return failed }
                 postOpen = false
                 notice(.text(t("discussions.posted")))
-                dismiss()
+                dlLeave(close, dismiss)
                 return nil
             }
         }

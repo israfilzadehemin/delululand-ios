@@ -14,6 +14,7 @@ public struct WriteScreen: View {
 
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dlClose) private var close
     @State private var model: WriteModel?
 
     public init(editId: PublicID? = nil, replyTo: PublicID? = nil) {
@@ -31,7 +32,7 @@ public struct WriteScreen: View {
                     VStack(spacing: 16) {
                         Text(editId == nil ? t("write.couldntLoadYourDraftCheck") : t("write.thisLetterCantBeEdited"))
                             .dlText(.callout).foregroundStyle(.dlInkQuiet).multilineTextAlignment(.center)
-                        Button(t("letters.back")) { dismiss() }.buttonStyle(DLButtonStyle(.outline))
+                        Button(t("letters.back")) { dlLeave(close, dismiss) }.buttonStyle(DLButtonStyle(.outline))
                     }
                     .padding(24)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -43,7 +44,7 @@ public struct WriteScreen: View {
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .task {
             if model == nil {
                 let m = WriteModel(backend: backend, editId: editId, replyTo: replyTo)
@@ -60,8 +61,10 @@ private struct WriteForm: View {
 
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dlClose) private var close
     @Environment(\.dlSelectTab) private var selectTab
     @Environment(\.dlReplace) private var replace
+    @Environment(\.dlLayout) private var layout
     @Environment(\.scenePhase) private var scenePhase
     @State private var editor = RichEditorState()
     @State private var recorder: VoiceRecorder?
@@ -122,6 +125,7 @@ private struct WriteForm: View {
             if let at = saver.savedAt, saver.status != .conflict { return t("common.draftSaved", ["time": DLTime.time(at)]) }
             return ""
         }()
+        WriteBeside(letter: layout == .split && !editing ? model.referenced : nil, friend: friend, layout: layout) {
         VStack(spacing: 0) {
             if let letter = model.letter {
                 EditingHead(left: DLTime.remaining(until: letter.windowEndsAt, now: now), arrives: DLTime.time(letter.arrivesAt), late: late)
@@ -182,13 +186,21 @@ private struct WriteForm: View {
                 .background(.dlLetterEnvelope)
             }
         }
+        }
         .navigationTitle(editing ? t("write.editingASentLetter") : t("letters.to", ["friend": friend]))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(editing)
         .toolbar {
+            // On the iPad Write is a full-screen cover (iPad Layout IP6): no back button, so a close.
+            if !editing, let close {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { close() } label: { Image(systemName: "xmark") }
+                        .accessibilityLabel(t("universe.close"))
+                }
+            }
             if editing {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { if changed { confirmDiscard = true } else { dismiss() } } label: { Image(systemName: "chevron.backward") }
+                    Button { if changed { confirmDiscard = true } else { dlLeave(close, dismiss) } } label: { Image(systemName: "chevron.backward") }
                         .disabled(late)
                         .accessibilityLabel(t("write.backDiscardChanges"))
                         // From the back button it guards (F9); "Discard" names the action, not "Yes".
@@ -196,7 +208,7 @@ private struct WriteForm: View {
                             Button(t("doodle.discard"), role: .destructive) {
                                 Task {
                                     await model.discardEdit()
-                                    dismiss()
+                                    dlLeave(close, dismiss)
                                 }
                             }
                             Button(t("letters.no"), role: .cancel) {}
@@ -218,6 +230,8 @@ private struct WriteForm: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.dlSeal)
                 .disabled(!canSend)
+                // iPad Layout IP8: ⌘↩ sends.
+                .keyboardShortcut(.return, modifiers: .command)
             }
         }
         .sheet(isPresented: $sendOpen) {
@@ -248,7 +262,7 @@ private struct WriteForm: View {
                 lateHandled = true
                 Task {
                     await model.discardEdit()
-                    dismiss()
+                    dlLeave(close, dismiss)
                 }
             }
             Button(t("write.keepTextInDraft")) {
@@ -293,7 +307,7 @@ private struct WriteForm: View {
             } else {
                 sealing = true
                 try? await Task.sleep(for: .milliseconds(900))
-                dismiss()
+                dlLeave(close, dismiss)
             }
         }
     }
@@ -611,6 +625,54 @@ private struct StampPicker: View {
                 .accessibilityLabel(s.name)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
+        }
+    }
+}
+
+/// Write on the iPad (canvas T-Write, iPad Layout IP6): the letter being answered on its paper at the
+/// left, the sheet beside it; without a reply, or elsewhere, the sheet alone.
+private struct WriteBeside<Sheet: View>: View {
+    let letter: LetterFull?
+    let friend: String
+    let layout: AppLayout
+    let sheet: Sheet
+
+    init(letter: LetterFull?, friend: String, layout: AppLayout, @ViewBuilder sheet: () -> Sheet) {
+        self.letter = letter
+        self.friend = friend
+        self.layout = layout
+        self.sheet = sheet()
+    }
+
+    var body: some View {
+        if let letter {
+            HStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(t("write.replyingTo").uppercased(with: I18n.shared.lang.locale))
+                            .font(.custom(DLFontName.manropeExtraBold.name, size: 11, relativeTo: .caption2))
+                            .tracking(0.77)
+                            .foregroundStyle(.dlInkQuiet)
+                        Text("\(friend) · \(DLTime.clock(letter.arrivesAt))")
+                            .dlText(.footnote)
+                            .foregroundStyle(.dlInkQuiet)
+                        LetterBody(letter.doc)
+                            .padding(.top, 8)
+                    }
+                    .padding(24)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: 420)
+                .background(.dlLetterSheet)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel(t("write.theLetterYouAreAnswering"))
+                Rectangle().fill(.dlLine).frame(width: 0.5)
+                sheet
+                    .dlReadable(layout)
+            }
+        } else {
+            sheet
+                .dlReadable(layout)
         }
     }
 }

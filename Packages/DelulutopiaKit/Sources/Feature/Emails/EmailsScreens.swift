@@ -90,6 +90,7 @@ public struct EmailsScreen: View {
                             }
                             ForEach(Array(rows.enumerated()), id: \.element.id) { i, row in
                                 ThreadCard(row: row, home: home)
+                                    .dlSelectedRow(.thread(row.id))
                                     .dlEnter(.rise, delay: DLMotion.stagger(i))
                                     .onAppear { if i >= rows.count - 3 { model.loadMore() } }
                             }
@@ -314,6 +315,7 @@ public struct ThreadScreen: View {
     let id: PublicID
     @Environment(Backend.self) private var backend
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dlClose) private var close
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model: ThreadModel?
     @State private var composer: EmailComposer?
@@ -353,7 +355,7 @@ public struct ThreadScreen: View {
                 VStack(spacing: 16) {
                     Text(model?.ui == .gone ? t("emails.threadGone") : t("common.cantReachTryAgain", ["brand": home?.universe.name ?? "Delulutopia"]))
                         .dlText(.callout).foregroundStyle(.dlInkQuiet)
-                    Button(t("emails.back")) { dismiss() }.buttonStyle(DLButtonStyle(.outline))
+                    Button(t("emails.back")) { dlLeave(close, dismiss) }.buttonStyle(DLButtonStyle(.outline))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .loading:
@@ -363,7 +365,7 @@ public struct ThreadScreen: View {
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(model?.thread?.subject ?? t("emails.email"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .task {
             if model == nil {
                 model = ThreadModel(backend: backend, id: id)
@@ -1166,7 +1168,7 @@ public struct NewEmailScreen: View {
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(t("emails.newEmail"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .dlHidesTabBar()
         .task {
             if composer == nil {
                 let c = EmailComposer(key: "new", backend: backend)

@@ -5,6 +5,7 @@ import DLNetwork
 import DLUI
 import FeatureStart
 import SwiftUI
+import WidgetKit
 
 extension AppTab {
     /// The line a placeholder tab shows until its screen lands.
@@ -18,11 +19,14 @@ extension AppTab {
 public struct AppRoot: View {
     let backend: Backend
     let initialTab: AppTab
+    /// Screenshots pin the iPad or Duo layout (iPad Layout §7); the app works it out itself.
+    let layout: AppLayout?
     @Environment(\.scenePhase) var scenePhase
 
-    public init(backend: Backend, initialTab: AppTab = .home) {
+    public init(backend: Backend, initialTab: AppTab = .home, layout: AppLayout? = nil) {
         self.backend = backend
         self.initialTab = initialTab
+        self.layout = layout
     }
 
     public var body: some View {
@@ -51,7 +55,11 @@ public struct AppRoot: View {
             }
             .onChange(of: signedIn) { _, now in
                 if now { backend.didSignIn() } else { backend.didSignOut() }
+                // Widgets read the same session: signed out (log out, deletion) they say so (WG7).
+                WidgetCenter.shared.reloadAllTimelines()
             }
+            // A widget tap (WG4); signed out it waits for the PIN like a notification tap.
+            .onOpenURL { url in backend.push.open(url: url) }
             .onChange(of: scenePhase) { _, phase in
                 guard signedIn else { return }
                 switch phase {
@@ -85,7 +93,7 @@ public struct AppRoot: View {
             StartFlow()
                 .transition(.opacity)
         case .signedIn:
-            SignedInShell(initialTab: initialTab)
+            SignedInShell(initialTab: initialTab, layout: layout)
                 .transition(.opacity)
         case let .gone(reason, brand):
             GoodbyeScreen(reason: reason, brand: brand) { backend.session.leaveGoodbye() }
@@ -117,17 +125,19 @@ struct LaunchScreen: View {
 /// Signed in: the tabs, plus the one-time Face ID offer after a typed PIN (X1).
 struct SignedInShell: View {
     let initialTab: AppTab
+    let layout: AppLayout?
     @Environment(Backend.self) var backend
     @State private var selection: AppTab
     @State private var askNotifications = false
 
-    init(initialTab: AppTab) {
+    init(initialTab: AppTab, layout: AppLayout? = nil) {
         self.initialTab = initialTab
+        self.layout = layout
         self._selection = State(initialValue: initialTab)
     }
 
     var body: some View {
-        MainTabView(selection: $selection)
+        MainTabView(selection: $selection, forcedLayout: layout)
             .alert(
                 t("settings.bioOfferTitle", ["bio": bioName]),
                 isPresented: Binding(get: { offerVisible }, set: { if !$0 { backend.pendingBiometricOffer = nil } })

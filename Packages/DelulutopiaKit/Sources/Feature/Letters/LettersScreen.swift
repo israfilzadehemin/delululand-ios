@@ -66,10 +66,13 @@ private struct LettersContent: View {
     let now: Date
 
     @Environment(Backend.self) private var backend
+    @Environment(\.dlLayout) private var layout
     @State private var played = false
 
     var body: some View {
         let rows = store.rows
+        // Tiles per line: 2 on the iPhone and in the iPad's list column, 3 on the Duo (canvas O-Letters).
+        let per = layout == .widePhone ? 3 : 2
         let home = backend.home.home
         let friendName = home?.friend?.nickname ?? t("common.friend")
         let first = home?.firstCitizen
@@ -79,24 +82,26 @@ private struct LettersContent: View {
                 if list {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { i, row in
                         ListRow(row: row, now: now, friendName: friendName, who: Who.of(senderOf(row), first: first))
+                            .dlSelectedRow(.letter(row.id))
                             .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i))
                             .onAppear { if i >= rows.count - 3 { store.loadMore() } }
                     }
                 } else {
-                    let pairs = stride(from: 0, to: rows.count, by: 2).map { Array(rows[$0 ..< min($0 + 2, rows.count)]) }
+                    let pairs = stride(from: 0, to: rows.count, by: per).map { Array(rows[$0 ..< min($0 + per, rows.count)]) }
                     // Keyed by both letters: keyed by the first alone, a prepended letter shifted every
                     // pair onto a stale row and showed a letter twice (iOS audit F5).
                     ForEach(Array(pairs.enumerated()), id: \.element.pairKey) { i, pair in
                         HStack(alignment: .top, spacing: 12) {
                             ForEach(Array(pair.enumerated()), id: \.element.id) { j, row in
-                                Thumb(row: row, now: now, friendName: friendName, who: Who.of(senderOf(row), first: first), index: i * 2 + j)
-                                    .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i * 2 + j))
+                                Thumb(row: row, now: now, friendName: friendName, who: Who.of(senderOf(row), first: first), index: i * per + j)
+                                    .dlSelectedRow(.letter(row.id))
+                                    .dlEnter(.rise, delay: played ? 0 : DLMotion.stagger(i * per + j))
                             }
-                            if pair.count == 1 { Color.clear.frame(maxWidth: .infinity) }
+                            ForEach(pair.count ..< per, id: \.self) { _ in Color.clear.frame(maxWidth: .infinity) }
                         }
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 2)
-                        .onAppear { if i * 2 >= rows.count - 4 { store.loadMore() } }
+                        .onAppear { if i * per >= rows.count - 4 { store.loadMore() } }
                     }
                 }
                 HStack(spacing: 8) {
@@ -114,6 +119,8 @@ private struct LettersContent: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
+            .frame(maxWidth: list && layout == .widePhone ? 680 : .infinity)
+            .frame(maxWidth: .infinity)
         }
         // One scroll view per mode: switching rebuilds it instead of reusing thumbnail cells as rows.
         .id(list)
