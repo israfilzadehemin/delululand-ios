@@ -148,14 +148,23 @@ public enum SelfiesState: Equatable, Sendable {
 public enum WidgetTimeline {
     public static let refresh: TimeInterval = 30 * 60
 
-    /// The entry dates from `now`: now, then each expiry before the next refresh.
+    /// The entry dates from `now`: now, each minute until the next refresh (the clocks read HH:MM in
+    /// each zone, 24-hour like Home), and each selfie's expiry in between.
     public static func dates(_ data: WidgetData, now: Date) -> [Date] {
         let end = now.addingTimeInterval(refresh)
+        let firstMinute = (now.timeIntervalSinceReferenceDate / 60).rounded(.down) * 60 + 60
+        let minutes = stride(from: firstMinute, to: end.timeIntervalSinceReferenceDate, by: 60)
+            .map { Date(timeIntervalSinceReferenceDate: $0) }
         let expiries = [data.mine.expiresAt, data.theirs.expiresAt]
             .compactMap { $0 }
             .filter { $0 > now && $0 < end }
-            .sorted()
-        return [now] + expiries
+        return [now] + Array(Set(minutes + expiries)).sorted()
+    }
+
+    /// "14:22" on `zone`'s wall clock, in the language's digits.
+    public static func clock(_ date: Date, zone: String) -> String {
+        let t = DLTime.wallClock(date, zone: zone)
+        return localDigits(String(format: "%02d:%02d", t.hour, t.minute))
     }
 
     /// The age line the board and selfies use ("2 h ago"), like Home's.

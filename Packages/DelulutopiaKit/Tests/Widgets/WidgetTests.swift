@@ -117,11 +117,22 @@ struct WidgetTests {
             boardImage: nil, mineImage: Data([7]), theirsImage: Data([9])
         )
         let dates = WidgetTimeline.dates(data, now: now)
-        #expect(dates == [now, now.addingTimeInterval(600)])
+        #expect(dates.first == now)
+        #expect(dates.contains(now.addingTimeInterval(600)))
+        #expect(dates.count == 30) // now + 29 more minutes; the expiry falls on a minute
+        #expect(dates == dates.sorted())
+        #expect(dates.last! < now.addingTimeInterval(WidgetTimeline.refresh))
         let later = data.at(now.addingTimeInterval(600))
         #expect(later.mine == .none)
         #expect(later.selfies == .theirsOnly)
         #expect(data.at(now).selfies == .both)
+    }
+
+    @Test("Clocks read HH:MM on each zone's wall clock")
+    func clockText() {
+        I18n.shared.set(.en)
+        #expect(WidgetTimeline.clock(now, zone: "Europe/Warsaw") == "13:00")
+        #expect(WidgetTimeline.clock(now, zone: "Asia/Tehran") == "15:30")
     }
 
     @Test("Ages read like Home's")

@@ -105,8 +105,7 @@ jobs:
             -destination "id=${{ steps.ipad.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath "$GITHUB_WORKSPACE/build/ScreenshotsIPad.xcresult" | xcbeautify
 
-      - name: Create an iPhone Duo simulator (iPad Layout IP12)
-        id: duo
+      - name: Boot an iPhone Duo simulator (iPad Layout IP12, log only)
         if: steps.sync.outputs.regenerated != 'true'
         continue-on-error: true
         run: |
@@ -125,19 +124,9 @@ jobs:
             exit 0
           fi
           udid="$(xcrun simctl create "iPhone Duo" com.apple.CoreSimulator.SimDeviceType.iPhone-Duo "$runtime")"
-          echo "udid=$udid" >> "$GITHUB_OUTPUT"
-
-      - name: Screenshots (iPhone Duo)
-        if: steps.sync.outputs.regenerated != 'true' && steps.duo.outputs.udid != ''
-        continue-on-error: true
-        env:
-          TEST_RUNNER_DL_SNAPSHOT_DIR: ${{ env.SNAPSHOT_DIR }}
-        run: |
-          set -o pipefail
-          xcodebuild test -project Delulutopia.xcodeproj -scheme "Delulutopia Staging" -configuration Debug-Staging \
-            -destination "id=${{ steps.duo.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
-            -resultBundlePath "$GITHUB_WORKSPACE/build/ScreenshotsDuo.xcresult" | tee "$RUNNER_TEMP/duo.log" | xcbeautify
-          grep -o "DUO-SCREEN.*" "$RUNNER_TEMP/duo.log" || true
+          xcrun simctl boot "$udid" && xcrun simctl bootstatus "$udid" -b >/dev/null
+          xcrun simctl io "$udid" screenshot "$SNAPSHOT_DIR/zz.duo-boot.png" || true
+          xcrun simctl shutdown "$udid" || true
 
       - name: Home Screen label (staging build)
         if: steps.sync.outputs.regenerated != 'true'

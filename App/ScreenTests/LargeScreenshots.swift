@@ -22,13 +22,18 @@ struct IPadScreenshots {
         return AppRoot(backend: backend, initialTab: tab)
     }
 
+    /// iPad Pro 13-inch in points: the App Store's 13″ shots are 2752 × 2064 px at 2× (IP15).
+    static func size(landscape: Bool) -> CGSize {
+        landscape ? CGSize(width: 1376, height: 1032) : CGSize(width: 1032, height: 1376)
+    }
+
     private func shoot(_ tab: AppTab, link: AppLink? = nil, _ name: String) async {
         for landscape in [true, false] {
             let o = landscape ? "landscape" : "portrait"
-            await Shoot.device(app(tab, link: link), named: "ipad-\(name)-\(o)-light", style: .light, wait: 3, landscape: landscape)
-            await Shoot.device(app(tab, link: link, theme: .dark), named: "ipad-\(name)-\(o)-dark", style: .dark, wait: 3, landscape: landscape)
+            await Shoot.device(app(tab, link: link), named: "ipad-\(name)-\(o)-light", style: .light, wait: 3, landscape: landscape, size: Self.size(landscape: landscape))
+            await Shoot.device(app(tab, link: link, theme: .dark), named: "ipad-\(name)-\(o)-dark", style: .dark, wait: 3, landscape: landscape, size: Self.size(landscape: landscape))
             I18n.shared.set(.fa)
-            await Shoot.device(app(tab, link: link), named: "ipad-\(name)-\(o)-fa-light", style: .light, wait: 3, landscape: landscape)
+            await Shoot.device(app(tab, link: link), named: "ipad-\(name)-\(o)-fa-light", style: .light, wait: 3, landscape: landscape, size: Self.size(landscape: landscape))
             I18n.shared.set(.en)
         }
     }
@@ -41,7 +46,7 @@ struct IPadScreenshots {
 
     /// IP4: nothing selected shows the hint, nothing is opened by itself.
     @Test func lettersHint() async {
-        await Shoot.device(app(.letters), named: "ipad-letters-hint-landscape-light", style: .light, wait: 2.5, landscape: true)
+        await Shoot.device(app(.letters), named: "ipad-letters-hint-landscape-light", style: .light, wait: 3, landscape: true, size: Self.size(landscape: true))
     }
 
     /// IP6: Write as a full-screen cover, the answered letter beside the sheet (canvas T-Write).
@@ -52,13 +57,13 @@ struct IPadScreenshots {
             .environment(backend)
             .environment(\.dlLayout, .split)
             .environment(\.dlClose) {}
-        await Shoot.device(view, named: "ipad-write-reply-landscape-light", style: .light, wait: 2.5, landscape: true)
+        await Shoot.device(view, named: "ipad-write-reply-landscape-light", style: .light, wait: 3, landscape: true, size: Self.size(landscape: true))
     }
 }
 
 /// The iPhone Duo's unfolded display (iPad Layout IP10, IP12): iPhone navigation with wide layouts.
-/// The runner lists an `iPhone-Duo` device type but no installed runtime accepts it, so the shots are
-/// drawn at the canvas size (1010 × 716 pt) on the iPhone run; on a Duo simulator they use its screen.
+/// The runner's Duo simulator reports a 678 × 466 pt screen (not the unfolded display), so the shots are
+/// drawn at the canvas size (1010 × 716 pt) on the iPhone run.
 @MainActor
 @Suite("Duo screenshots", .serialized, .enabled(if: !Shoot.onIPad))
 struct DuoScreenshots {
@@ -71,7 +76,7 @@ struct DuoScreenshots {
     }
 
     private func shot(_ view: some View, _ name: String, _ style: UIUserInterfaceStyle) async {
-        await Shoot.device(view, named: name, style: style, wait: 3, landscape: true, size: Shoot.onDuo ? nil : Self.canvas)
+        await Shoot.device(view, named: name, style: style, wait: 3, landscape: true, size: Self.canvas)
     }
 
     private func shoot(_ tab: AppTab, link: AppLink? = nil, _ name: String) async {

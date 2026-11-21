@@ -1,3 +1,4 @@
+import DLData
 import DLDesignSystem
 import DLI18n
 import SwiftUI
@@ -174,7 +175,7 @@ public struct SelfiesWidgetView: View {
                     }
                 case let .locked(blur, _, _):
                     if let blur, let image = UIImage(data: blur) {
-                        Image(uiImage: image).resizable().scaledToFill().blur(radius: 6).privacySensitive()
+                        Image(uiImage: image).resizable().scaledToFill().blur(radius: 14).privacySensitive()
                     } else {
                         Color.dlLine
                     }
@@ -199,7 +200,7 @@ public struct SelfiesWidgetView: View {
             HStack {
                 Text(name)
                 Spacer(minLength: 2)
-                if let at = slot.takenAt { Text(at, style: .time) }
+                if let at = slot.takenAt { Text(DLTime.time(of: at)) }
             }
             .font(.custom(DLFontName.caveatSemiBold.name, size: 15, relativeTo: .caption))
             .foregroundStyle(Color(red: 0.2, green: 0.2, blue: 0.23))
@@ -261,12 +262,11 @@ public struct ClocksWidgetView: View {
                 .font(.custom(DLFontName.manropeBold.name, size: 12, relativeTo: .caption))
                 .foregroundStyle(.dlInkQuiet)
                 .lineLimit(1)
-            Text(date, style: .time)
+            Text(WidgetTimeline.clock(date, zone: c.zone))
                 .font(.custom(DLFontName.manropeExtraBold.name, size: 30, relativeTo: .title))
                 .monospacedDigit()
                 .foregroundStyle(.dlInk)
                 .widgetAccentable()
-                .environment(\.timeZone, TimeZone(identifier: c.zone) ?? .current)
             if let mood = c.mood {
                 Text(mood)
                     .font(.custom(DLFontName.manropeMedium.name, size: 13, relativeTo: .footnote))
@@ -300,8 +300,7 @@ public struct ClocksWidgetView: View {
     private func initialTime(_ c: WidgetCitizen) -> some View {
         HStack(spacing: 3) {
             Text(String(c.name.prefix(1)).uppercased())
-            Text(date, style: .time)
-                .environment(\.timeZone, TimeZone(identifier: c.zone) ?? .current)
+            Text(WidgetTimeline.clock(date, zone: c.zone))
         }
     }
 }
