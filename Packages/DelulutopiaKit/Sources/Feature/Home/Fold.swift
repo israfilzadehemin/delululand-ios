@@ -24,22 +24,14 @@ extension AnyTransition {
     }
 }
 
-/// Shows the top `progress` of its content; the mask reaches past the edges so shadows, pins and
-/// tape stay whole when it is fully open. Fades over the last stretch so nothing lingers under
-/// the strip.
-private struct RollClip: ViewModifier, Animatable {
-    var progress: CGFloat
-
-    var animatableData: CGFloat {
-        get { progress }
-        set { progress = newValue }
-    }
+/// Shows the top `progress` of its content. The mask reaches past the edges so shadows, pins and
+/// tape stay whole when it is fully open. Its scale animates on its own, so no Animatable needed.
+private struct RollClip: ViewModifier {
+    let progress: CGFloat
 
     func body(content: Content) -> some View {
-        content
-            .mask(alignment: .top) {
-                Rectangle().padding(-24).scaleEffect(x: 1, y: max(progress, 0.0001), anchor: .top)
-            }
-            .opacity(min(1, progress * 3))
+        content.mask(alignment: .top) {
+            Rectangle().padding(-24).scaleEffect(x: 1, y: max(progress, 0.0001), anchor: .top)
+        }
     }
 }
