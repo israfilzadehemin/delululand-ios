@@ -97,6 +97,13 @@ public struct API: Sendable {
     }
     public func boardSeen(version: Int) async throws { try await client.run("POST", "api/board/seen", body: VersionBody(version: version)) }
 
+    // MARK: Selfies (doc "Delululand — Selfies")
+
+    public func postSelfie(jpeg: Data) async throws -> Selfie {
+        try await client.upload("api/selfies", fields: [:], filename: "selfie.jpg", mime: "image/jpeg", data: jpeg, timeout: UploadKind.photo.timeout)
+    }
+    public func selfieSeen(id: PublicID) async throws { try await client.run("POST", "api/selfies/seen", body: SelfieSeenBody(id: id)) }
+
     // MARK: Letters and the draft
 
     public func draft() async throws -> Draft { try await client.call("GET", "api/draft") }

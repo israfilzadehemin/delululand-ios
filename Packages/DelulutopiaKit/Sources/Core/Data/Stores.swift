@@ -172,7 +172,7 @@ public final class HomeStore {
         guard refresher == nil else { return }
         let refresher = Refresher(
             live: live,
-            signals: ["letter", "discussion", "comment", "email", "reaction", "board", "mood", "moods", "profile", "universe", "language"],
+            signals: ["letter", "discussion", "comment", "email", "reaction", "board", "selfie", "mood", "moods", "profile", "universe", "language"],
             deadlines: { [weak self] in self?.deadlines() ?? [] },
             reload: { [weak self] in await self?.load() }
         )
@@ -268,5 +268,6 @@ public final class HomeStore {
         guard let h = home else { return [] }
         return (h.from + h.to).flatMap { [$0.windowEndsAt, $0.arrivesAt] }
             + h.newDiscussions.map(\.arrivesAt) + [h.emailCredits?.renewsAt]
+            + [h.selfies?.mine?.expiresAt, h.selfies?.theirs?.expiresAt]
     }
 }

@@ -8,6 +8,7 @@ struct LoginBody: Encodable { let userId: PublicID; let pin: String }
 struct IdsBody: Encodable { let ids: [PublicID] }
 struct InviteBody: Encodable { let invite: String }
 struct VersionBody: Encodable { let version: Int }
+struct SelfieSeenBody: Encodable { let id: PublicID }
 struct ReactionVersionBody: Encodable { let version: Int; let reaction: String }
 struct BoardCommentBody: Encodable { let version: Int; let text: String }
 struct TextBody: Encodable { let text: String }

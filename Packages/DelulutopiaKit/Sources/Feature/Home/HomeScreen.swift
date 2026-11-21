@@ -65,6 +65,7 @@ private struct HomeContent: View {
                 if stale { OfflineBanner() }
                 NotificationHint()
                 BoardTile(home: home, now: now, actions: actions)
+                if home.selfies != nil { SelfieBoardView(home: home, now: now, actions: actions) }
                 VStack(alignment: .leading, spacing: 8) {
                     MyMood(me: home.me, now: now) { moodOpen = true }
                         .dlEnter(.rise)
