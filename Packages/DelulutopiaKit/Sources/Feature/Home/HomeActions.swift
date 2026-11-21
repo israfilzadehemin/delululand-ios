@@ -13,6 +13,7 @@ final class HomeActions {
     let backend: Backend
     private var lastRefetch = Date.distantPast
     private var tellingSeen: Set<Int> = []
+    private var tellingSelfie: Set<PublicID> = []
 
     init(backend: Backend) {
         self.backend = backend
@@ -193,6 +194,39 @@ final class HomeActions {
 
     private static func changed(_ error: APIError) -> Board? {
         error.code == "BOARD_CHANGED" ? error.extra["board"]?.decode(Board.self) : nil
+    }
+
+    // MARK: Selfies (doc "Delululand — Selfies")
+
+    /// Q3: tell the server once that the friend's selfie was on screen, unlocked.
+    func selfieSeen(_ id: PublicID) {
+        guard tellingSelfie.insert(id).inserted else { return }
+        Task {
+            do {
+                try await api.selfieSeen(id: id)
+            } catch {
+                tellingSelfie.remove(id)
+            }
+        }
+    }
+
+    /// DS4: pins the shot; nil when pinned, else the words to show. One live selfie each (DS3).
+    func postSelfie(jpeg: Data) async -> String? {
+        if let tooLarge = API.UploadKind.photo.precheck(jpeg.count) { return tooLarge }
+        do {
+            let view = try await api.postSelfie(jpeg: jpeg)
+            store.patch { home in
+                if home.selfies == nil { home.selfies = SelfieBoard(ttlHours: 24, mine: nil, theirs: nil) }
+                home.selfies?.mine = view
+            }
+            store.refreshSoon()
+            return nil
+        } catch let error as APIError {
+            store.refreshSoon()
+            return error.isOffline ? t("selfie.notPinned") : error.message
+        } catch {
+            return t("selfie.notPinned")
+        }
     }
 
     // MARK: Letters

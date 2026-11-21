@@ -18,6 +18,7 @@ public final class DeviceSettings {
     enum Keys {
         static let theme = "dl.theme"
         static let boardMini = "dl.boardMini"
+        static let selfieMini = "dl.selfieMini"
         static let lettersList = "dl.lettersList"
         static let leaves = "dl.leaves"
         static let recentEmojis = "dl.recentEmojis"
@@ -30,6 +31,8 @@ public final class DeviceSettings {
     public private(set) var themeMode: ThemeMode
     /// Board §9: the Home tile folded to a strip.
     public private(set) var boardMini: Bool
+    /// Selfies DS1: the selfie board folded to a strip.
+    public private(set) var selfieMini: Bool
     /// Letters: the compact list instead of the tile grid (thumbnails are the default).
     public private(set) var lettersList: Bool
     /// Falling leaves over Home and the lists (Appearance › Seasonal effects).
@@ -41,6 +44,7 @@ public final class DeviceSettings {
         self.defaults = defaults
         self.themeMode = defaults.string(forKey: Keys.theme).flatMap(ThemeMode.init(rawValue:)) ?? .match
         self.boardMini = defaults.bool(forKey: Keys.boardMini)
+        self.selfieMini = defaults.bool(forKey: Keys.selfieMini)
         self.lettersList = defaults.bool(forKey: Keys.lettersList)
         self.leaves = defaults.object(forKey: Keys.leaves) as? Bool ?? true
         self.recentEmojis = defaults.stringArray(forKey: Keys.recentEmojis) ?? []
@@ -49,6 +53,11 @@ public final class DeviceSettings {
     public func setBoardMini(_ mini: Bool) {
         boardMini = mini
         defaults.set(mini, forKey: Keys.boardMini)
+    }
+
+    public func setSelfieMini(_ mini: Bool) {
+        selfieMini = mini
+        defaults.set(mini, forKey: Keys.selfieMini)
     }
 
     public func setLettersList(_ list: Bool) {

@@ -264,6 +264,10 @@ public struct Home: Codable, Sendable, Hashable {
     public var universe: UniverseInfo
     /// Subscription Tiers: nil from an API before V24; nothing is limited on screen then.
     public var plan: Plan?
+    /// Daily selfies (doc "Delululand — Selfies"): nil from an API before V32, which hides the board.
+    public var selfies: SelfieBoard?
+    /// The friend's selfie, not yet shown unlocked on my Home (Q3).
+    @Default<False> public var selfieNew: Bool
 
     /// The other citizen's name for sentences, or "your friend" while the creator is alone (Universe U8).
     public var friendName: String { friend?.nickname ?? t("settings.yourFriend") }
@@ -275,6 +279,34 @@ public struct HomeCounts: Codable, Sendable, Hashable {
     @Default<Zero> public var emailsUnread: Int
     @Default<Zero> public var emailsReacted: Int
     @Default<False> public var boardNew: Bool
+    @Default<False> public var selfieNew: Bool
+}
+
+// MARK: - Selfies (doc "Delululand — Selfies")
+
+public struct Selfie: Codable, Sendable, Hashable, Identifiable {
+    public var id: PublicID
+    public var authorId: PublicID
+    public var createdAt: String
+    /// Gone at this instant (DS7): hidden on Home, which then reloads.
+    public var expiresAt: String
+    /// Nil while locked (Q2): the friend's selfie before mine is up.
+    public var url: String?
+    @Default<False> public var locked: Bool
+    /// A tiny JPEG as a data URI, only while locked; shown blurred.
+    public var blurPreview: String?
+}
+
+public struct SelfieBoard: Codable, Sendable, Hashable {
+    public var ttlHours: Int
+    public var mine: Selfie?
+    public var theirs: Selfie?
+
+    public init(ttlHours: Int, mine: Selfie?, theirs: Selfie?) {
+        self.ttlHours = ttlHours
+        self.mine = mine
+        self.theirs = theirs
+    }
 }
 
 public struct MoodChange: Codable, Sendable, Hashable {
