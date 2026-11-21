@@ -178,18 +178,11 @@ struct SelfieBoardView: View {
 
     // MARK: Board
 
-    private var woodColors: [Color] {
-        dark
-            ? [Color(red: 0.478, green: 0.337, blue: 0.220), Color(red: 0.369, green: 0.255, blue: 0.165), Color(red: 0.451, green: 0.322, blue: 0.227)]
-            : [Color(red: 0.737, green: 0.553, blue: 0.376), Color(red: 0.624, green: 0.439, blue: 0.282), Color(red: 0.710, green: 0.525, blue: 0.345)]
-    }
-
-    private var corkColor: Color { dark ? Color(red: 0.612, green: 0.478, blue: 0.345) : Color(red: 0.788, green: 0.635, blue: 0.478) }
-
     private var cork: some View {
         ZStack {
-            corkColor
-            CorkSpecks()
+            Image(uiImage: BoardTextures.cork(dark: dark)).resizable().scaledToFill()
+            // The frame's lip shades the cork just inside it, as on a real board.
+            Rectangle().strokeBorder(Color.black.opacity(dark ? 0.45 : 0.32), lineWidth: 5).blur(radius: 3.5)
             HStack(spacing: 20) {
                 left
                 right
@@ -197,10 +190,18 @@ struct SelfieBoardView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 232)
-        .clipShape(RoundedRectangle(cornerRadius: 2))
+        .clipped()
         .padding(10)
-        .background(LinearGradient(colors: woodColors, startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 6))
-        .shadow(color: .dlShade.opacity(0.3), radius: 6, y: 4)
+        .background(
+            Image(uiImage: BoardTextures.wood(dark: dark)).resizable().scaledToFill()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 5)
+                        .strokeBorder(LinearGradient(colors: [.white.opacity(0.28), .black.opacity(0.22)], startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+        )
+        .shadow(color: .black.opacity(0.18), radius: 1, y: 1)
+        .shadow(color: .black.opacity(0.12), radius: 4, y: 3)
     }
 
     @ViewBuilder private var left: some View {
@@ -284,7 +285,8 @@ struct SelfieBoardView: View {
                     MiniPolaroid(tilt: 4, url: locked ? nil : theirs?.url, image: locked ? blurImage(theirs?.blurPreview) : nil, present: theirs != nil, blurred: locked)
                 }
                 .frame(width: 72, height: 54)
-                .background(corkColor, in: RoundedRectangle(cornerRadius: 3))
+                .background(Image(uiImage: BoardTextures.cork(dark: dark)).resizable().scaledToFill())
+                .clipShape(RoundedRectangle(cornerRadius: 3))
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
                         Text(t("selfie.selfies")).font(.custom(DLFontName.manropeExtraBold.name, size: 15, relativeTo: .subheadline))
@@ -297,7 +299,8 @@ struct SelfieBoardView: View {
             }
             .foregroundStyle(.white)
             .padding(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 12))
-            .background(LinearGradient(colors: woodColors, startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 8))
+            .background(Image(uiImage: BoardTextures.wood(dark: dark)).resizable().scaledToFill())
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .shadow(color: .dlShade.opacity(0.18), radius: 1.5, y: 1)
         }
         .buttonStyle(DLPressStyle(scale: 0.99))
@@ -313,25 +316,136 @@ struct SelfieBoardView: View {
 
 // MARK: - Pieces
 
-private struct CorkSpecks: View {
-    var body: some View {
-        Canvas { context, size in
-            var rng = SeededRandom(seed: 7)
-            for i in 0 ..< 420 {
-                let x = CGFloat(rng.next()) * size.width
-                let y = CGFloat(rng.next()) * size.height
-                let kind = i % 3
-                let r: CGFloat = kind == 2 ? 1.6 : 1
-                let color: Color = switch kind {
-                case 0: Color(red: 0.39, green: 0.22, blue: 0.10).opacity(0.38)
-                case 1: Color(red: 1, green: 0.94, blue: 0.84).opacity(0.35)
-                default: Color(red: 0.47, green: 0.29, blue: 0.14).opacity(0.28)
-                }
-                context.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r)), with: .color(color))
+/// Selfies DS2: cork and wood drawn once per theme from a fixed seed, so they look like material
+/// (dense granules in many tones, pores, soft mottling; wood grain with knots) instead of flat colour.
+@MainActor
+private enum BoardTextures {
+    private static var cache: [String: UIImage] = [:]
+
+    static func cork(dark: Bool) -> UIImage { cached("cork\(dark)") { renderCork(dark: dark) } }
+    static func wood(dark: Bool) -> UIImage { cached("wood\(dark)") { renderWood(dark: dark) } }
+
+    private static func cached(_ key: String, _ make: () -> UIImage) -> UIImage {
+        if let image = cache[key] { return image }
+        let image = make()
+        cache[key] = image
+        return image
+    }
+
+    private static func renderer(_ size: CGSize) -> UIGraphicsImageRenderer {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 2
+        format.opaque = true
+        return UIGraphicsImageRenderer(size: size, format: format)
+    }
+
+    /// Mixes two RGB colours; `t` 0…1.
+    private static func mix(_ a: (CGFloat, CGFloat, CGFloat), _ b: (CGFloat, CGFloat, CGFloat), _ t: CGFloat) -> (CGFloat, CGFloat, CGFloat) {
+        (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t, a.2 + (b.2 - a.2) * t)
+    }
+
+    private static func renderCork(dark: Bool) -> UIImage {
+        let size = CGSize(width: 420, height: 250)
+        let shade: CGFloat = dark ? 0.72 : 1
+        let deep = (0.52 * shade, 0.36 * shade, 0.22 * shade)
+        let mid = (0.74 * shade, 0.57 * shade, 0.39 * shade)
+        let light = (0.90 * shade, 0.76 * shade, 0.57 * shade)
+        return renderer(size).image { ctx in
+            let cg = ctx.cgContext
+            var rng = SeededRandom(seed: 41)
+            UIColor(red: mid.0, green: mid.1, blue: mid.2, alpha: 1).setFill()
+            cg.fill(CGRect(origin: .zero, size: size))
+            // Soft mottling: the pressed cork is never one tone.
+            for _ in 0 ..< 70 {
+                let r: CGFloat = 14 + 40 * rng.next()
+                let c = rng.next() < 0.5 ? deep : light
+                cg.setFillColor(UIColor(red: c.0, green: c.1, blue: c.2, alpha: 0.10).cgColor)
+                cg.fillEllipse(in: CGRect(x: rng.next() * size.width - r, y: rng.next() * size.height - r, width: 2 * r, height: 1.6 * r))
+            }
+            // Granules: thousands of irregular crumbs, each its own tone.
+            for _ in 0 ..< 14000 {
+                let w: CGFloat = 0.6 + 2.4 * pow(rng.next(), 1.6)
+                let h = w * (0.45 + 0.7 * rng.next())
+                let t = rng.next()
+                let c = t < 0.5 ? mix(deep, mid, t * 2) : mix(mid, light, (t - 0.5) * 2)
+                cg.saveGState()
+                cg.translateBy(x: rng.next() * size.width, y: rng.next() * size.height)
+                cg.rotate(by: rng.next() * .pi)
+                cg.setFillColor(UIColor(red: c.0, green: c.1, blue: c.2, alpha: 0.35 + 0.5 * rng.next()).cgColor)
+                cg.fillEllipse(in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+                cg.restoreGState()
+            }
+            // Pores and gaps between crumbs.
+            for _ in 0 ..< 3200 {
+                let r = 0.25 + 0.6 * rng.next()
+                cg.setFillColor(UIColor(red: 0.24 * shade, green: 0.15 * shade, blue: 0.08 * shade, alpha: 0.25 + 0.4 * rng.next()).cgColor)
+                cg.fillEllipse(in: CGRect(x: rng.next() * size.width, y: rng.next() * size.height, width: 2 * r, height: 2 * r))
+            }
+            // A few bright flecks catching light.
+            for _ in 0 ..< 700 {
+                let r = 0.2 + 0.4 * rng.next()
+                cg.setFillColor(UIColor(red: 1, green: 0.93, blue: 0.80, alpha: 0.18 + 0.25 * rng.next()).cgColor)
+                cg.fillEllipse(in: CGRect(x: rng.next() * size.width, y: rng.next() * size.height, width: 2 * r, height: 2 * r))
             }
         }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
+    }
+
+    private static func renderWood(dark: Bool) -> UIImage {
+        let size = CGSize(width: 440, height: 280)
+        let shade: CGFloat = dark ? 0.62 : 1
+        let base = (0.70 * shade, 0.51 * shade, 0.33 * shade)
+        let grain = (0.50 * shade, 0.33 * shade, 0.19 * shade)
+        let light = (0.82 * shade, 0.64 * shade, 0.44 * shade)
+        return renderer(size).image { ctx in
+            let cg = ctx.cgContext
+            var rng = SeededRandom(seed: 23)
+            UIColor(red: base.0, green: base.1, blue: base.2, alpha: 1).setFill()
+            cg.fill(CGRect(origin: .zero, size: size))
+            // Long, slightly wavy grain lines in bands of tone.
+            var y: CGFloat = 0
+            while y < size.height {
+                let band = rng.next()
+                let c = band < 0.55 ? grain : light
+                let width = 0.4 + 1.6 * rng.next()
+                let amp = 0.6 + 2.2 * rng.next()
+                let freq = 0.004 + 0.012 * rng.next()
+                let phase: CGFloat = rng.next() * 6.28
+                let path = CGMutablePath()
+                path.move(to: CGPoint(x: 0, y: y))
+                var x: CGFloat = 0
+                while x <= size.width {
+                    path.addLine(to: CGPoint(x: x, y: y + amp * sin(x * freq * 6.28 + phase)))
+                    x += 6
+                }
+                cg.addPath(path)
+                cg.setStrokeColor(UIColor(red: c.0, green: c.1, blue: c.2, alpha: 0.18 + 0.35 * rng.next()).cgColor)
+                cg.setLineWidth(width)
+                cg.strokePath()
+                y += 0.8 + 2.6 * rng.next()
+            }
+            // Two small knots.
+            for _ in 0 ..< 2 {
+                let cx = rng.next() * size.width
+                let cy = rng.next() * size.height
+                for ring in 0 ..< 5 {
+                    let r = CGFloat(2 + ring * 2)
+                    cg.setStrokeColor(UIColor(red: grain.0, green: grain.1, blue: grain.2, alpha: 0.35 - CGFloat(ring) * 0.05).cgColor)
+                    cg.setLineWidth(0.8)
+                    cg.strokeEllipse(in: CGRect(x: cx - r * 2.2, y: cy - r, width: r * 4.4, height: r * 2))
+                }
+            }
+        }
+    }
+}
+
+/// Polaroid card stock: faintly warm, a touch darker toward the bottom edge, a hairline edge.
+private struct PolaroidPaper: View {
+    let dark: Bool
+    var body: some View {
+        let top = dark ? Polaroid.paperDark : Polaroid.paper
+        LinearGradient(colors: [top, top.opacity(0.94)], startPoint: .top, endPoint: .bottom)
+            .background(dark ? Color(red: 0.80, green: 0.78, blue: 0.73) : Color(red: 0.93, green: 0.92, blue: 0.89))
+            .overlay(Rectangle().strokeBorder(Color.black.opacity(0.07), lineWidth: 0.5))
     }
 }
 
@@ -339,9 +453,9 @@ private struct CorkSpecks: View {
 private struct SeededRandom {
     var state: UInt64
     init(seed: UInt64) { state = seed &* 6_364_136_223_846_793_005 &+ 1 }
-    mutating func next() -> Double {
+    mutating func next() -> CGFloat {
         state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
-        return Double(state >> 11) / Double(UInt64(1) << 53)
+        return CGFloat(Double(state >> 11) / Double(UInt64(1) << 53))
     }
 }
 
@@ -351,7 +465,7 @@ private struct Pin: View {
         Circle()
             .fill(RadialGradient(colors: [.white.opacity(0.75), color], center: UnitPoint(x: 0.34, y: 0.3), startRadius: 0, endRadius: 6))
             .frame(width: 15, height: 15)
-            .shadow(color: .black.opacity(0.35), radius: 1.5, y: 2)
+            .shadow(color: .black.opacity(0.4), radius: 0.8, x: 1, y: 1.5)
             .accessibilityHidden(true)
     }
 }
@@ -385,12 +499,15 @@ private struct PolaroidFrame<Photo: View>: View {
     var body: some View {
         VStack(spacing: 0) {
             photo().frame(width: 122, height: 122).clipped().background(Color(red: 0.227, green: 0.220, blue: 0.251))
+                .overlay(Rectangle().strokeBorder(Color.black.opacity(0.16), lineWidth: 0.5))
             Caption(name: name, time: time)
         }
         .padding([.top, .horizontal], 8)
         .frame(width: 138)
-        .background(dark ? Polaroid.paperDark : Polaroid.paper)
-        .shadow(color: .black.opacity(0.35), radius: 6, y: 5)
+        .background(PolaroidPaper(dark: dark))
+        // Pinned flat to the cork: a tight contact shadow, not a lift.
+        .shadow(color: .black.opacity(0.24), radius: 0.6, y: 0.5)
+        .shadow(color: .black.opacity(0.10), radius: 1.8, y: 1)
         .overlay(alignment: .topLeading) { if isNew { NewChip(paper: false).padding(13) } }
         .overlay(alignment: .top) { Pin(color: pin).offset(y: -6) }
         .rotationEffect(.degrees(tilt))
@@ -459,12 +576,14 @@ private struct BigPolaroid<Photo: View>: View {
     var body: some View {
         VStack(spacing: 0) {
             photo().frame(width: 278, height: 278).clipped().background(Color(red: 0.227, green: 0.220, blue: 0.251))
+                .overlay(Rectangle().strokeBorder(Color.black.opacity(0.16), lineWidth: 0.5))
             Caption(name: name, time: time, big: true)
         }
         .padding([.top, .horizontal], 16)
         .frame(width: 310)
-        .background(scheme == .dark ? Polaroid.paperDark : Polaroid.paper)
-        .shadow(color: .black.opacity(0.35), radius: 10, y: 8)
+        .background(PolaroidPaper(dark: scheme == .dark))
+        .shadow(color: .black.opacity(0.22), radius: 1, y: 1)
+        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
         .rotationEffect(.degrees(tilt))
     }
 }
