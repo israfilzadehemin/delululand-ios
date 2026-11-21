@@ -17,14 +17,22 @@ struct AddSticker: View {
     let onClose: () -> Void
 
     private enum Step: Equatable {
-        case menu, working
+        case menu
         case preview(Data, String, Bool)
     }
 
     @State private var step: Step = .menu
+    @State private var detent: PresentationDetent = .medium
     @State private var error: String?
+    @State private var working = false
+    /// The pickers hang off this view, not off menu rows, so nothing they were opened from goes away
+    /// while they close (a PhotosPicker in a row took the whole sheet down with it on iOS).
+    @State private var choosingPhoto = false
+    @State private var choosingFile = false
     @State private var photoPick: PhotosPickerItem?
     @State private var filePick: PhotosPickerItem?
+    /// FS-SK20: a photo with no subject found, kept for "Use whole photo".
+    @State private var noSubject: Data?
     @State private var drawing = false
     @Environment(Backend.self) private var backend
 
@@ -32,40 +40,67 @@ struct AddSticker: View {
         Group {
             switch step {
             case .menu: menu
-            case .working:
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             case let .preview(data, mime, outlinable):
-                StickerPreview(store: store, data: data, mime: mime, outlinable: outlinable, onBack: { step = .menu }, onDone: onClose)
+                StickerPreview(store: store, data: data, mime: mime, outlinable: outlinable, onBack: { show(.menu) }, onDone: onClose)
             }
         }
-        .presentationDetents(step == .menu ? [.medium, .large] : [.large])
+        .overlay {
+            if working {
+                ProgressView()
+                    .controlSize(.large)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.ultraThinMaterial)
+            }
+        }
+        .presentationDetents([.medium, .large], selection: $detent)
+        .interactiveDismissDisabled(working)
+        .photosPicker(isPresented: $choosingPhoto, selection: $photoPick, matching: .images)
+        .photosPicker(isPresented: $choosingFile, selection: $filePick, matching: .images, preferredItemEncoding: .current)
         .fullScreenCover(isPresented: $drawing) {
             DoodlePad(surface: .sticker, title: t("stickers.draw"), doneLabel: t("stickers.next")) { png in
                 drawing = false
-                step = .preview(png, "image/png", true)
+                show(.preview(png, "image/png", true))
             } onClose: {
                 drawing = false
             }
             .environment(backend)
         }
+        .alert(
+            t("stickers.noSubject"),
+            isPresented: Binding(get: { noSubject != nil }, set: { if !$0 { noSubject = nil } }),
+            presenting: noSubject
+        ) { raw in
+            Button(t("stickers.useWholePhoto")) {
+                noSubject = nil
+                if let jpeg = wholePhoto(raw) { show(.preview(jpeg, "image/jpeg", false)) } else { error = t("common.somethingWentWrong") }
+            }
+            Button(t("stickers.cancel"), role: .cancel) {}
+        }
         .onChange(of: photoPick) { _, item in
             guard let item else { return }
             photoPick = nil
-            step = .working
+            error = nil
+            working = true
             Task {
-                let raw = try? await item.loadTransferable(type: Data.self)
-                if let raw, let png = await cutOut(raw) {
-                    step = .preview(png, "image/png", true)
-                } else {
+                defer { working = false }
+                guard let raw = try? await item.loadTransferable(type: Data.self) else {
                     error = t("common.somethingWentWrong")
-                    step = .menu
+                    return
+                }
+                if let png = await cutOut(raw) {
+                    show(.preview(png, "image/png", true))
+                } else {
+                    noSubject = raw
                 }
             }
         }
         .onChange(of: filePick) { _, item in
             guard let item else { return }
             filePick = nil
+            error = nil
+            working = true
             Task {
+                defer { working = false }
                 let mime = item.supportedContentTypes.compactMap(\.preferredMIMEType).first { stickerTypes.contains($0) }
                     ?? item.supportedContentTypes.first?.preferredMIMEType ?? ""
                 guard let data = try? await item.loadTransferable(type: Data.self) else {
@@ -75,11 +110,16 @@ struct AddSticker: View {
                 if let refusal = checkSticker(bytes: data.count, mime: mime) {
                     error = refusal
                 } else {
-                    error = nil
-                    step = .preview(data, mime, false)
+                    show(.preview(data, mime, false))
                 }
             }
         }
+    }
+
+    /// The preview wants the full height; the menu goes back to half.
+    private func show(_ next: Step) {
+        step = next
+        detent = next == .menu ? .medium : .large
     }
 
     private var menu: some View {
@@ -88,10 +128,10 @@ struct AddSticker: View {
                 Button { drawing = true } label: {
                     menuRow(t("stickers.draw"), t("stickers.drawHint"), symbol: "scribble")
                 }
-                PhotosPicker(selection: $photoPick, matching: .images) {
+                Button { choosingPhoto = true } label: {
                     menuRow(t("stickers.fromPhoto"), nil, symbol: "person.crop.square")
                 }
-                PhotosPicker(selection: $filePick, matching: .images, preferredItemEncoding: .current) {
+                Button { choosingFile = true } label: {
                     menuRow(t("stickers.import"), t("stickers.importHint"), symbol: "square.and.arrow.down")
                 }
                 if let error {
@@ -247,6 +287,19 @@ func cutOut(_ raw: Data) async -> Data? {
             UIImage(cgImage: cut).draw(in: CGRect(x: margin * k, y: margin * k, width: w * k, height: h * k))
         }.pngData()
     }.value
+}
+
+/// FS-SK20 fallback: the photo's centre square at 512 px, no cut-out (JPEG keeps it well under 1 MB).
+func wholePhoto(_ raw: Data) -> Data? {
+    guard let photo = UIImage(data: raw)?.normalized() else { return nil }
+    let side = min(photo.size.width, photo.size.height)
+    guard side > 0 else { return nil }
+    let k = 512 / side
+    let format = UIGraphicsImageRendererFormat()
+    format.scale = 1
+    return UIGraphicsImageRenderer(size: CGSize(width: 512, height: 512), format: format).image { _ in
+        photo.draw(in: CGRect(x: (side - photo.size.width) / 2 * k, y: (side - photo.size.height) / 2 * k, width: photo.size.width * k, height: photo.size.height * k))
+    }.jpegData(compressionQuality: 0.9)
 }
 
 private extension UIImage {

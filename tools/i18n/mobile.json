@@ -61,5 +61,7 @@
   "write.editingASentLetter": {"en": "Editing a sent letter", "az": "Göndərilmiş məktubu dəyişirsən", "fa": "ویرایش نامه‌ی فرستاده‌شده", "tr": "Gönderilmiş mektubu düzenliyorsun", "ru": "Правка отправленного письма"},
   "write.leftArrivesAt": {"en": "{countdown} left · arrives at {time}", "az": "{countdown} qalıb · çatacaq: {time}", "fa": "{countdown} مونده · ساعت {time} می‌رسه", "tr": "{countdown} kaldı · varış: {time}", "ru": "Осталось {countdown} · придёт: {time}"},
   "write.leftArrivesAtChange": {"en": "{countdown} left · arrives at {time} whatever you change", "az": "{countdown} qalıb · nəyi dəyişsən də, çatacaq: {time}", "fa": "{countdown} مونده · هر چی هم عوض کنی، ساعت {time} می‌رسه", "tr": "{countdown} kaldı · neyi değiştirirsen değiştir, varış: {time}", "ru": "Осталось {countdown} · что ни меняй, придёт: {time}"},
-  "write.thisLetterCantBeEdited": {"en": "This letter can't be edited.", "az": "Bu məktubu artıq dəyişmək olmur.", "fa": "این نامه دیگه ویرایش نمی‌شه.", "tr": "Bu mektup artık düzenlenemez.", "ru": "Это письмо уже нельзя изменить."}
+  "write.thisLetterCantBeEdited": {"en": "This letter can't be edited.", "az": "Bu məktubu artıq dəyişmək olmur.", "fa": "این نامه دیگه ویرایش نمی‌شه.", "tr": "Bu mektup artık düzenlenemez.", "ru": "Это письмо уже нельзя изменить."},
+  "stickers.noSubject": {"en": "Couldn’t find a subject in this photo", "az": "Bu fotoda əsas obyekt tapılmadı", "fa": "توی این عکس سوژه‌ای پیدا نشد", "tr": "Bu fotoğrafta bir özne bulunamadı", "ru": "На этом фото не нашлось объекта"},
+  "stickers.useWholePhoto": {"en": "Use the whole photo", "az": "Bütün fotonu istifadə et", "fa": "از کل عکس استفاده کن", "tr": "Fotoğrafın tamamını kullan", "ru": "Взять всё фото"}
 }
