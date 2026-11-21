@@ -29,6 +29,7 @@
 		F48CD9C7A5BBF42692A94073 /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = BDD68A0A08CA5287AE6058AC /* DLData */; };
 		F6C854F7DC5F84B4F3D8D77A /* FeatureLetters in Frameworks */ = {isa = PBXBuildFile; productRef = 941987CC3761B9121501B044 /* FeatureLetters */; };
 		FD37B14D762D2CFFBA67B76E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */; };
+		FF4D2F0481F7870759E007EE /* LargeScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F148AEE319A9B77270B2876 /* LargeScreenshots.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +68,7 @@
 		12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogScreenshots.swift; sourceTree = "<group>"; };
 		24C08093F003F94991B707A0 /* Prod.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Prod.xcconfig; sourceTree = "<group>"; };
 		2AB8A901C788027C29970DBF /* DelulutopiaKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DelulutopiaKit; path = Packages/DelulutopiaKit; sourceTree = SOURCE_ROOT; };
+		3F148AEE319A9B77270B2876 /* LargeScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeScreenshots.swift; sourceTree = "<group>"; };
 		5FD4CFC3086166B5616C4EEA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		66B52D7A5E0A4489A76F05B0 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
 		8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DelulutopiaScreens.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -132,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */,
+				3F148AEE319A9B77270B2876 /* LargeScreenshots.swift */,
 				FD6B2C0663981BD15ABB39F2 /* ShellScreenshots.swift */,
 			);
 			path = ScreenTests;
@@ -358,6 +361,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				762D164795CAC955CD72B0CF /* CatalogScreenshots.swift in Sources */,
+				FF4D2F0481F7870759E007EE /* LargeScreenshots.swift in Sources */,
 				8A410E5A1BC5B0BD7B63F367 /* ShellScreenshots.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
