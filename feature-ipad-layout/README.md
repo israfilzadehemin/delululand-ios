@@ -1,6 +1,6 @@
 # feature/ipad-layout
 
-Commit `0581d31`, run 44937598802.
+Commit `3eec922`, run 44940440381.
 
 ## appearanceDark.appearance-dark
 
@@ -274,6 +274,54 @@ Commit `0581d31`, run 44937598802.
 
 ![shoot-_-link-_.ipad-you-portrait-light.png](shoot-_-link-_.ipad-you-portrait-light.png)
 
+## shot-_-_-_.duo-home-dark
+
+![shot-_-_-_.duo-home-dark.png](shot-_-_-_.duo-home-dark.png)
+
+## shot-_-_-_.duo-home-fa-light
+
+![shot-_-_-_.duo-home-fa-light.png](shot-_-_-_.duo-home-fa-light.png)
+
+## shot-_-_-_.duo-home-light
+
+![shot-_-_-_.duo-home-light.png](shot-_-_-_.duo-home-light.png)
+
+## shot-_-_-_.duo-letter-dark
+
+![shot-_-_-_.duo-letter-dark.png](shot-_-_-_.duo-letter-dark.png)
+
+## shot-_-_-_.duo-letter-fa-light
+
+![shot-_-_-_.duo-letter-fa-light.png](shot-_-_-_.duo-letter-fa-light.png)
+
+## shot-_-_-_.duo-letter-light
+
+![shot-_-_-_.duo-letter-light.png](shot-_-_-_.duo-letter-light.png)
+
+## shot-_-_-_.duo-letters-dark
+
+![shot-_-_-_.duo-letters-dark.png](shot-_-_-_.duo-letters-dark.png)
+
+## shot-_-_-_.duo-letters-fa-light
+
+![shot-_-_-_.duo-letters-fa-light.png](shot-_-_-_.duo-letters-fa-light.png)
+
+## shot-_-_-_.duo-letters-light
+
+![shot-_-_-_.duo-letters-light.png](shot-_-_-_.duo-letters-light.png)
+
+## shot-_-_-_.duo-thread-dark
+
+![shot-_-_-_.duo-thread-dark.png](shot-_-_-_.duo-thread-dark.png)
+
+## shot-_-_-_.duo-thread-fa-light
+
+![shot-_-_-_.duo-thread-fa-light.png](shot-_-_-_.duo-thread-fa-light.png)
+
+## shot-_-_-_.duo-thread-light
+
+![shot-_-_-_.duo-thread-light.png](shot-_-_-_.duo-thread-light.png)
+
 ## startCards.start-cards-light
 
 ![startCards.start-cards-light.png](startCards.start-cards-light.png)
@@ -321,6 +369,18 @@ Commit `0581d31`, run 44937598802.
 ## startPinDark.start-pin-dark
 
 ![startPinDark.start-pin-dark.png](startPinDark.start-pin-dark.png)
+
+## widgetsDark.widgets-dark
+
+![widgetsDark.widgets-dark.png](widgetsDark.widgets-dark.png)
+
+## widgetsFa.widgets-fa-light
+
+![widgetsFa.widgets-fa-light.png](widgetsFa.widgets-fa-light.png)
+
+## widgetsLight.widgets-light
+
+![widgetsLight.widgets-light.png](widgetsLight.widgets-light.png)
 
 ## writeDraft.write-draft-light
 
