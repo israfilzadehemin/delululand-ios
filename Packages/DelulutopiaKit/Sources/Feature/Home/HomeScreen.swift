@@ -23,20 +23,40 @@ public struct HomeScreen: View {
                     HomeContent(home: home, stale: store.offline, now: DLTime.now, actions: actions)
                 }
             } else if store.offline {
-                VStack {
-                    OfflineBanner().padding(.horizontal, 16)
+                VStack(alignment: .leading) {
+                    HomeTitle(text: brand)
+                    OfflineBanner()
                     Spacer()
                 }
+                .padding(.horizontal, 16)
             } else {
-                HomeLoading()
+                HomeLoading(title: brand)
             }
         }
         .background(Color.dlPaper.ignoresSafeArea())
         .navigationTitle(store.home?.universe.name ?? brand)
-        .navigationBarTitleDisplayMode(.large)
+        // Home has no bar buttons: an empty bar row pushed the large title down onto the board.
+        // The title is the first line of the page instead, at the large-title size.
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             if actions == nil { actions = HomeActions(backend: backend) }
         }
+    }
+}
+
+/// The page title (iOS design: large title, Manrope 800/34), set in the content so it sits right under
+/// the status bar with room before the board.
+private struct HomeTitle: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.custom(DLFontName.manropeExtraBold.name, size: 34, relativeTo: .largeTitle))
+            .foregroundStyle(.dlInk)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .padding(.top, 6)
+            .padding(.bottom, 6)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -62,6 +82,7 @@ private struct HomeContent: View {
         let flipped = rows.contains { LetterState.of($0, now: now) != $0.state }
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                HomeTitle(text: home.universe.name)
                 if stale { OfflineBanner() }
                 NotificationHint()
                 BoardTile(home: home, now: now, actions: actions)
@@ -531,9 +552,11 @@ private struct EmptyPost: View {
 
 /// S2-Home-loading: placeholders in the shapes that will arrive.
 private struct HomeLoading: View {
+    let title: String
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                HomeTitle(text: title)
                 RoundedRectangle(cornerRadius: 6).fill(.dlLetterEnvelope).aspectRatio(4 / 3, contentMode: .fit)
                 HStack(spacing: 10) {
                     Circle().fill(.dlLetterEnvelope).frame(width: 40, height: 40)

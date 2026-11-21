@@ -179,17 +179,18 @@ struct SelfieBoardView: View {
     // MARK: Board
 
     private var cork: some View {
-        ZStack {
-            Image(uiImage: BoardTextures.cork(dark: dark)).resizable().scaledToFill()
-            // The frame's lip shades the cork just inside it, as on a real board.
-            Rectangle().strokeBorder(Color.black.opacity(dark ? 0.45 : 0.32), lineWidth: 5).blur(radius: 3.5)
-            HStack(spacing: 20) {
-                left
-                right
-            }
+        HStack(spacing: 20) {
+            left
+            right
         }
         .frame(maxWidth: .infinity)
         .frame(height: 232)
+        // Textures sit behind, never as a sized child: an aspect-filled image would widen Home.
+        .background {
+            Image(uiImage: BoardTextures.cork(dark: dark)).resizable().scaledToFill()
+                // The frame's lip shades the cork just inside it, as on a real board.
+                .overlay(Rectangle().strokeBorder(Color.black.opacity(dark ? 0.45 : 0.32), lineWidth: 5).blur(radius: 3.5))
+        }
         .clipped()
         .padding(10)
         .background(
