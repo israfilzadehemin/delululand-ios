@@ -1,6 +1,6 @@
 # feature/ipad-layout
 
-Commit `6910379`, run 44945028611.
+Commit `6bd2a78`, run 44948886217.
 
 ## appearanceDark.appearance-dark
 
@@ -417,6 +417,14 @@ Commit `6910379`, run 44945028611.
 ## youTr.you-tr-light
 
 ![youTr.you-tr-light.png](youTr.you-tr-light.png)
+
+## zz.duo-cover
+
+![zz.duo-cover.png](zz.duo-cover.png)
+
+## zz.duo-inner
+
+![zz.duo-inner.png](zz.duo-inner.png)
 
 ## zz.home-screen
 
