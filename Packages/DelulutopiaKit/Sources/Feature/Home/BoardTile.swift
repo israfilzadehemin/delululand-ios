@@ -85,19 +85,19 @@ struct BoardTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // §9 fold/unfold: the board shrinks up into the strip and grows back out of it.
+            // §9 fold/unfold: the board rolls up into the strip and unrolls out of it (Fold).
             if mini {
                 strip
-                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                    .transition(.dlFoldStrip)
             } else if let board {
                 unfolded(board)
-                    .transition(.opacity.combined(with: .scale(scale: 0.6, anchor: .top)))
+                    .transition(.dlFoldBoard)
             } else {
                 empty
-                    .transition(.opacity.combined(with: .scale(scale: 0.6, anchor: .top)))
+                    .transition(.dlFoldBoard)
             }
         }
-        .animation(DLMotion.easeOut(0.32), value: mini)
+        .animation(Fold.animation, value: mini)
         .onAppear { markRibbon() }
         .onChange(of: board?.version) { _, _ in markRibbon() }
         .onChange(of: mini) { _, _ in markRibbon() }
@@ -253,7 +253,7 @@ struct BoardTile: View {
                     .disabled(noDoodles)
                 DrawButton(symbol: "scribble", title: t("board.draw"), label: nil) { pad = .new }
                     .disabled(noDoodles)
-                FoldButton(up: true) { withAnimation(DLMotion.easeOut(0.32)) { backend.settings.setBoardMini(true) } }
+                FoldButton(up: true) { withAnimation(Fold.animation) { backend.settings.setBoardMini(true) } }
                     .padding(.trailing, -8)
             }
             if let capLine {
@@ -302,14 +302,14 @@ struct BoardTile: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .dlZoomSource(id: "board", in: zoom)
-            FoldButton(up: true) { withAnimation(DLMotion.easeOut(0.32)) { backend.settings.setBoardMini(true) } }
+            FoldButton(up: true) { withAnimation(Fold.animation) { backend.settings.setBoardMini(true) } }
                 .offset(y: 8)
         }
     }
 
     /// §9: the folded strip, with NEW while unseen.
     private var strip: some View {
-        Button { withAnimation(DLMotion.easeOut(0.32)) { backend.settings.setBoardMini(false) } } label: {
+        Button { withAnimation(Fold.animation) { backend.settings.setBoardMini(false) } } label: {
             HStack(spacing: 12) {
                 ZStack {
                     Color.dlBoardSurface
