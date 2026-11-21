@@ -5,6 +5,7 @@ import DLNetwork
 import DLUI
 import FeatureStart
 import SwiftUI
+import WidgetKit
 
 extension AppTab {
     /// The line a placeholder tab shows until its screen lands.
@@ -54,7 +55,11 @@ public struct AppRoot: View {
             }
             .onChange(of: signedIn) { _, now in
                 if now { backend.didSignIn() } else { backend.didSignOut() }
+                // Widgets read the same session: signed out (log out, deletion) they say so (WG7).
+                WidgetCenter.shared.reloadAllTimelines()
             }
+            // A widget tap (WG4); signed out it waits for the PIN like a notification tap.
+            .onOpenURL { url in backend.push.open(url: url) }
             .onChange(of: scenePhase) { _, phase in
                 guard signedIn else { return }
                 switch phase {

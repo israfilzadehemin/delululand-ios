@@ -28,6 +28,19 @@
 	<string>$(DL_APNS_ENVIRONMENT)</string>
 	<key>DLKeychainGroup</key>
 	<string>$(DL_KEYCHAIN_GROUP)</string>
+	<key>DLURLScheme</key>
+	<string>$(DL_URL_SCHEME)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>$(DL_BUNDLE_ID).widgets</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(DL_URL_SCHEME)</string>
+			</array>
+		</dict>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

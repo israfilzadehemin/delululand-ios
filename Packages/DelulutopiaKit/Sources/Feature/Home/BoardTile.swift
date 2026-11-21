@@ -101,6 +101,12 @@ struct BoardTile: View {
         .onAppear { markRibbon() }
         .onChange(of: board?.version) { _, _ in markRibbon() }
         .onChange(of: mini) { _, _ in markRibbon() }
+        // A Board widget tap opens the viewer (WG4).
+        .onChange(of: backend.push.homeIntent, initial: true) { _, intent in
+            guard intent == .board else { return }
+            backend.push.homeIntent = nil
+            if board != nil { viewing = true }
+        }
         .fullScreenCover(isPresented: $viewing) {
             if let board {
                 BoardViewer(board: board, home: home, actions: actions, canReact: canReact, canDraw: !noDoodles, onReact: {

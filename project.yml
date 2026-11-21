@@ -73,6 +73,7 @@ targets:
       - package: DelulutopiaKit
         product: DLData
       - target: DelulutopiaNotify
+      - target: DelulutopiaWidgets
 
   # Read Ticks TK2: the Notification Service Extension. New-email pushes carry mutable-content, so
   # iOS runs it even while the app is closed; it acks the delivery with the app's session (shared
@@ -96,6 +97,31 @@ targets:
     dependencies:
       - package: DelulutopiaKit
         product: DLNetwork
+
+  # Home Screen and Lock Screen widgets (doc "Delululand — iPad Layout" WG1–WG14): board, selfies,
+  # clocks and moods. They load Home with the app's session through the shared keychain group, like
+  # the Notification Service Extension; faces and loader live in the package (DLWidgets).
+  DelulutopiaWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: WidgetsExtension
+        excludes:
+          - "*.entitlements"
+    settings:
+      base:
+        INFOPLIST_FILE: WidgetsExtension/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_NAME: DelulutopiaWidgets
+        PRODUCT_BUNDLE_IDENTIFIER: $(DL_BUNDLE_ID).widgets
+        CODE_SIGN_ENTITLEMENTS: WidgetsExtension/DelulutopiaWidgets.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+    dependencies:
+      - package: DelulutopiaKit
+        product: DLWidgets
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
 
   # Screenshot tests hosted by the app, so screens draw through a real key window and system glass
   # renders as on a device (decision D5). Unit tests live in the package.
@@ -134,6 +160,8 @@ targets:
         product: DLDesignSystem
       - package: DelulutopiaKit
         product: DLData
+      - package: DelulutopiaKit
+        product: DLWidgets
 
 schemes:
   Delulutopia Staging:

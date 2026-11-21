@@ -8,6 +8,7 @@ import DLDesignSystem
 import DLUI
 import SwiftUI
 import UIKit
+import WidgetKit
 
 /// The floating glass tab bar on iOS 26+ (the system draws it), the classic bar before. Each tab
 /// keeps its own navigation stack; `dlOpen` pushes on the current one, `dlNotice` shows a toast
@@ -79,6 +80,8 @@ struct MainTabView: View {
             .onChange(of: backend.push.pendingLink, initial: true) { _, link in
                 if let link { open(link) }
             }
+            // Widgets show the board, the selfies, the clocks and moods (WG3): what they show changed.
+            .onChange(of: widgetSignature) { _, _ in WidgetCenter.shared.reloadAllTimelines() }
             // The icon badge follows the tab dots as items are read (Q7).
             .onChange(of: unreadTotal) { _, total in
                 if let total { backend.push.setBadge(total) }
@@ -236,6 +239,18 @@ struct MainTabView: View {
         backend.push.permission == .blocked || backend.push.permission == .notAsked
     }
 
+    /// Everything the widgets show; a change reloads their timelines (WG3).
+    private var widgetSignature: String {
+        guard let h = backend.home.home else { return "" }
+        let selfies = [h.selfies?.mine, h.selfies?.theirs].map { s in s.map { "\($0.id):\($0.locked)" } ?? "-" }
+        return [
+            "\(h.board?.version ?? 0)", h.board?.authorId ?? "", "\(h.boardNew)",
+            selfies.joined(separator: ","),
+            h.me.nickname, h.me.mood ?? "", h.me.timezone ?? "", h.me.language ?? "",
+            h.friend?.nickname ?? "", h.friend?.mood ?? "", h.friend?.timezone ?? "", h.universe.name,
+        ].joined(separator: "|")
+    }
+
     /// Nobody has joined yet (Home loaded, no friend).
     private var alone: Bool {
         guard let h = backend.home.home else { return false }
@@ -252,6 +267,8 @@ struct MainTabView: View {
     private func open(_ link: AppLink) {
         backend.push.pendingLink = nil
         nav.open(link: link)
+        // A widget tap that lands on Home names what to open there (WG4).
+        if let intent = link.homeIntent { backend.push.homeIntent = intent }
         backend.home.refreshSoon()
     }
 

@@ -101,6 +101,12 @@ struct SelfieBoardView: View {
         .onChange(of: theirs?.id) { _, _ in markRibbon() }
         .onChange(of: mini) { _, _ in markRibbon() }
         .onChange(of: locked) { _, _ in markRibbon() }
+        // A Selfies widget tap lands here; "Take one" opens the camera while mine is missing (WG4).
+        .onChange(of: backend.push.homeIntent, initial: true) { _, intent in
+            guard intent == .selfies || intent == .selfieCamera else { return }
+            backend.push.homeIntent = nil
+            if intent == .selfieCamera, mine == nil { camera = true }
+        }
         .fullScreenCover(isPresented: $camera) {
             FrontCameraPicker { image in
                 camera = false

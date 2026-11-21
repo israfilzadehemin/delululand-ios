@@ -150,6 +150,7 @@ struct TabNavigation: Equatable {
             case .emails: (.emails, nil)
             case let .thread(id): (.emails, .thread(id))
             case .notificationSettings: (.you, .notifications)
+            case .board, .selfies, .selfieCamera: (.home, nil)
             }
         show(target.0, target.1)
     }

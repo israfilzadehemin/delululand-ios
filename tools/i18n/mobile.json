@@ -63,5 +63,15 @@
   "write.leftArrivesAtChange": {"en": "{countdown} left · arrives at {time} whatever you change", "az": "{countdown} qalıb · nəyi dəyişsən də, çatacaq: {time}", "fa": "{countdown} مونده · هر چی هم عوض کنی، ساعت {time} می‌رسه", "tr": "{countdown} kaldı · neyi değiştirirsen değiştir, varış: {time}", "ru": "Осталось {countdown} · что ни меняй, придёт: {time}"},
   "write.thisLetterCantBeEdited": {"en": "This letter can't be edited.", "az": "Bu məktubu artıq dəyişmək olmur.", "fa": "این نامه دیگه ویرایش نمی‌شه.", "tr": "Bu mektup artık düzenlenemez.", "ru": "Это письмо уже нельзя изменить."},
   "stickers.noSubject": {"en": "Couldn’t find a subject in this photo", "az": "Bu fotoda əsas obyekt tapılmadı", "fa": "توی این عکس سوژه‌ای پیدا نشد", "tr": "Bu fotoğrafta bir özne bulunamadı", "ru": "На этом фото не нашлось объекта"},
-  "stickers.useWholePhoto": {"en": "Use the whole photo", "az": "Bütün fotonu istifadə et", "fa": "از کل عکس استفاده کن", "tr": "Fotoğrafın tamamını kullan", "ru": "Взять всё фото"}
+  "stickers.useWholePhoto": {"en": "Use the whole photo", "az": "Bütün fotonu istifadə et", "fa": "از کل عکس استفاده کن", "tr": "Fotoğrafın tamamını kullan", "ru": "Взять всё фото"},
+  "widget.signedOut": {"en": "Open Delulutopia to sign in", "az": "Daxil olmaq üçün Delulutopia-nı aç", "fa": "برای ورود، Delulutopia رو باز کن", "tr": "Giriş yapmak için Delulutopia'yı aç", "ru": "Открой Delulutopia, чтобы войти"},
+  "widget.selfiesSignedOut": {"en": "Open Delulutopia to see today’s selfies", "az": "Bugünkü selfiləri görmək üçün Delulutopia-nı aç", "fa": "برای دیدن سلفی‌های امروز، Delulutopia رو باز کن", "tr": "Bugünün selfielerini görmek için Delulutopia'yı aç", "ru": "Открой Delulutopia, чтобы увидеть селфи дня"},
+  "widget.takeOne": {"en": "Take one", "az": "Birini çək", "fa": "یکی بگیر", "tr": "Bir tane çek", "ru": "Сделай селфи"},
+  "widget.takeYours": {"en": "Take yours", "az": "Sən də çək", "fa": "مال خودت رو بگیر", "tr": "Sen de çek", "ru": "Сделай своё"},
+  "widget.noSelfiesToday": {"en": "No selfies yet today", "az": "Bu gün hələ selfi yoxdur", "fa": "امروز هنوز سلفی‌ای نیست", "tr": "Bugün henüz selfie yok", "ru": "Сегодня селфи пока нет"},
+  "widget.takeTodays": {"en": "Take today’s selfie", "az": "Bugünkü selfini çək", "fa": "سلفی امروزت رو بگیر", "tr": "Bugünün selfiesini çek", "ru": "Сделай селфи дня"},
+  "widget.board.description": {"en": "The latest doodle on your board.", "az": "Lövhənizdəki ən son rəsm.", "fa": "آخرین نقاشی روی تخته‌تون.", "tr": "Panonuzdaki en son çizim.", "ru": "Последний рисунок на вашей доске."},
+  "widget.selfies.description": {"en": "Today’s selfies from both of you.", "az": "İkinizin bugünkü selfiləri.", "fa": "سلفی‌های امروزِ هر دوتون.", "tr": "İkinizin bugünkü selfieleri.", "ru": "Селфи дня от вас обоих."},
+  "widget.clocks.name": {"en": "Clocks and moods", "az": "Saatlar və əhvallar", "fa": "ساعت‌ها و حال‌وهواها", "tr": "Saatler ve ruh halleri", "ru": "Часы и настроения"},
+  "widget.clocks.description": {"en": "Both your times and moods at a glance.", "az": "İkinizin saatı və əhvalı bir baxışda.", "fa": "ساعت و حال‌وهوای هر دوتون، یه نگاه.", "tr": "İkinizin saati ve ruh hali bir bakışta.", "ru": "Время и настроение вас обоих — с одного взгляда."}
 }

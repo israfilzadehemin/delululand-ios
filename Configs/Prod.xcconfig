@@ -6,3 +6,6 @@ DL_BUNDLE_ID = com.delulutopia.app
 DL_DISPLAY_NAME = Delulutopia
 DL_API_BASE_URL = https:/$()/delulutopia.com
 DL_APP_ICON = AppIcon
+
+// Widget taps open the app (doc "Delululand — iPad Layout" WG4).
+DL_URL_SCHEME = delulutopia

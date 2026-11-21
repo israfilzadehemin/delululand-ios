@@ -51,8 +51,13 @@ if [ -f "$entitlements" ]; then
   find "$archived_app" -depth \( -name '*.framework' -o -name '*.dylib' -o -name '*.appex' \) -print0 |
     while IFS= read -r -d '' nested; do
       # An extension keeps its own entitlements (the Notification Service Extension's keychain group).
-      ext_entitlements="$root/Notify/DelulutopiaNotify.entitlements"
-      if [ "$(basename "$nested")" = "DelulutopiaNotify.appex" ] && [ -f "$ext_entitlements" ]; then
+      case "$(basename "$nested")" in
+        DelulutopiaNotify.appex) ext_entitlements="$root/Notify/DelulutopiaNotify.entitlements" ;;
+        # The widgets read the app's session from the same keychain group (iPad Layout WG2).
+        DelulutopiaWidgets.appex) ext_entitlements="$root/WidgetsExtension/DelulutopiaWidgets.entitlements" ;;
+        *) ext_entitlements="" ;;
+      esac
+      if [ -n "$ext_entitlements" ] && [ -f "$ext_entitlements" ]; then
         codesign --force --sign - --timestamp=none --entitlements "$ext_entitlements" "$nested"
       else
         codesign --force --sign - --timestamp=none "$nested"

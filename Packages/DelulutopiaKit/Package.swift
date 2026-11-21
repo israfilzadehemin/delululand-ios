@@ -19,6 +19,8 @@ let package = Package(
         .library(name: "FeatureDiscussions", targets: ["FeatureDiscussions"]),
         .library(name: "FeatureEmails", targets: ["FeatureEmails"]),
         .library(name: "AppShell", targets: ["AppShell"]),
+        // The Home Screen and Lock Screen widgets' faces and loader (doc "Delululand — iPad Layout" WG1).
+        .library(name: "DLWidgets", targets: ["DLWidgets"]),
         // Linked only by the app-hosted screenshot target (DelulutopiaScreens).
         .library(name: "DLTestSupport", targets: ["DLTestSupport"]),
     ],
@@ -84,6 +86,11 @@ let package = Package(
             path: "Sources/App/Shell"
         ),
         .target(
+            name: "DLWidgets",
+            dependencies: ["DLI18n", "DLDesignSystem", "DLNetwork", "DLData"],
+            path: "Sources/Widgets"
+        ),
+        .target(
             name: "DLTestSupport",
             dependencies: [
                 "DLI18n",
@@ -114,6 +121,11 @@ let package = Package(
             name: "DLNetworkTests",
             dependencies: ["DLI18n", "DLNetwork"],
             path: "Tests/Network"
+        ),
+        .testTarget(
+            name: "DLWidgetsTests",
+            dependencies: ["DLI18n", "DLWidgets", "DLNetwork", "DLData"],
+            path: "Tests/Widgets"
         ),
         .testTarget(
             name: "AppShellTests",

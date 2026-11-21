@@ -17,6 +17,12 @@ public enum AppLink: Equatable, Sendable {
     case thread(PublicID)
     /// You › Notifications (`providesAppNotificationSettings`).
     case notificationSettings
+    /// Home with the board viewer open (a Board widget tap, doc "Delululand — iPad Layout" WG4).
+    case board
+    /// Home at the selfies (a Selfies widget tap).
+    case selfies
+    /// Home with the selfie camera open ("Take one" on the Selfies widget).
+    case selfieCamera
 
     /// `/letters/<id>`, `/discussions/<id>`, `/emails/<thread>`, the bare lists, anything else Home.
     public init(path: String?) {
@@ -33,6 +39,35 @@ public enum AppLink: Equatable, Sendable {
         default: self = .home
         }
     }
+
+    /// A widget's link, `<scheme>://home`, `…://home/board`, `…://home/selfies`, `…://home/selfies/camera`
+    /// (WG4). Any other path reads as a notification path (`…://letters/<id>`).
+    public init(url: URL) {
+        let parts = ([url.host ?? ""] + url.pathComponents.filter { $0 != "/" }).filter { !$0.isEmpty }
+        switch parts {
+        case ["home", "board"]: self = .board
+        case ["home", "selfies"]: self = .selfies
+        case ["home", "selfies", "camera"]: self = .selfieCamera
+        default: self.init(path: parts.joined(separator: "/"))
+        }
+    }
+
+    /// What Home should open once it shows (WG4), for the links that land on Home.
+    public var homeIntent: HomeIntent? {
+        switch self {
+        case .board: .board
+        case .selfies: .selfies
+        case .selfieCamera: .selfieCamera
+        default: nil
+        }
+    }
+}
+
+/// Something a widget tap asks Home to open (WG4).
+public enum HomeIntent: Equatable, Sendable {
+    case board
+    case selfies
+    case selfieCamera
 }
 
 /// iOS push (doc "Delululand — iOS Build" Q6, Q7; iOS design I-4, I-5): this device's permission,
@@ -58,6 +93,8 @@ public final class PushStore {
     public private(set) var token: String?
     /// A notification tap waiting for the signed-in shell to open it (logged out: after the PIN).
     public var pendingLink: AppLink?
+    /// Set when a widget link lands on Home; the board or the selfies open it and clear it.
+    public var homeIntent: HomeIntent?
 
     private let api: API
     private let topic: String
@@ -143,6 +180,11 @@ public final class PushStore {
     /// A tapped notification's `url`.
     public func open(path: String?) {
         pendingLink = AppLink(path: path)
+    }
+
+    /// A widget's link (WG4); signed out it waits here like a notification tap.
+    public func open(url: URL) {
+        pendingLink = AppLink(url: url)
     }
 
     private func upload() async {
