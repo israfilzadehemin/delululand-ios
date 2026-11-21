@@ -193,13 +193,13 @@ struct SelfieBoardView: View {
         }
         .clipped()
         .padding(10)
-        .background(
-            Image(uiImage: BoardTextures.wood(dark: dark)).resizable().scaledToFill()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 5)
-                        .strokeBorder(LinearGradient(colors: [.white.opacity(0.28), .black.opacity(0.22)], startPoint: .top, endPoint: .bottom), lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 5))
+        // The wood is aspect-filled, so it is larger than the board: clip the board itself, or the
+        // frame spills past the column and the board looks wider than the whiteboard above.
+        .background { Image(uiImage: BoardTextures.wood(dark: dark)).resizable().scaledToFill() }
+        .clipShape(RoundedRectangle(cornerRadius: 5))
+        .overlay(
+            RoundedRectangle(cornerRadius: 5)
+                .strokeBorder(LinearGradient(colors: [.white.opacity(0.28), .black.opacity(0.22)], startPoint: .top, endPoint: .bottom), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.18), radius: 1, y: 1)
         .shadow(color: .black.opacity(0.12), radius: 4, y: 3)
