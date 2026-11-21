@@ -133,6 +133,10 @@ public enum Shoot {
         let short = min(screen.width, screen.height)
         let long = max(screen.width, screen.height)
         let size = fixed ?? (landscape ? CGSize(width: long, height: short) : CGSize(width: short, height: long))
+        // Drawing the hierarchy needs the window to hold the whole shot: the window takes the shot's
+        // size for the moment (turned iPad, the Duo's inner display), then goes back.
+        let original = window.frame
+        window.frame = CGRect(origin: .zero, size: size)
         let controller = host(view, style: style, topUpSafeArea: false)
         window.rootViewController = controller
         controller.view.frame = CGRect(origin: .zero, size: size)
@@ -146,6 +150,7 @@ public enum Shoot {
             testName: testName,
             line: line
         )
+        window.frame = original
     }
 
     /// Shoots `view` at `size` with regular size classes, off screen (the iPhone Duo's inner display,
