@@ -8,7 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		047EABB824A2E8198C63025C /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 8D5936CB8CEAEC1DB85F9454 /* AppShell */; };
+		105B0100E93BF38D722E2E77 /* DelulutopiaWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C154ED378CFF5822F1972173 /* DelulutopiaWidgets.swift */; };
+		22B423B316FCE7BA773A6CE8 /* DLWidgets in Frameworks */ = {isa = PBXBuildFile; productRef = 72814D0E2FF05AE7CB65B22E /* DLWidgets */; };
 		3DADBA06934DBF429730AA2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B8765B756B9F7FB135D0D61 /* Assets.xcassets */; };
+		481529B88355D2E6C776ED61 /* DLWidgets in Frameworks */ = {isa = PBXBuildFile; productRef = 6163F84605D51F6550C04757 /* DLWidgets */; };
 		49091DAB09DE66285B70F113 /* FeatureDiscussions in Frameworks */ = {isa = PBXBuildFile; productRef = DFFAF39DC6E35C38D242D9BA /* FeatureDiscussions */; };
 		6BE1DD9B4681D1048055D04B /* DLDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = E5B24DBBD4E0BCAB57515633 /* DLDesignSystem */; };
 		762D164795CAC955CD72B0CF /* CatalogScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */; };
@@ -17,7 +20,9 @@
 		882FD8EC7AF1944DFCC82911 /* DLUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8BAB82FDD6823DD21B2B360C /* DLUI */; };
 		8A410E5A1BC5B0BD7B63F367 /* ShellScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6B2C0663981BD15ABB39F2 /* ShellScreenshots.swift */; };
 		8CB0441CA2C97C6AC70D3548 /* DLDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = BC5CA5F7736869F5C1E61E6D /* DLDesignSystem */; };
+		8DE01E8975866F6FED01D8BF /* DelulutopiaWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 649417CEB678BD395153896F /* DelulutopiaWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8F288843F44E1021EAEA20DF /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = 527B3BDEDC35254A318BDF5A /* DLData */; };
+		AAEB7428D4C7B706A9090E01 /* WidgetScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A98F47FBCE80876947A09E7 /* WidgetScreenshots.swift */; };
 		B63676DF42DACA1815C4D711 /* FeatureStart in Frameworks */ = {isa = PBXBuildFile; productRef = A36F5CC59C946F9020F7D093 /* FeatureStart */; };
 		BE622631986CF0A77DE7CEBA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0D77EDB142956EC0F1A54 /* NotificationService.swift */; };
 		BFE965593BA20D9E589A20F2 /* DLNetwork in Frameworks */ = {isa = PBXBuildFile; productRef = 43A9A53728A032B8E9ECDBD0 /* DLNetwork */; };
@@ -25,7 +30,9 @@
 		D1FA9754A0C737A05A41AD4A /* DLI18n in Frameworks */ = {isa = PBXBuildFile; productRef = F82D76EB375ADC093145AEE4 /* DLI18n */; };
 		D80CA666683EEFA7DE22531B /* FeatureHome in Frameworks */ = {isa = PBXBuildFile; productRef = 43032E393299D077EE8970E4 /* FeatureHome */; };
 		D854EF0AF3C87E168BBC4BB5 /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 61E820D413B1D49EE9B6D6C3 /* AppShell */; };
+		DA1CE6303FBDB35AAAD7AD95 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3AA7AAF31F1A48CB32CDA48 /* WidgetKit.framework */; };
 		E3810935A7FC1C887861B638 /* DelulutopiaNotify.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 987B556D843E22DE044FDDE6 /* DelulutopiaNotify.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E561C03C5BC2BAB7D15F6455 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5EFB43F202336DB191C6F1A /* SwiftUI.framework */; };
 		F48CD9C7A5BBF42692A94073 /* DLData in Frameworks */ = {isa = PBXBuildFile; productRef = BDD68A0A08CA5287AE6058AC /* DLData */; };
 		F6C854F7DC5F84B4F3D8D77A /* FeatureLetters in Frameworks */ = {isa = PBXBuildFile; productRef = 941987CC3761B9121501B044 /* FeatureLetters */; };
 		FD37B14D762D2CFFBA67B76E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */; };
@@ -39,6 +46,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = E9036A1EEC88F5D753757F6B;
 			remoteInfo = DelulutopiaNotify;
+		};
+		773D438EB6F0CA77785D3252 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 50CC5B60FE3CC44F276251C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5CBFAF91C200A57816032869;
+			remoteInfo = DelulutopiaWidgets;
 		};
 		BC8C379048D59524972EEB97 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -57,6 +71,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				E3810935A7FC1C887861B638 /* DelulutopiaNotify.appex in Embed Foundation Extensions */,
+				8DE01E8975866F6FED01D8BF /* DelulutopiaWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -70,17 +85,33 @@
 		2AB8A901C788027C29970DBF /* DelulutopiaKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DelulutopiaKit; path = Packages/DelulutopiaKit; sourceTree = SOURCE_ROOT; };
 		3F148AEE319A9B77270B2876 /* LargeScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeScreenshots.swift; sourceTree = "<group>"; };
 		5FD4CFC3086166B5616C4EEA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		649417CEB678BD395153896F /* DelulutopiaWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = DelulutopiaWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		66B52D7A5E0A4489A76F05B0 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
+		6A98F47FBCE80876947A09E7 /* WidgetScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetScreenshots.swift; sourceTree = "<group>"; };
 		8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DelulutopiaScreens.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B8765B756B9F7FB135D0D61 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		987B556D843E22DE044FDDE6 /* DelulutopiaNotify.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = DelulutopiaNotify.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A08AB8F3AD1BD33012593C32 /* Delulutopia.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Delulutopia.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5AB35B69274C41DA740EE63 /* DelulutopiaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelulutopiaApp.swift; sourceTree = "<group>"; };
 		B5AFE53163129794EE52D313 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C154ED378CFF5822F1972173 /* DelulutopiaWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelulutopiaWidgets.swift; sourceTree = "<group>"; };
+		E3AA7AAF31F1A48CB32CDA48 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		E5EFB43F202336DB191C6F1A /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		F7F726D2D43D6268016B29EC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		FD6B2C0663981BD15ABB39F2 /* ShellScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellScreenshots.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3A536C1BA286999D0E5D4DDA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22B423B316FCE7BA773A6CE8 /* DLWidgets in Frameworks */,
+				DA1CE6303FBDB35AAAD7AD95 /* WidgetKit.framework in Frameworks */,
+				E561C03C5BC2BAB7D15F6455 /* SwiftUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		417E24F5F4D0F17DD76FCCFF /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -96,6 +127,7 @@
 				882FD8EC7AF1944DFCC82911 /* DLUI in Frameworks */,
 				6BE1DD9B4681D1048055D04B /* DLDesignSystem in Frameworks */,
 				8F288843F44E1021EAEA20DF /* DLData in Frameworks */,
+				481529B88355D2E6C776ED61 /* DLWidgets in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,12 +162,22 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		3691C80D31A96BA23595DCD0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E5EFB43F202336DB191C6F1A /* SwiftUI.framework */,
+				E3AA7AAF31F1A48CB32CDA48 /* WidgetKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		3D10BAE802DC19CA7DDF4F55 /* ScreenTests */ = {
 			isa = PBXGroup;
 			children = (
 				12769C2C23ABA8CD4F3FC60E /* CatalogScreenshots.swift */,
 				3F148AEE319A9B77270B2876 /* LargeScreenshots.swift */,
 				FD6B2C0663981BD15ABB39F2 /* ShellScreenshots.swift */,
+				6A98F47FBCE80876947A09E7 /* WidgetScreenshots.swift */,
 			);
 			path = ScreenTests;
 			sourceTree = "<group>";
@@ -165,8 +207,19 @@
 				42489E8DAAF5C7FEADA20A23 /* Configs */,
 				8C9F8D2C51ED5C45F3B3232C /* Notify */,
 				BC82C56281C39C4CC6469DA2 /* Packages */,
+				8C7646F6F1F2F856ACB1D791 /* WidgetsExtension */,
+				3691C80D31A96BA23595DCD0 /* Frameworks */,
 				AAFA56F9507BF5D63485DF63 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		8C7646F6F1F2F856ACB1D791 /* WidgetsExtension */ = {
+			isa = PBXGroup;
+			children = (
+				C154ED378CFF5822F1972173 /* DelulutopiaWidgets.swift */,
+				F7F726D2D43D6268016B29EC /* Info.plist */,
+			);
+			path = WidgetsExtension;
 			sourceTree = "<group>";
 		};
 		8C9F8D2C51ED5C45F3B3232C /* Notify */ = {
@@ -184,6 +237,7 @@
 				A08AB8F3AD1BD33012593C32 /* Delulutopia.app */,
 				987B556D843E22DE044FDDE6 /* DelulutopiaNotify.appex */,
 				8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */,
+				649417CEB678BD395153896F /* DelulutopiaWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -207,6 +261,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		5CBFAF91C200A57816032869 /* DelulutopiaWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A12D828B4E493FFCFEA750EA /* Build configuration list for PBXNativeTarget "DelulutopiaWidgets" */;
+			buildPhases = (
+				85F898A229E93DAF3A1A865F /* Sources */,
+				3A536C1BA286999D0E5D4DDA /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DelulutopiaWidgets;
+			packageProductDependencies = (
+				72814D0E2FF05AE7CB65B22E /* DLWidgets */,
+			);
+			productName = DelulutopiaWidgets;
+			productReference = 649417CEB678BD395153896F /* DelulutopiaWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		8CDCF64B84AD4F43F97AF008 /* Delulutopia */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = DE106E01D78852031333C94B /* Build configuration list for PBXNativeTarget "Delulutopia" */;
@@ -220,6 +293,7 @@
 			);
 			dependencies = (
 				1D383B78CF0836B78E106FB4 /* PBXTargetDependency */,
+				B436E3D8321C63623D1C33C3 /* PBXTargetDependency */,
 			);
 			name = Delulutopia;
 			packageProductDependencies = (
@@ -256,6 +330,7 @@
 				8BAB82FDD6823DD21B2B360C /* DLUI */,
 				E5B24DBBD4E0BCAB57515633 /* DLDesignSystem */,
 				527B3BDEDC35254A318BDF5A /* DLData */,
+				6163F84605D51F6550C04757 /* DLWidgets */,
 			);
 			productName = DelulutopiaScreens;
 			productReference = 8327E6F6D1ADE06A01700412 /* DelulutopiaScreens.xctest */;
@@ -289,6 +364,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					5CBFAF91C200A57816032869 = {
+						DevelopmentTeam = NM3GZ4M68M;
+						ProvisioningStyle = Automatic;
+					};
 					8CDCF64B84AD4F43F97AF008 = {
 						DevelopmentTeam = NM3GZ4M68M;
 						ProvisioningStyle = Automatic;
@@ -322,6 +401,7 @@
 			targets = (
 				8CDCF64B84AD4F43F97AF008 /* Delulutopia */,
 				E9036A1EEC88F5D753757F6B /* DelulutopiaNotify */,
+				5CBFAF91C200A57816032869 /* DelulutopiaWidgets */,
 				AD9E276FFE2E24EB440F9E98 /* DelulutopiaScreens */,
 			);
 		};
@@ -348,6 +428,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		85F898A229E93DAF3A1A865F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				105B0100E93BF38D722E2E77 /* DelulutopiaWidgets.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BF4C29A47EADE4313DE110BD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -363,6 +451,7 @@
 				762D164795CAC955CD72B0CF /* CatalogScreenshots.swift in Sources */,
 				FF4D2F0481F7870759E007EE /* LargeScreenshots.swift in Sources */,
 				8A410E5A1BC5B0BD7B63F367 /* ShellScreenshots.swift in Sources */,
+				AAEB7428D4C7B706A9090E01 /* WidgetScreenshots.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -373,6 +462,11 @@
 			isa = PBXTargetDependency;
 			target = E9036A1EEC88F5D753757F6B /* DelulutopiaNotify */;
 			targetProxy = 4DB08FD00593B51960732999 /* PBXContainerItemProxy */;
+		};
+		B436E3D8321C63623D1C33C3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5CBFAF91C200A57816032869 /* DelulutopiaWidgets */;
+			targetProxy = 773D438EB6F0CA77785D3252 /* PBXContainerItemProxy */;
 		};
 		D823C87CA1E839DDC80E53D4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -631,6 +725,26 @@
 			};
 			name = "Release-Prod";
 		};
+		3C572E9BAE1F74F479E33A94 /* Debug-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WidgetsExtension/DelulutopiaWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WidgetsExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID).widgets";
+				PRODUCT_NAME = DelulutopiaWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug-Prod";
+		};
 		3CE982F5A43A448A02A7AA6C /* Release-Staging */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -664,6 +778,26 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Delulutopia.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Delulutopia";
 			};
 			name = "Debug-Prod";
+		};
+		670D0E65799FCE6B6FA70B0D /* Debug-Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WidgetsExtension/DelulutopiaWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WidgetsExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID).widgets";
+				PRODUCT_NAME = DelulutopiaWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Debug-Staging";
 		};
 		689FCB0B007680D5AC9A7C90 /* Release-Prod */ = {
 			isa = XCBuildConfiguration;
@@ -808,6 +942,46 @@
 			};
 			name = "Release-Prod";
 		};
+		AC80256A05D774FD0A41A6A7 /* Release-Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WidgetsExtension/DelulutopiaWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WidgetsExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID).widgets";
+				PRODUCT_NAME = DelulutopiaWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-Staging";
+		};
+		BD9B76F8DADF808A2439F721 /* Release-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WidgetsExtension/DelulutopiaWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WidgetsExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DL_BUNDLE_ID).widgets";
+				PRODUCT_NAME = DelulutopiaWidgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-Prod";
+		};
 		FCFE4FC323D6C4AE9107F215 /* Debug-Staging */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 66B52D7A5E0A4489A76F05B0 /* Staging.xcconfig */;
@@ -901,6 +1075,17 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug-Prod";
 		};
+		A12D828B4E493FFCFEA750EA /* Build configuration list for PBXNativeTarget "DelulutopiaWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3C572E9BAE1F74F479E33A94 /* Debug-Prod */,
+				670D0E65799FCE6B6FA70B0D /* Debug-Staging */,
+				BD9B76F8DADF808A2439F721 /* Release-Prod */,
+				AC80256A05D774FD0A41A6A7 /* Release-Staging */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug-Prod";
+		};
 		DE106E01D78852031333C94B /* Build configuration list for PBXNativeTarget "Delulutopia" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -945,6 +1130,10 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = DLData;
 		};
+		6163F84605D51F6550C04757 /* DLWidgets */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLWidgets;
+		};
 		61E820D413B1D49EE9B6D6C3 /* AppShell */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AppShell;
@@ -952,6 +1141,10 @@
 		674862BA9685E9B46B221D97 /* DLTestSupport */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DLTestSupport;
+		};
+		72814D0E2FF05AE7CB65B22E /* DLWidgets */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DLWidgets;
 		};
 		85C2684739F7051B1DFFF91E /* FeatureEmails */ = {
 			isa = XCSwiftPackageProductDependency;
