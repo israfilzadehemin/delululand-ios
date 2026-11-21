@@ -147,11 +147,14 @@ public final class PushStore {
 
     private func upload() async {
         guard signedIn, let token, token != sentToken else { return }
+        // Claimed before the await: a second upload() started meanwhile (sign-in's permission
+        // refresh and a token callback race) must not send the same token again.
+        sentToken = token
         do {
             try await api.registerPushDevice(platform: "apns", token: token, appId: topic, environment: environment)
-            sentToken = token
         } catch {
             // Sent again on the next start or sign-in; pushes wait until then.
+            if sentToken == token { sentToken = nil }
         }
     }
 
