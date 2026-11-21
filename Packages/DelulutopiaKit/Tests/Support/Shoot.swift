@@ -113,29 +113,26 @@ public enum Shoot {
     /// True on the iPhone Duo simulator CI creates (iPad Layout IP12): only the Duo suite runs there.
     nonisolated public static let onDuo: Bool = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"]?.contains("Duo") ?? false
 
-    /// Shoots `view` at the device's own size (the iPad run), turned to `landscape` first, after it
-    /// has run in the key window for `wait` seconds.
+    /// Shoots `view` at the device's own size (the iPad run), upright or turned, or at `size` (the
+    /// iPhone Duo's inner display drawn on the iPhone run), after it has run in the key window for
+    /// `wait` seconds. An iPad app that supports multitasking cannot turn itself, so a turned shot is
+    /// laid out at the turned size inside the upright window; system glass still draws there.
     public static func device<V: View>(
         _ view: V,
         named name: String,
         style: UIUserInterfaceStyle,
         wait: TimeInterval,
         landscape: Bool,
+        size fixed: CGSize? = nil,
         file: StaticString = #filePath,
         testName: String = #function,
         line: UInt = #line
     ) async {
-        if let scene = keyWindow?.windowScene {
-            scene.requestGeometryUpdate(.iOS(interfaceOrientations: landscape ? .landscapeRight : .portrait)) { _ in }
-            try? await Task.sleep(for: .seconds(1))
-        }
         guard let window = keyWindow else { return }
-        // An iPad app that supports multitasking cannot turn itself; if the window stayed upright,
-        // the shot is laid out at the turned size inside it instead.
-        var size = window.bounds.size
-        if landscape != (size.width > size.height) {
-            size = CGSize(width: size.height, height: size.width)
-        }
+        let screen = window.windowScene?.screen.bounds.size ?? window.bounds.size
+        let short = min(screen.width, screen.height)
+        let long = max(screen.width, screen.height)
+        let size = fixed ?? (landscape ? CGSize(width: long, height: short) : CGSize(width: short, height: long))
         let controller = host(view, style: style, topUpSafeArea: false)
         window.rootViewController = controller
         controller.view.frame = CGRect(origin: .zero, size: size)

@@ -116,7 +116,14 @@ jobs:
             plutil -p "$profile" | grep -iE "screen|display|fold|scale|width|height" || plutil -p "$profile"
             echo "::endgroup::"
           fi
-          runtime="$(xcrun simctl list runtimes available -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x["platform"]=="iOS"]; print(sorted(r,key=lambda x: x["version"])[-1]["identifier"])')"
+          # Only a runtime that lists the Duo among its device types can create one.
+          runtime="$(xcrun simctl list runtimes available -j | python3 -c 'import json,sys
+          rs=[r for r in json.load(sys.stdin)["runtimes"] if r["platform"]=="iOS" and any("iPhone-Duo" in d.get("identifier","") for d in r.get("supportedDeviceTypes",[]))]
+          print(sorted(rs,key=lambda r: r["version"])[-1]["identifier"] if rs else "")')"
+          if [ -z "$runtime" ]; then
+            echo "No installed iOS runtime supports the iPhone Duo; the Duo shots run on the iPhone at 1010 x 716 pt."
+            exit 0
+          fi
           udid="$(xcrun simctl create "iPhone Duo" com.apple.CoreSimulator.SimDeviceType.iPhone-Duo "$runtime")"
           echo "udid=$udid" >> "$GITHUB_OUTPUT"
 

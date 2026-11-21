@@ -25,10 +25,10 @@ struct IPadScreenshots {
     private func shoot(_ tab: AppTab, link: AppLink? = nil, _ name: String) async {
         for landscape in [true, false] {
             let o = landscape ? "landscape" : "portrait"
-            await Shoot.device(app(tab, link: link), named: "ipad-\(name)-\(o)-light", style: .light, wait: 2.5, landscape: landscape)
-            await Shoot.device(app(tab, link: link, theme: .dark), named: "ipad-\(name)-\(o)-dark", style: .dark, wait: 2.5, landscape: landscape)
+            await Shoot.device(app(tab, link: link), named: "ipad-\(name)-\(o)-light", style: .light, wait: 3, landscape: landscape)
+            await Shoot.device(app(tab, link: link, theme: .dark), named: "ipad-\(name)-\(o)-dark", style: .dark, wait: 3, landscape: landscape)
             I18n.shared.set(.fa)
-            await Shoot.device(app(tab, link: link), named: "ipad-\(name)-\(o)-fa-light", style: .light, wait: 2.5, landscape: landscape)
+            await Shoot.device(app(tab, link: link), named: "ipad-\(name)-\(o)-fa-light", style: .light, wait: 3, landscape: landscape)
             I18n.shared.set(.en)
         }
     }
@@ -56,29 +56,30 @@ struct IPadScreenshots {
     }
 }
 
-/// The iPhone Duo's unfolded display (iPad Layout IP10, IP12): iPhone navigation with wide layouts,
-/// shot on the iPhone Duo simulator CI creates from the runner's `iPhone-Duo` device type.
+/// The iPhone Duo's unfolded display (iPad Layout IP10, IP12): iPhone navigation with wide layouts.
+/// The runner lists an `iPhone-Duo` device type but no installed runtime accepts it, so the shots are
+/// drawn at the canvas size (1010 × 716 pt) on the iPhone run; on a Duo simulator they use its screen.
 @MainActor
-@Suite("Duo screenshots", .serialized, .enabled(if: Shoot.onDuo))
+@Suite("Duo screenshots", .serialized, .enabled(if: !Shoot.onIPad))
 struct DuoScreenshots {
+    static let canvas = CGSize(width: 1010, height: 716)
+
     private func app(_ tab: AppTab, link: AppLink? = nil, theme: ThemeMode = .match) -> some View {
         let backend = FixtureBackend.make(theme: theme)
         backend.push.pendingLink = link
         return AppRoot(backend: backend, initialTab: tab, layout: .widePhone)
     }
 
-    private func shoot(_ tab: AppTab, link: AppLink? = nil, _ name: String) async {
-        await Shoot.device(app(tab, link: link), named: "duo-\(name)-light", style: .light, wait: 2.5, landscape: true)
-        await Shoot.device(app(tab, link: link, theme: .dark), named: "duo-\(name)-dark", style: .dark, wait: 2.5, landscape: true)
-        I18n.shared.set(.fa)
-        await Shoot.device(app(tab, link: link), named: "duo-\(name)-fa-light", style: .light, wait: 2.5, landscape: true)
-        I18n.shared.set(.en)
+    private func shot(_ view: some View, _ name: String, _ style: UIUserInterfaceStyle) async {
+        await Shoot.device(view, named: name, style: style, wait: 3, landscape: true, size: Shoot.onDuo ? nil : Self.canvas)
     }
 
-    /// The screen the device reports, for the doc (IP12).
-    @Test func screenSize() {
-        let bounds = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.screen.bounds ?? .zero
-        print("DUO-SCREEN \(bounds.width) x \(bounds.height) pt")
+    private func shoot(_ tab: AppTab, link: AppLink? = nil, _ name: String) async {
+        await shot(app(tab, link: link), "duo-\(name)-light", .light)
+        await shot(app(tab, link: link, theme: .dark), "duo-\(name)-dark", .dark)
+        I18n.shared.set(.fa)
+        await shot(app(tab, link: link), "duo-\(name)-fa-light", .light)
+        I18n.shared.set(.en)
     }
 
     @Test func home() async { await shoot(.home, "home") }

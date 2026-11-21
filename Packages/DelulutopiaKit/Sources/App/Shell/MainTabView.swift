@@ -105,6 +105,8 @@ struct MainTabView: View {
                     }
                 }
                 .tabViewStyle(.sidebarAdaptable)
+                // The canvas's tab bar on top, with the "Show sidebar" button to switch.
+                .defaultAdaptableTabBarPlacement(.tabBar)
             } else {
                 TabView(selection: tabSelection) {
                     ForEach(AppTab.allCases) { tab in
