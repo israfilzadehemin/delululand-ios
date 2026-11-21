@@ -87,26 +87,16 @@ struct SelfieBoardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if mini {
-                strip.transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                strip.transition(.dlFoldStrip)
             } else {
-                cork.transition(.opacity.combined(with: .scale(scale: 0.6, anchor: .top)))
-                HStack(spacing: 10) {
-                    (Text(t("selfie.todays")).font(DLTextStyle.footnoteStrong.spec.dynamicFont).foregroundColor(.dlInk)
-                        + Text(" · " + meta).font(DLTextStyle.footnote.spec.dynamicFont))
-                        .foregroundStyle(.dlInkQuiet)
-                    Spacer(minLength: 0)
-                    Button {
-                        withAnimation(DLMotion.easeOut(0.32)) { backend.settings.setSelfieMini(true) }
-                    } label: {
-                        Image(systemName: "chevron.up").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
-                    }
-                    .foregroundStyle(.dlInk)
-                    .accessibilityLabel(t("selfie.fold"))
+                VStack(alignment: .leading, spacing: 6) {
+                    cork
+                    footer
                 }
-                .padding(.leading, 2)
+                .transition(.dlFoldBoard)
             }
         }
-        .animation(DLMotion.easeOut(0.32), value: mini)
+        .animation(Fold.animation, value: mini)
         .onAppear { markRibbon() }
         .onChange(of: theirs?.id) { _, _ in markRibbon() }
         .onChange(of: mini) { _, _ in markRibbon() }
@@ -139,6 +129,23 @@ struct SelfieBoardView: View {
             SelfieViewer(items: gallery, start: gallery.firstIndex { $0.id == v.id } ?? 0, now: now) { viewing = nil }
                 .environment(backend)
         }
+    }
+
+    private var footer: some View {
+        HStack(spacing: 10) {
+            (Text(t("selfie.todays")).font(DLTextStyle.footnoteStrong.spec.dynamicFont).foregroundColor(.dlInk)
+                + Text(" · " + meta).font(DLTextStyle.footnote.spec.dynamicFont))
+                .foregroundStyle(.dlInkQuiet)
+            Spacer(minLength: 0)
+            Button {
+                withAnimation(Fold.animation) { backend.settings.setSelfieMini(true) }
+            } label: {
+                Image(systemName: "chevron.up").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
+            }
+            .foregroundStyle(.dlInk)
+            .accessibilityLabel(t("selfie.fold"))
+        }
+        .padding(.leading, 2)
     }
 
     private var meta: String {
@@ -279,7 +286,7 @@ struct SelfieBoardView: View {
     // MARK: Folded strip
 
     private var strip: some View {
-        Button { withAnimation(DLMotion.easeOut(0.32)) { backend.settings.setSelfieMini(false) } } label: {
+        Button { withAnimation(Fold.animation) { backend.settings.setSelfieMini(false) } } label: {
             HStack(spacing: 12) {
                 HStack(spacing: 5) {
                     MiniPolaroid(tilt: -5, url: mine?.url, image: nil)
