@@ -274,17 +274,35 @@ public struct DoodlePad: View {
     private var blank: Bool { backdropURL != nil ? history.isUnchanged : history.isBlank }
 
     public var body: some View {
-        ZStack {
-            Color.dlPaper.ignoresSafeArea()
-            VStack(spacing: 0) {
-                header
-                Spacer(minLength: 12)
-                paper
-                    .padding(.horizontal, 10)
-                Spacer(minLength: 12)
-                tools
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 8)
+        GeometryReader { geo in
+            ZStack {
+                Color.dlPaper.ignoresSafeArea()
+                // A wide landscape page (iPad, unfolded Duo) puts the tools in a rail beside the
+                // paper (canvas T-Board, iPad Layout IP7); the iPhone keeps them below.
+                if geo.size.width >= 700, geo.size.width > geo.size.height {
+                    VStack(spacing: 0) {
+                        header
+                        HStack(alignment: .center, spacing: 20) {
+                            paper
+                            tools
+                                .frame(width: 380)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .frame(maxHeight: .infinity)
+                    }
+                } else {
+                    VStack(spacing: 0) {
+                        header
+                        Spacer(minLength: 12)
+                        paper
+                            .padding(.horizontal, 10)
+                        Spacer(minLength: 12)
+                        tools
+                            .padding(.horizontal, 10)
+                            .padding(.bottom, 8)
+                    }
+                }
             }
         }
         .interactiveDismissDisabled(!history.isUnchanged)

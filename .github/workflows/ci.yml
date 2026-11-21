@@ -81,6 +81,30 @@ jobs:
             -destination "id=${{ steps.sim.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath "$GITHUB_WORKSPACE/build/Screenshots.xcresult" | xcbeautify
 
+      - name: Device types (iPhone Duo check, iPad Layout IP12)
+        if: steps.sync.outputs.regenerated != 'true'
+        continue-on-error: true
+        run: |
+          xcrun simctl list devicetypes | tee "$SNAPSHOT_DIR/zz.devicetypes.txt"
+          echo "::group::Foldable / Duo device types"
+          grep -iE "duo|fold" "$SNAPSHOT_DIR/zz.devicetypes.txt" || echo "No iPhone Duo device type on this runner"
+          echo "::endgroup::"
+
+      - name: Pick an iPad simulator
+        id: ipad
+        if: steps.sync.outputs.regenerated != 'true'
+        run: echo "udid=$(tools/ci/pick-simulator.sh --ipad)" >> "$GITHUB_OUTPUT"
+
+      - name: Screenshots (iPad 13-inch, landscape + portrait)
+        if: steps.sync.outputs.regenerated != 'true'
+        env:
+          TEST_RUNNER_DL_SNAPSHOT_DIR: ${{ env.SNAPSHOT_DIR }}
+        run: |
+          set -o pipefail
+          xcodebuild test -project Delulutopia.xcodeproj -scheme "Delulutopia Staging" -configuration Debug-Staging \
+            -destination "id=${{ steps.ipad.outputs.udid }}" CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath "$GITHUB_WORKSPACE/build/ScreenshotsIPad.xcresult" | xcbeautify
+
       - name: Home Screen label (staging build)
         if: steps.sync.outputs.regenerated != 'true'
         continue-on-error: true

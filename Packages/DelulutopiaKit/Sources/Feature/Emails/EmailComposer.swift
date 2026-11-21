@@ -358,6 +358,8 @@ struct ComposerView: View {
                         .layoutPriority(1)
                         .buttonStyle(.borderedProminent)
                         .tint(.dlMailBlue)
+                        // iPad Layout IP8: ⌘↩ sends.
+                        .keyboardShortcut(.return, modifiers: .command)
                         .disabled(!canSend)
                 }
                 AttachmentStrip(atts, limits: limits, retentionDays: backend.server?.retention?.otherDays, stacked: true) { item in
@@ -597,6 +599,7 @@ struct DockedComposerView: View {
                 .buttonStyle(.plain)
                 .disabled(!canSend)
                 .accessibilityLabel(sending ? t("common.sending") : t("common.send"))
+                .keyboardShortcut(.return, modifiers: .command)
             }
             if pickerOpen, let stickers {
                 StickerPicker(

@@ -6,7 +6,7 @@ import Testing
 /// The component catalog in light and dark, published to `ci-screenshots` for review. The tall page
 /// is drawn off screen, so the glass pieces get their own on-screen shot.
 @MainActor
-@Suite("Catalog screenshots", .serialized)
+@Suite("Catalog screenshots", .serialized, .enabled(if: !Shoot.onIPad))
 struct CatalogScreenshots {
     @Test func catalogLight() {
         Shoot.page(DLComponentCatalog(), named: "catalog-light", style: .light, height: 2300)

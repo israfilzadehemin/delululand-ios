@@ -15,7 +15,7 @@ import Testing
 /// The app on the fixture API (Emin and Leyla in Delulutopia), rendered on screen in the host app so
 /// the system glass shows, and published to `ci-screenshots`.
 @MainActor
-@Suite("Shell screenshots", .serialized)
+@Suite("Shell screenshots", .serialized, .enabled(if: !Shoot.onIPad))
 struct ShellScreenshots {
     private func app(_ tab: AppTab, theme: ThemeMode = .match, state: FixtureServer.State = .init(), boardMini: Bool = false) -> some View {
         AppRoot(backend: FixtureBackend.make(state: state, theme: theme, boardMini: boardMini), initialTab: tab)

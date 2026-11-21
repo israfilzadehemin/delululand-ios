@@ -107,6 +107,72 @@ public enum Shoot {
         )
     }
 
+    /// True when the screenshot run is on an iPad simulator: the iPhone suites skip, the iPad suite
+    /// runs (iPad Layout §7). Read from the simulator's environment, so traits can use it.
+    nonisolated public static let onIPad: Bool = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"]?.hasPrefix("iPad") ?? false
+
+    /// Shoots `view` at the device's own size (the iPad run), turned to `landscape` first, after it
+    /// has run in the key window for `wait` seconds.
+    public static func device<V: View>(
+        _ view: V,
+        named name: String,
+        style: UIUserInterfaceStyle,
+        wait: TimeInterval,
+        landscape: Bool,
+        file: StaticString = #filePath,
+        testName: String = #function,
+        line: UInt = #line
+    ) async {
+        if let scene = keyWindow?.windowScene {
+            scene.requestGeometryUpdate(.iOS(interfaceOrientations: landscape ? .landscapeRight : .portrait)) { _ in }
+            try? await Task.sleep(for: .seconds(1))
+        }
+        guard let window = keyWindow else { return }
+        let controller = host(view, style: style, topUpSafeArea: false)
+        window.rootViewController = controller
+        controller.view.frame = window.bounds
+        window.layoutIfNeeded()
+        try? await Task.sleep(for: .seconds(wait))
+        let size = window.bounds.size
+        record(
+            controller,
+            named: name,
+            as: .image(drawHierarchyInKeyWindow: true, precision: 1, size: size, traits: makeTraits(style)),
+            file: file,
+            testName: testName,
+            line: line
+        )
+    }
+
+    /// Shoots `view` at `size` with regular size classes, off screen (the iPhone Duo's inner display,
+    /// iPad Layout IP12), after it has run for `wait` seconds.
+    public static func sized<V: View>(
+        _ view: V,
+        named name: String,
+        style: UIUserInterfaceStyle,
+        size: CGSize,
+        wait: TimeInterval,
+        file: StaticString = #filePath,
+        testName: String = #function,
+        line: UInt = #line
+    ) async {
+        let controller = host(view, style: style, topUpSafeArea: false)
+        if let window = keyWindow {
+            window.rootViewController = controller
+            controller.view.frame = CGRect(origin: .zero, size: size)
+            window.layoutIfNeeded()
+        }
+        try? await Task.sleep(for: .seconds(wait))
+        let traits = UITraitCollection { traits in
+            traits.userInterfaceStyle = style
+            traits.displayScale = 2
+            traits.horizontalSizeClass = .regular
+            traits.verticalSizeClass = .regular
+        }
+        let config = ViewImageConfig(safeArea: UIEdgeInsets(top: 24, left: 0, bottom: 20, right: 0), size: size, traits: traits)
+        record(controller, named: name, as: .image(on: config, precision: 1, traits: traits), file: file, testName: testName, line: line)
+    }
+
     private static func host<V: View>(_ view: V, style: UIUserInterfaceStyle, topUpSafeArea: Bool) -> UIViewController {
         DLFonts.register()
         DLAppearance.apply()
