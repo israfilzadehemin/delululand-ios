@@ -54,13 +54,15 @@ func quoteOf(_ e: Email) -> EmailQuote {
         media: ThreadMedia(photos: photos, audios: audios, videos: videos),
         thumbUrl: thumb,
         thumbExpired: visual?.expired == true,
-        sentAt: e.sentAt
+        sentAt: e.sentAt,
+        sticker: e.sticker?.url256
     )
 }
 
-/// RE9, RE11: the quote's text, else "Photo" / "Voice note" / "Video".
+/// RE9, RE11: the quote's text, else "Sticker" (FS-SK15), else "Photo" / "Voice note" / "Video".
 func quoteLine(_ q: EmailQuote) -> String {
-    q.text ?? mediaWords(photos: q.media?.photos ?? 0, audios: q.media?.audios ?? 0, videos: q.media?.videos ?? 0) ?? ""
+    q.text ?? (q.sticker != nil ? t("stickers.sticker") : nil)
+        ?? mediaWords(photos: q.media?.photos ?? 0, audios: q.media?.audios ?? 0, videos: q.media?.videos ?? 0) ?? ""
 }
 
 /// RE6: the distance (pt) that arms a reply, and the most a bubble follows the finger.
@@ -423,10 +425,17 @@ struct DockedComposerView: View {
     /// Email Replies RE9: "You" or the friend's name, and the colour key, for the strip.
     var quoteName: (PublicID) -> String = { _ in "" }
     var quoteWho: (PublicID) -> Who = { _ in .a }
+    /// Stickers SK1: thread replies only; nil where there is no thread.
+    var stickers: StickerStore?
+    var onSticker: (Sticker) -> Void = { _ in }
     let onSent: (EmailSent) -> Void
 
     @Environment(Backend.self) private var backend
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// SK10: the sticker picker sits where the keyboard was; typing closes it.
+    @State private var pickerOpen = false
+    @State private var adding = false
+    @State private var deleting: Sticker?
     @State private var recorder: VoiceRecorder?
     @State private var sending = false
     @State private var error: String?
@@ -454,7 +463,7 @@ struct DockedComposerView: View {
             && (!composer.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !(atts?.done.isEmpty ?? true))
         // The tray stays open while it holds something; the bar is open while it is in use.
         let tray = trayAsked || !(atts?.items.isEmpty ?? true) || recording
-        let open = tray || focused || !composer.text.isEmpty || composer.replyTo != nil
+        let open = tray || focused || pickerOpen || !composer.text.isEmpty || composer.replyTo != nil
         let motion: Animation? = reduceMotion ? nil : .snappy(duration: 0.26)
         VStack(spacing: 6) {
             if tray, let atts {
@@ -542,11 +551,37 @@ struct DockedComposerView: View {
                     .foregroundStyle(.dlInk)
                     .lineLimit(1 ... 6)
                     .focused($focused)
-                    .padding(.horizontal, 16).padding(.vertical, 11)
+                    .padding(.leading, 16).padding(.trailing, stickers == nil ? 16 : 44).padding(.vertical, 11)
                     .frame(minHeight: 44)
                     .background(Color.dlPaperLetter, in: RoundedRectangle(cornerRadius: 22))
                     .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.dlLine, lineWidth: 1))
                     .accessibilityLabel(t("emails.replyLabel"))
+                    .overlay(alignment: .bottomTrailing) {
+                        if stickers != nil {
+                            Button {
+                                if pickerOpen {
+                                    pickerOpen = false
+                                    focused = true
+                                } else {
+                                    // Picking is not typing: the keyboard goes, the picker takes its place.
+                                    focused = false
+                                    trayAsked = false
+                                    withAnimation(motion) { pickerOpen = true }
+                                }
+                            } label: {
+                                Image(systemName: "face.smiling")
+                                    .font(.system(size: 20))
+                                    .foregroundStyle(pickerOpen ? Color.dlSeal : Color.dlInkQuiet)
+                                    .frame(width: 36, height: 36)
+                                    .background(pickerOpen ? Color.dlSealTint : Color.clear, in: Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(held)
+                            .padding(.trailing, 4).padding(.bottom, 4)
+                            .accessibilityLabel(t("stickers.stickers"))
+                            .accessibilityAddTraits(pickerOpen ? .isSelected : [])
+                        }
+                    }
                 Button { send() } label: {
                     Group {
                         if sending {
@@ -563,6 +598,16 @@ struct DockedComposerView: View {
                 .disabled(!canSend)
                 .accessibilityLabel(sending ? t("common.sending") : t("common.send"))
             }
+            if pickerOpen, let stickers {
+                StickerPicker(
+                    store: stickers,
+                    disabled: noCredits || held,
+                    onPick: onSticker,
+                    onAdd: { adding = true },
+                    onDelete: { deleting = $0 }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 8)
         .background(.bar)
@@ -572,6 +617,27 @@ struct DockedComposerView: View {
         .animation(motion, value: composer.replyTo?.id)
         // RE8: a picked reply puts the cursor in the field (unlike +, EB15).
         .onChange(of: composer.focusAsk) { focused = true }
+        .onChange(of: focused) { _, on in if on { pickerOpen = false } }
+        .animation(motion, value: pickerOpen)
+        .task { stickers?.load(backend) }
+        .sheet(isPresented: $adding) {
+            if let stickers { AddSticker(store: stickers) { adding = false }.environment(backend) }
+        }
+        // FS-SK25: "Delete this sticker for both of you? Sent ones stay."
+        .alert(
+            t("stickers.deleteTitle"),
+            isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
+            presenting: deleting
+        ) { s in
+            Button(t("stickers.delete"), role: .destructive) {
+                Task {
+                    if await stickers?.delete(s.id) != true { error = t("common.somethingWentWrong") }
+                }
+            }
+            Button(t("stickers.cancel"), role: .cancel) {}
+        } message: { _ in
+            Text(t("stickers.deleteBody"))
+        }
         .onAppear {
             if recorder == nil, let atts {
                 recorder = VoiceRecorder { data, ms in atts.add(.audio, name: "voice.m4a", mime: "audio/mp4", durationMs: ms) { data } }

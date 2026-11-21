@@ -180,7 +180,7 @@ final class EmailOutbox {
 
     struct TimedOut: Error {}
 
-    private static func withTimeout<T: Sendable>(_ op: @escaping @Sendable () async throws -> T) async throws -> T {
+    static func withTimeout<T: Sendable>(_ op: @escaping @Sendable () async throws -> T) async throws -> T {
         try await withThrowingTaskGroup(of: T.self) { group in
             group.addTask { try await op() }
             group.addTask {

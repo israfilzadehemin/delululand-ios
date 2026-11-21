@@ -16,6 +16,7 @@ struct EmojiBody: Encodable { let emoji: String }
 struct MoodBody: Encodable { let mood: String }
 struct MoodEditBody: Encodable { let emoji: String; let label: String }
 struct DraftVersionBody: Encodable { let draftVersion: Int }
+struct SendStickerBody: Encodable { let stickerId: String; let replyToId: String?; let clientId: String }
 struct BodyOnly: Encodable { let body: Doc }
 struct ChangePinBody: Encodable { let currentPin: String; let newPin: String }
 struct UniverseUpdate: Encodable { let name: String; let welcome: String }

@@ -189,6 +189,33 @@ public struct API: Sendable {
         try await client.call("POST", "api/emails/threads/\(threadId)/emails", body: DraftVersionBody(draftVersion: draftVersion))
     }
 
+    // MARK: Stickers (doc "Delululand — Stickers")
+
+    public func stickers() async throws -> StickerCatalogue { try await client.call("GET", "api/stickers") }
+    /// FS-SK6: a sticker-only reply; the client id makes a retry safe.
+    public func sendSticker(threadId: PublicID, stickerId: PublicID, replyToId: PublicID?, clientId: String) async throws -> EmailSent {
+        try await client.call(
+            "POST",
+            "api/emails/threads/\(threadId)/stickers",
+            body: SendStickerBody(stickerId: stickerId, replyToId: replyToId, clientId: clientId)
+        )
+    }
+    /// SK13: one of Ours, as the image's bytes; keywords are optional, comma or space separated.
+    public func addSticker(data: Data, mime: String, keywords: String) async throws -> Sticker {
+        let words = keywords.trimmingCharacters(in: .whitespacesAndNewlines)
+        return try await client.upload(
+            "api/stickers/custom",
+            fields: words.isEmpty ? [:] : ["keywords": words],
+            filename: "sticker" + stickerExtension(mime),
+            mime: mime,
+            data: data,
+            timeout: 60
+        )
+    }
+    public func deleteSticker(id: PublicID) async throws { try await client.run("DELETE", "api/stickers/custom/\(id)") }
+    public func favouriteSticker(id: PublicID) async throws { try await client.run("PUT", "api/stickers/\(id)/favourite") }
+    public func unfavouriteSticker(id: PublicID) async throws { try await client.run("DELETE", "api/stickers/\(id)/favourite") }
+
     // MARK: Reactions (target = discussions | comments | emails)
 
     public func react(target: String, id: PublicID, emoji: String) async throws -> Reactions {
@@ -264,5 +291,15 @@ public struct API: Sendable {
             throw APIError(status: 413, code: "TOO_LARGE", message: kind.tooLarge)
         }
         return try await client.upload(path, fields: ["kind": kind.rawValue], filename: filename, mime: mime, data: data, timeout: kind.timeout, progress: progress)
+    }
+}
+
+/// The file name's extension the server reads the type from.
+func stickerExtension(_ mime: String) -> String {
+    switch mime {
+    case "image/webp": ".webp"
+    case "image/gif": ".gif"
+    case "image/jpeg": ".jpg"
+    default: ".png"
     }
 }

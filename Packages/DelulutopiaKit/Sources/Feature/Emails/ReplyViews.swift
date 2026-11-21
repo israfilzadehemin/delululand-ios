@@ -92,7 +92,12 @@ private struct QuoteThumb: View {
     let quote: EmailQuote
 
     var body: some View {
-        if quote.thumbExpired {
+        if let sticker = quote.sticker {
+            // FS-SK15: a quoted sticker shows small and whole, without the photo's crop and corners.
+            RemoteImage(sticker, contentMode: .fit, maxPixel: 120) { Color.clear }
+                .frame(width: 36, height: 36)
+                .accessibilityHidden(true)
+        } else if quote.thumbExpired {
             ExpiredThumb(size: 36)
         } else if let thumb = quote.thumbUrl {
             RemoteImage(thumb, contentMode: .fill, maxPixel: 120) { Color.dlPaperLetter }

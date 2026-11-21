@@ -86,6 +86,8 @@ struct BubbleLayer<Copy: View>: View {
     let onReply: () -> Void
     let onCopy: () -> Void
     let onClose: () -> Void
+    /// Stickers SK7: a sticker's ★ Add to / Remove from favourites; nil for other emails.
+    let favourite: StickerFavourite?
     let copy: () -> Copy
 
     @Environment(\.layoutDirection) private var direction
@@ -106,8 +108,10 @@ struct BubbleLayer<Copy: View>: View {
         onReply: @escaping () -> Void,
         onCopy: @escaping () -> Void,
         onClose: @escaping () -> Void,
+        favourite: StickerFavourite? = nil,
         @ViewBuilder copy: @escaping () -> Copy
     ) {
+        self.favourite = favourite
         self.frame = frame
         self.mine = mine
         self.quick = quick
@@ -129,7 +133,8 @@ struct BubbleLayer<Copy: View>: View {
             // Line up with the bubble's outer edge: the friend's start edge, my end edge.
             let left = mine == (direction == .rightToLeft)
             let above: CGFloat = 52 + 10 + (info == nil ? 0 : CGFloat(infoRows) * 28 + 12 + 2 + 8)
-            let below: CGFloat = (canCopy ? 2 * 48 : 48) + 14
+            let rows = 1 + (canCopy ? 1 : 0) + (favourite == nil ? 0 : 1)
+            let below = CGFloat(rows * 48 + 14)
             let topEdge = geo.safeAreaInsets.top + 12
             let bottomEdge = screenH - geo.safeAreaInsets.bottom - 12
             let maxH = max(80, bottomEdge - topEdge - above - below)
@@ -217,6 +222,14 @@ struct BubbleLayer<Copy: View>: View {
             if canCopy {
                 Divider()
                 item(t("emails.copyText"), systemImage: "doc.on.doc", action: onCopy)
+            }
+            if let favourite {
+                Divider()
+                item(
+                    favourite.on ? t("stickers.removeFavourite") : t("stickers.addFavourite"),
+                    systemImage: favourite.on ? "star.fill" : "star",
+                    action: favourite.toggle
+                )
             }
         }
         .frame(width: 210)
@@ -383,4 +396,10 @@ struct UnsentSheet: View {
         .presentationDetents([.height(260)])
         .presentationDragIndicator(.visible)
     }
+}
+
+/// Stickers SK7: whether the sticker is a favourite, and the toggle.
+struct StickerFavourite {
+    let on: Bool
+    let toggle: () -> Void
 }
